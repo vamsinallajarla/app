@@ -1,0 +1,312 @@
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: linear-gradient(135deg, #1a1f71 0%, #0c2b45 100%);
+  margin: 0;
+  padding: 0;
+  color: #e0e0e0;
+}
+
+.page-bg {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, #212a72 0%, #102c44 100%);
+  z-index: -1;
+  filter: drop-shadow(0 3px 3px rgba(0,0,0,0.15));
+}
+
+header {
+  background: linear-gradient(90deg, #3a44ab, #1f2661);
+  color: #f1f1f1;
+  padding: 2rem 2rem 1.5rem 2rem;
+  box-shadow: 0 6px 25px rgba(12, 43, 69, 0.7);
+  border-bottom: 1px solid #4951a1;
+}
+
+header h1 {
+  margin: 0 0 12px 0;
+  font-weight: 900;
+  text-shadow: 1px 1px 5px rgba(255, 255, 255, 0.15);
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.tab-button {
+  background: linear-gradient(145deg, #3f4dab, #303e8c);
+  color: #dff3ff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 14px;
+  cursor: pointer;
+  font-weight: 700;
+  box-shadow:
+    inset 2px 2px 6px #5771d2,
+    7px 7px 12px #1a1f4f,
+    4px 4px 5px #2a3378;
+  transition: all 0.2s ease;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+
+.tab-button:hover:not(.active) {
+  background: linear-gradient(145deg, #5b6ada, #4151bb);
+  box-shadow:
+    inset 3px 3px 8px #6ba2ee,
+    9px 9px 18px #0f1442,
+    6px 6px 7px #3553ba;
+  color: #edf6ff;
+}
+
+.tab-button.active {
+  background: linear-gradient(145deg, #f5f7ff, #d6dafd);
+  color: #2f3d73;
+  font-weight: 900;
+  box-shadow:
+    inset 1px 1px 12px #ffffff,
+    0 9px 12px rgba(19,52,142,0.7);
+}
+
+main {
+  padding: 3rem 4rem;
+}
+
+.tab-content {
+  display: none;
+  background: linear-gradient(135deg, #2e3679, #213256);
+  padding: 2rem;
+  border-radius: 22px;
+  margin-bottom: 3rem;
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.6),
+    inset 0 0 30px rgba(54, 71, 163, 0.7);
+  border: 1px solid #35468b;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.calculation-bg {
+  background: transparent;
+}
+
+.summary-cards {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+  justify-content: space-between;
+}
+
+.card {
+  background: linear-gradient(145deg, #3648a7, #26347a);
+  border-radius: 18px;
+  padding: 2rem;
+  flex-grow: 1;
+  box-shadow:
+    6px 6px 18px #1a1f4f,
+    inset 2px 2px 6px #4152bb,
+    inset -4px -4px 15px #2a3c7d;
+  color: #c4d3f3;
+  text-align: center;
+  transition: box-shadow 0.3s ease;
+  cursor: default;
+}
+
+.card:hover {
+  box-shadow:
+    9px 9px 28px #142069,
+    inset 6px 6px 18px #687dce,
+    inset -6px -6px 20px #4058c0;
+}
+
+.card h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-shadow: 1.5px 1.5px 4px rgba(0,0,0,0.6);
+}
+
+.card p {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #a0bfff;
+  text-shadow: 1.8px 1.8px 5px rgba(19,52,130,0.8);
+  letter-spacing: 1px;
+}
+
+.charts-row {
+  display: flex;
+  gap: 2.75rem;
+  flex-wrap: nowrap;
+  justify-content: center;
+}
+
+.charts-row canvas {
+  background: linear-gradient(145deg, #2e3971, #1d2566);
+  border-radius: 28px;
+  box-shadow:
+    7px 7px 18px #151e58,
+    inset 0 0 20px rgba(255, 255, 255, 0.07);
+  padding: 18px;
+  max-width: 320px;
+  max-height: 240px;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  transition: box-shadow 0.3s ease;
+}
+
+.charts-row canvas:hover {
+  box-shadow:
+    9px 9px 30px #121f61,
+    inset 0 0 40px rgba(255, 255, 255, 0.15);
+}
+
+form {
+  display: flex;
+  gap: 1.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 1rem 0;
+}
+
+form input, form select {
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: none;
+  font-size: 1rem;
+  background: linear-gradient(145deg, #2e3680, #243063);
+  color: #aabeff;
+  box-shadow:
+    4px 4px 12px #1b2163,
+    inset 2px 2px 6px #4672dd;
+  transition: box-shadow 0.3s ease, color 0.3s ease;
+  width: 220px;
+  outline-offset: 2px;
+}
+
+form input:focus, form select:focus {
+  box-shadow:
+    0 0 24px 3px #7199ff;
+  color: #c4d7ff;
+  outline: none;
+}
+
+form button {
+  padding: 0.85rem 2.2rem;
+  background: linear-gradient(145deg, #4a58c5, #27398f);
+  color: #dfe5ff;
+  border: none;
+  border-radius: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow:
+    5px 5px 18px #1d2480,
+    inset 1px 1px 8px #a7b8ff;
+  transition: all 0.2s ease;
+  user-select: none;
+  min-width: 140px;
+  text-align: center;
+}
+
+form button:hover {
+  background: linear-gradient(160deg, #7692ff, #3d4bc9);
+  box-shadow:
+    0 0 20px 3px rgba(118,146,255,0.9),
+    inset 2px 2px 10px #d0dbff;
+}
+
+form button:active {
+  background: linear-gradient(160deg, #3355ff, #1d2b80);
+  box-shadow: inset 0 0 14px #2843d8;
+}
+
+form button[type="button"] {
+  background: linear-gradient(145deg, #2d3450, #221f4d);
+  color: #7b8abb;
+  box-shadow:
+    3px 3px 9px #1a1f48,
+    inset 1px 1px 3px #121647;
+}
+
+form button[type="button"]:hover {
+  background: linear-gradient(145deg, #3a416c, #2f2a5d);
+  color: #a1b0de;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+}
+
+ul li {
+  background: linear-gradient(135deg, #35428d, #2b3681);
+  border-radius: 16px;
+  padding: 1rem 1.2rem;
+  margin-bottom: 0.85rem;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #aabaff;
+  box-shadow:
+    5px 5px 15px #101e61,
+    inset 0 0 6px #556ab4;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.3s ease;
+}
+
+ul li span button {
+  background: #506ef9;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: 700;
+  padding: 0.4rem 0.8rem;
+  margin-left: 0.6rem;
+  box-shadow:
+    2px 2px 8px #223988;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+ul li span button:hover {
+  background: #738fff;
+  box-shadow:
+    4px 4px 12px #4770d1;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 900px) {
+  nav {
+    justify-content: center;
+  }
+  main {
+    padding: 2rem 1rem;
+  }
+  .summary-cards {
+    flex-wrap: wrap;
+  }
+  .card {
+    margin-bottom: 1.7rem;
+    width: 100%;
+  }
+  .charts-row {
+    flex-direction: column;
+    gap: 2rem;
+    align-items: center;
+  }
+  form input, form select {
+    width: 100%;
+  }
+  form {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}

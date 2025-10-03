@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Login</title>
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    background: #111;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+  }
+  .left-panel {
+    width: 50vw;
+    min-width: 320px;
+    background: url('nuv.png') no-repeat center center;
+    background-size: cover;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .left-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(17,17,17,0.7);
+    /* adjust opacity as needed */
+    z-index: 1;
+  }
+  /* Optional: add a slightly lighter overlay for logo visibility */
+  .left-panel img {
+    display: none;
+  }
+  .right-panel {
+    width: 50vw;
+    min-width: 350px;
+    background: #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .login-container {
+    background: rgba(24,24,24,0.98);
+    border-radius: 18px;
+    box-shadow: 0 0 22px 4px rgba(0,0,0,0.7);
+    padding: 2rem 2.5rem;
+    max-width: 350px;
+    width: 100%;
+    text-align: center;
+    font-weight: bold;
+  }
+  h2 {
+    color: #bb86fc;
+    margin-bottom: 1.5rem;
+    font-weight: bold;
+  }
+  input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 0.85rem;
+    margin-bottom: 1rem;
+    border-radius: 7px;
+    border: none;
+    background: #333;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: bold;
+    outline: none;
+  }
+  input[type="text"]:focus, input[type="password"]:focus {
+    background: #444;
+    outline: 2px solid #bb86fc;
+  }
+  button {
+    width: 100%;
+    padding: 0.75rem;
+    background: #bb86fc;
+    color: #111;
+    font-size: 1.1rem;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 0.5rem;
+    transition: background 0.3s;
+  }
+  button:hover {
+    background: #9a63d6;
+  }
+  .error-message {
+    color: #cf6679;
+    margin-top: 1rem;
+    display: none;
+    font-weight: bold;
+  }
+  .welcome-message {
+    font-size: 1.2rem;
+    color: #03dac6;
+    margin-top: 1rem;
+    font-weight: bold;
+  }
+  @media (max-width: 900px) {
+    .left-panel, .right-panel {
+      width: 100vw;
+      min-width: unset;
+    }
+    body {
+      flex-direction: column;
+    }
+    .left-panel {
+      height: 35vh;
+      width: 100vw;
+    }
+    .right-panel {
+      height: 65vh;
+      width: 100vw;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="left-panel"></div>
+  <div class="right-panel">
+    <div class="login-container">
+      <h2>Login to Financial Dashboard</h2>
+      <input type="text" id="username" placeholder="Username" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <button onclick="login()">Login</button>
+      <div class="error-message" id="errorMessage">Invalid credentials, please try again.</div>
+      <div class="welcome-message" id="welcomeMessage" style="display:none;"></div>
+    </div>
+  </div>
+  <script>
+    const storedUsername = "vamsi";
+    const storedPassword = "v@M$!8055";
+
+    function login() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+      if (username === storedUsername && password === storedPassword) {
+        document.getElementById("errorMessage").style.display = "none";
+        const welcome = document.getElementById("welcomeMessage");
+        welcome.textContent = `Welcome, ${username}!`;
+        welcome.style.display = "block";
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 1500);
+      } else {
+        document.getElementById("errorMessage").style.display = "block";
+        document.getElementById("welcomeMessage").style.display = "none";
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Financial Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <div class="page-bg"></div>
+  <header>
+    <h1>Financial Dashboard</h1>
+    <nav>
+      <button class="tab-button active" data-tab="dashboard">Dashboard</button>
+      <button class="tab-button" data-tab="income">Income</button>
+      <button class="tab-button" data-tab="expense">Expenses</button>
+      <button class="tab-button" data-tab="asset">Assets</button>
+      <button class="tab-button" data-tab="liability">Liabilities</button>
+      <button class="tab-button" data-tab="investment">Investments</button>
+      <button class="tab-button" data-tab="personal">Personal Details</button>
+      <button class="tab-button" data-tab="bank">Bank Accounts</button>
+      <button class="tab-button" data-tab="card">Credit Cards</button>
+	  <button id="logoutBtn" class="tab-button" style="margin-left: 12px;">
+  <i class="fas fa-power-off"></i>
+</button>
+    </nav>
+	<script>
+		document.getElementById('logoutBtn').addEventListener('click', function() {
+		window.location.href = 'login.html';
+		});
+	</script>
+  </header>
+  <main>
+    <section id="dashboard" class="tab-content active calculation-bg">
+      <h2>Dashboard Summary</h2>
+      <div class="summary-cards">
+        <div class="card" id="net-worth-card">
+          <h3>Net Worth</h3>
+          <p id="net-worth-value">₹0</p>
+        </div>
+        <div class="card" id="emergency-fund-card">
+          <h3>Emergency Fund</h3>
+          <p id="emergency-fund-value">₹0</p>
+        </div>
+        <div class="card" id="monthly-surplus-card">
+          <h3>Monthly Surplus</h3>
+          <p id="monthly-surplus-value">₹0</p>
+        </div>
+        <div class="card" id="assets-summary-card">
+          <h3>Assets</h3>
+          <p id="assets-summary">₹0</p>
+        </div>
+        <div class="card" id="liabilities-summary-card">
+          <h3>Liabilities</h3>
+          <p id="liabilities-summary">₹0</p>
+        </div>
+      </div>
+      <div class="charts-row">
+        <div><canvas id="incomeExpensesChart" width="200" height="200"></canvas></div>
+        <div><canvas id="assetsLiabilitiesChart" width="200" height="200"></canvas></div>
+        <div><canvas id="netWorthTrendChart" width="300" height="200"></canvas></div>
+      </div>
+    </section>
+
+    <section id="income" class="tab-content calculation-bg">
+      <h2>Income</h2>
+      <form id="income-form">
+        <input type="hidden" id="income-id" name="id" />
+        <input type="text" id="income-source" name="source" placeholder="Source" required />
+        <input type="number" id="income-amount" name="amount" placeholder="Amount (₹)" required />
+        <input type="date" id="income-date" name="date" required />
+        <button type="submit">Add / Update Income</button>
+        <button id="income-cancel" type="button" style="display:none;">Cancel Edit</button>
+      </form>
+      <ul id="income-list"></ul>
+    </section>
+
+    <section id="expense" class="tab-content calculation-bg">
+      <h2>Expenses</h2>
+      <form id="expense-form">
+        <input type="hidden" id="expense-id" name="id" />
+        <input type="text" id="expense-category" name="category" placeholder="Category" required />
+        <input type="number" id="expense-amount" name="amount" placeholder="Amount (₹)" required />
+        <input type="date" id="expense-date" name="date" required />
+        <button type="submit">Add / Update Expense</button>
+        <button id="expense-cancel" type="button" style="display:none;">Cancel Edit</button>
+      </form>
+      <ul id="expense-list"></ul>
+    </section>
+
+    <section id="asset" class="tab-content calculation-bg">
+      <h2>Assets</h2>
+      <form id="asset-form">
+        <input type="hidden" id="asset-id" name="id" />
+        <input type="text" id="asset-name" name="name" placeholder="Asset Name" required />
+        <input type="number" id="asset-value" name="value" placeholder="Value (₹)" required />
+        <input type="date" id="asset-date" name="date" required />
+        <button type="submit">Add / Update Asset</button>
+        <button id="asset-cancel" type="button" style="display:none;">Cancel Edit</button>
+      </form>
+      <ul id="asset-list"></ul>
+    </section>
+
+    <section id="liability" class="tab-content calculation-bg">
+      <h2>Liabilities</h2>
+      <form id="liability-form">
+        <input type="hidden" id="liability-id" name="id" />
+        <input type="text" id="liability-name" name="name" placeholder="Liability Name" required />
+        <input type="number" id="liability-value" name="value" placeholder="Value (₹)" required />
+        <input type="date" id="liability-date" name="date" required />
+        <button type="submit">Add / Update Liability</button>
+        <button id="liability-cancel" type="button" style="display:none;">Cancel Edit</button>
+      </form>
+      <ul id="liability-list"></ul>
+    </section>
+
+    <section id="investment" class="tab-content calculation-bg">
+      <h2>Investment Suggestions</h2>
+      <form id="investment-form">
+        <input type="hidden" id="investment-id" name="id" />
+        <input type="text" id="investment-name" name="name" placeholder="Investment Name" required />
+        <input type="number" id="investment-amount" name="amount" placeholder="Amount (₹)" required />
+        <input type="date" id="investment-date" name="date" required />
+        <select id="investment-type" name="type" required>
+          <option value="FD">Fixed Deposit</option>
+          <option value="Mutual Fund">Mutual Fund</option>
+          <option value="Stock">Stock</option>
+          <option value="Other">Other</option>
+        </select>
+        <button type="submit">Add / Update Investment</button>
+        <button id="investment-cancel" type="button" style="display:none;">Cancel Edit</button>
+      </form>
+      <ul id="investment-list"></ul>
+    </section>
+
+    <section id="personal" class="tab-content calculation-bg">
+      <h2>Personal Details</h2>
+      <form id="personal-form">
+        <input type="hidden" id="personal-id" name="id" />
+        <input type="text" id="aadhar" name="aadhar" placeholder="Aadhaar Number" maxlength="12" required />
+        <input type="text" id="pan" name="pan" placeholder="PAN Number" maxlength="10" required />
+        <input type="text" id="tax" name="tax" placeholder="Tax Filing ID (optional)" />
+        <button type="submit">Add / Update Personal Detail</button>
+        <button id="personal-cancel" type="button" style="display:none;">Cancel Edit</button>
+      </form>
+      <ul id="personal-list"></ul>
+    </section>
+
+    <section id="bank" class="tab-content calculation-bg">
+      <h2>Bank Accounts</h2>
+      <form id="bank-form">
+        <input type="hidden" id="bank-id" name="id" />
+        <input type="text" id="bankName" name="bankName" placeholder="Bank Name" required />
+        <input type="text" id="accountNumber" name="accountNumber" placeholder="Account Number" maxlength="20" required />
+        <input type="text" id="accountType" name="accountType" placeholder="Account Type (Savings/CC)" required />
+        <input type="text" id="ifsc" name="ifsc" placeholder="IFSC Code" required />
+        <input type="text" id="branch" name="branch" placeholder="Branch" />
+        <button type="submit">Add / Update Bank Account</button>
+        <button id="bank-cancel" type="button" style="display:none;">Cancel Edit</button>
+      </form>
+      <ul id="bank-list"></ul>
+    </section>
+
+    <section id="card" class="tab-content calculation-bg">
+      <h2>Credit Cards</h2>
+      <form id="card-form">
+        <input type="hidden" id="card-id" name="id" />
+        <input type="text" id="bank" name="bank" placeholder="Bank Name" required />
+        <input type="text" id="cardNumber" name="cardNumber" placeholder="Card Number" maxlength="16" required />
+        <input type="number" id="limit" name="limit" placeholder="Credit Limit (₹)" />
+        <input type="date" id="expiry" name="expiry" />
+        <button type="submit">Add / Update Credit Card</button>
+        <button id="card-cancel" type="button" style="display:none;">Cancel Edit</button>
+      </form>
+      <ul id="card-list"></ul>
+    </section>
+  </main>
+</body>
+</html>
