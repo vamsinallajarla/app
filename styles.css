@@ -310,3 +310,6 @@ ul li span button:hover {
     gap: 1rem;
   }
 }
+*, *::before, *::after {
+  box-sizing: border-box;
+}
