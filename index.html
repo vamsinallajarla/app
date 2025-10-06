@@ -3,163 +3,202 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Login</title>
+<title>Dark Login with Ambient Violet</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
   html, body {
     height: 100%;
     margin: 0;
-    padding: 0;
-  }
-  body {
-    min-height: 100vh;
-    font-family: Arial, sans-serif;
-    background: #111;
-    display: flex;
-    align-items: stretch;
-    justify-content: center;
-  }
-  .left-panel {
-    width: 50vw;
-    min-width: 320px;
-    background: url('nuv.png') no-repeat center center;
-    background-size: cover;
-    position: relative;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
     display: flex;
     align-items: center;
     justify-content: center;
+    color: #ddd;
+    perspective: 1000px;
   }
-  .left-panel::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(17,17,17,0.7);
-    /* adjust opacity as needed */
-    z-index: 1;
-  }
-  /* Optional: add a slightly lighter overlay for logo visibility */
-  .left-panel img {
-    display: none;
-  }
-  .right-panel {
-    width: 50vw;
-    min-width: 350px;
-    background: #1a1a1a;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
-  .login-container {
-    background: rgba(24,24,24,0.98);
-    border-radius: 18px;
-    box-shadow: 0 0 22px 4px rgba(0,0,0,0.7);
-    padding: 2rem 2.5rem;
-    max-width: 350px;
-    width: 100%;
+
+  .login-wrapper {
+    background: rgba(15, 15, 15, 0.9);
+    backdrop-filter: blur(16px);
+    border-radius: 30px;
+    box-shadow:
+      0 18px 28px rgba(38, 14, 64, 0.5),
+      inset 0 0 20px #120a25,
+      0 0 15px #3b2d52;
+    width: 360px;
+    padding: 3rem 3rem 2.5rem 3rem;
     text-align: center;
-    font-weight: bold;
+    transform-style: preserve-3d;
+    transition: transform 0.4s ease;
   }
-  h2 {
-    color: #bb86fc;
-    margin-bottom: 1.5rem;
-    font-weight: bold;
+
+  .login-wrapper:hover {
+    transform: rotateY(6deg) rotateX(4deg) scale(1.04);
+    box-shadow:
+      0 30px 50px rgba(38, 14, 64, 0.7),
+      inset 0 0 30px #210f47,
+      0 0 30px #6e5c9f;
   }
-  input[type="text"], input[type="password"] {
+
+  .login-wrapper h2 {
+    margin-bottom: 2rem;
+    font-weight: 600;
+    font-size: 1.95rem;
+    letter-spacing: 1.3px;
+    color: #b8a9cc;
+    text-shadow: 0 0 6px #362e50;
+    user-select: none;
+  }
+
+  .input-group {
+    position: relative;
+    margin-bottom: 1.8rem;
+    perspective: 700px;
+  }
+
+  .input-group input {
     width: 100%;
-    padding: 0.85rem;
-    margin-bottom: 1rem;
-    border-radius: 7px;
+    padding: 0.9rem 1.3rem;
+    border-radius: 14px;
     border: none;
-    background: #333;
-    color: #fff;
+    background: #222222;
+    color: #e0dfee;
     font-size: 1rem;
-    font-weight: bold;
+    font-weight: 600;
     outline: none;
+    box-shadow:
+      0 5px 15px rgba(20, 10, 45, 0.7),
+      inset 1px 1px 10px #000000;
+    transition: all 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
   }
-  input[type="text"]:focus, input[type="password"]:focus {
-    background: #444;
-    outline: 2px solid #bb86fc;
+
+  .input-group input:focus {
+    background: #2b2a3a;
+    box-shadow:
+      0 10px 25px rgba(90, 80, 130, 0.6),
+      inset 1px 1px 12px #3c2e6d;
+    transform: translateZ(10px);
+    color: #d8cfff;
   }
+
+  /* Floating label */
+  .input-group label {
+    position: absolute;
+    top: 50%;
+    left: 20px;
+    transform: translateY(-50%);
+    color: #958bb8;
+    font-weight: 400;
+    pointer-events: none;
+    transition: 0.4s ease all;
+    background: transparent;
+    padding: 0 7px;
+    user-select: none;
+    text-shadow: 0 0 2px #1a1532;
+  }
+
+  .input-group input:focus + label,
+  .input-group input:not(:placeholder-shown) + label {
+    top: -10px;
+    left: 16px;
+    font-size: 0.75rem;
+    color: #a597d1;
+    text-shadow: 0 0 5px #a597d1aa;
+    background: #1b1b2f;
+    border-radius: 8px;
+  }
+
   button {
     width: 100%;
-    padding: 0.75rem;
-    background: #bb86fc;
-    color: #111;
-    font-size: 1.1rem;
+    padding: 1rem;
+    margin-top: 0.3rem;
+    border-radius: 35px;
     border: none;
-    border-radius: 7px;
+    background: linear-gradient(145deg, #8178a1, #5f5484);
+    color: #ddd;
+    font-weight: 700;
+    font-size: 1.15rem;
     cursor: pointer;
-    font-weight: bold;
-    margin-top: 0.5rem;
-    transition: background 0.3s;
+    box-shadow:
+      0 8px 15px rgba(120, 105, 190, 0.5),
+      0 6px 8px rgba(90, 80, 130, 0.7);
+    transition: all 0.4s ease;
+    transform-style: preserve-3d;
   }
-  button:hover {
-    background: #9a63d6;
+
+  button:hover,
+  button:focus {
+    background: linear-gradient(145deg, #a79dd9dd, #8c7eccdd);
+    box-shadow: 0 15px 30px rgba(135, 120, 220, 0.8),
+      0 8px 12px rgba(100, 90, 160, 0.9);
+    transform: translateZ(10px) scale(1.05);
+    color: #fff;
   }
+
   .error-message {
-    color: #cf6679;
     margin-top: 1rem;
+    color: #ff6f83;
+    font-weight: 600;
     display: none;
-    font-weight: bold;
+    text-shadow: 0 0 3px #800000;
   }
+
   .welcome-message {
-    font-size: 1.2rem;
-    color: #03dac6;
     margin-top: 1rem;
-    font-weight: bold;
+    color: #7eeeea;
+    font-weight: 600;
+    display: none;
+    text-shadow: 0 0 6px #5bd3caaa;
   }
-  @media (max-width: 900px) {
-    .left-panel, .right-panel {
-      width: 100vw;
-      min-width: unset;
-    }
-    body {
-      flex-direction: column;
-    }
-    .left-panel {
-      height: 35vh;
-      width: 100vw;
-    }
-    .right-panel {
-      height: 65vh;
-      width: 100vw;
+
+  /* Responsive */
+  @media (max-width: 400px) {
+    .login-wrapper {
+      width: 90vw;
+      padding: 2.5rem 1.5rem;
     }
   }
 </style>
 </head>
 <body>
-  <div class="left-panel"></div>
-  <div class="right-panel">
-    <div class="login-container">
-      <h2>Login to Financial Dashboard</h2>
-      <input type="text" id="username" placeholder="Username" required />
-      <input type="password" id="password" placeholder="Password" required />
-      <button onclick="login()">Login</button>
-      <div class="error-message" id="errorMessage">Invalid credentials, please try again.</div>
-      <div class="welcome-message" id="welcomeMessage" style="display:none;"></div>
+  <div class="login-wrapper">
+    <h2>Login to Financial Dashboard</h2>
+    <div class="input-group">
+      <input type="text" id="username" placeholder=" " autocomplete="username" required />
+      <label for="username">Username</label>
     </div>
+    <div class="input-group">
+      <input type="password" id="password" placeholder=" " autocomplete="current-password" required />
+      <label for="password">Password</label>
+    </div>
+    <button onclick="login()">Login</button>
+    <div class="error-message" id="errorMessage">Invalid credentials, please try again.</div>
+    <div class="welcome-message" id="welcomeMessage"></div>
   </div>
-  <script>
-    const storedUsername = "vamsi";
-    const storedPassword = "v@M$!8055";
 
-    function login() {
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value;
-      if (username === storedUsername && password === storedPassword) {
-        document.getElementById("errorMessage").style.display = "none";
-        const welcome = document.getElementById("welcomeMessage");
-        welcome.textContent = `Welcome, ${username}!`;
-        welcome.style.display = "block";
-        setTimeout(() => {
-          window.location.href = 'dashboard.html';
-        }, 1500);
-      } else {
-        document.getElementById("errorMessage").style.display = "block";
-        document.getElementById("welcomeMessage").style.display = "none";
-      }
+<script>
+  const storedUsername = "vamsi";
+  const storedPassword = "v@M$!8055";
+
+  function login() {
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+    if (username === storedUsername && password === storedPassword) {
+      document.getElementById("errorMessage").style.display = "none";
+      const welcome = document.getElementById("welcomeMessage");
+      welcome.textContent = `Welcome, ${username}!`;
+      welcome.style.display = "block";
+      setTimeout(() => {
+        window.location.href = 'dashboard.html';
+      }, 1500);
+    } else {
+      document.getElementById("errorMessage").style.display = "block";
+      document.getElementById("welcomeMessage").style.display = "none";
     }
-  </script>
+  }
+</script>
 </body>
 </html>
-
