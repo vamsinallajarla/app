@@ -3,10 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Login</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+<title>Google Login</title>
 
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<style>
   html, body {
     height: 100%;
     margin: 0;
@@ -16,190 +18,80 @@
     align-items: center;
     justify-content: center;
     color: #ddd;
-    perspective: 1000px;
   }
 
   .login-wrapper {
-    background: rgba(15, 15, 15, 0.9);
+    background: rgba(15, 15, 15, 0.92);
     backdrop-filter: blur(16px);
     border-radius: 30px;
     box-shadow:
-      0 18px 28px rgba(38, 14, 64, 0.5),
-      inset 0 0 20px #120a25,
-      0 0 15px #3b2d52;
-    width: 360px;
-    padding: 3rem 3rem 2.5rem 3rem;
+      0 20px 40px rgba(38, 14, 64, 0.6),
+      inset 0 0 25px #1a0f30;
+    width: 380px;
+    padding: 3rem;
     text-align: center;
-    transform-style: preserve-3d;
-    transition: transform 0.4s ease;
   }
 
-  .login-wrapper:hover {
-    transform: rotateY(6deg) rotateX(4deg) scale(1.04);
-    box-shadow:
-      0 30px 50px rgba(38, 14, 64, 0.7),
-      inset 0 0 30px #210f47,
-      0 0 30px #6e5c9f;
-  }
-
-  .login-wrapper h2 {
+  h2 {
     margin-bottom: 2rem;
     font-weight: 600;
-    font-size: 1.95rem;
-    letter-spacing: 1.3px;
     color: #b8a9cc;
-    text-shadow: 0 0 6px #362e50;
-    user-select: none;
-  }
-
-  .input-group {
-    position: relative;
-    margin-bottom: 1.8rem;
-    perspective: 700px;
-  }
-
-  .input-group input {
-    width: 100%;
-    padding: 0.9rem 1.3rem;
-    border-radius: 14px;
-    border: none;
-    background: #222222;
-    color: #e0dfee;
-    font-size: 1rem;
-    font-weight: 600;
-    outline: none;
-    box-shadow:
-      0 5px 15px rgba(20, 10, 45, 0.7),
-      inset 1px 1px 10px #000000;
-    transition: all 0.38s cubic-bezier(0.4, 0, 0.2, 1);
-    transform-style: preserve-3d;
-  }
-
-  .input-group input:focus {
-    background: #2b2a3a;
-    box-shadow:
-      0 10px 25px rgba(90, 80, 130, 0.6),
-      inset 1px 1px 12px #3c2e6d;
-    transform: translateZ(10px);
-    color: #d8cfff;
-  }
-
-  /* Floating label */
-  .input-group label {
-    position: absolute;
-    top: 50%;
-    left: 20px;
-    transform: translateY(-50%);
-    color: #958bb8;
-    font-weight: 400;
-    pointer-events: none;
-    transition: 0.4s ease all;
-    background: transparent;
-    padding: 0 7px;
-    user-select: none;
-    text-shadow: 0 0 2px #1a1532;
-  }
-
-  .input-group input:focus + label,
-  .input-group input:not(:placeholder-shown) + label {
-    top: -10px;
-    left: 16px;
-    font-size: 0.75rem;
-    color: #a597d1;
-    text-shadow: 0 0 5px #a597d1aa;
-    background: #1b1b2f;
-    border-radius: 8px;
-  }
-
-  button {
-    width: 100%;
-    padding: 1rem;
-    margin-top: 0.3rem;
-    border-radius: 35px;
-    border: none;
-    background: linear-gradient(145deg, #8178a1, #5f5484);
-    color: #ddd;
-    font-weight: 700;
-    font-size: 1.15rem;
-    cursor: pointer;
-    box-shadow:
-      0 8px 15px rgba(120, 105, 190, 0.5),
-      0 6px 8px rgba(90, 80, 130, 0.7);
-    transition: all 0.4s ease;
-    transform-style: preserve-3d;
-  }
-
-  button:hover,
-  button:focus {
-    background: linear-gradient(145deg, #a79dd9dd, #8c7eccdd);
-    box-shadow: 0 15px 30px rgba(135, 120, 220, 0.8),
-      0 8px 12px rgba(100, 90, 160, 0.9);
-    transform: translateZ(10px) scale(1.05);
-    color: #fff;
-  }
-
-  .error-message {
-    margin-top: 1rem;
-    color: #ff6f83;
-    font-weight: 600;
-    display: none;
-    text-shadow: 0 0 3px #800000;
   }
 
   .welcome-message {
-    margin-top: 1rem;
+    margin-top: 1.5rem;
     color: #7eeeea;
     font-weight: 600;
     display: none;
-    text-shadow: 0 0 6px #5bd3caaa;
-  }
-
-  /* Responsive */
-  @media (max-width: 400px) {
-    .login-wrapper {
-      width: 90vw;
-      padding: 2.5rem 1.5rem;
-    }
   }
 </style>
 </head>
+
 <body>
   <div class="login-wrapper">
-    <h2>Login with creds</h2>
-    <div class="input-group">
-      <input type="text" id="username" placeholder=" " autocomplete="username" required />
-      <label for="username">Username</label>
+    <h2>Sign in with Google</h2>
+
+    <!-- Google Button -->
+    <div id="g_id_onload"
+         data-client_id="840290523953-u9jdtr6m7hqqebogn50iit029qpuc868.apps.googleusercontent.com"
+         data-callback="handleCredentialResponse">
     </div>
-    <div class="input-group">
-      <input type="password" id="password" placeholder=" " autocomplete="current-password" required />
-      <label for="password">Password</label>
+
+    <div class="g_id_signin"
+         data-type="standard"
+         data-size="large"
+         data-theme="filled_blue"
+         data-text="signin_with"
+         data-shape="pill">
     </div>
-    <button onclick="login()">Login</button>
-    <div class="error-message" id="errorMessage">Invalid credentials, please try again.</div>
+
     <div class="welcome-message" id="welcomeMessage"></div>
   </div>
 
 <script>
-  const storedUsername = "vamsi";
-  const storedPassword = "v@M$!8055";
+let accessToken = null;
 
-  function login() {
-    const username = document.getElementById("username").value.trim();
-    const password = document.getElementById("password").value;
-    if (username === storedUsername && password === storedPassword) {
-      document.getElementById("errorMessage").style.display = "none";
-      const welcome = document.getElementById("welcomeMessage");
-      welcome.textContent = `Welcome, ${username}!`;
-      welcome.style.display = "block";
-      setTimeout(() => {
-        window.location.href = 'dashboard.html';
-      }, 1500);
-    } else {
-      document.getElementById("errorMessage").style.display = "block";
-      document.getElementById("welcomeMessage").style.display = "none";
-    }
-  }
+function handleCredentialResponse(response) {
+    google.accounts.oauth2.initTokenClient({
+        client_id: 'YOUR_CLIENT_ID',
+        scope: 'https://www.googleapis.com/auth/drive.appdata openid email profile',
+        callback: (tokenResponse) => {
+            accessToken = tokenResponse.access_token;
+
+            // Store token for dashboard usage
+            sessionStorage.setItem("gdrive_token", accessToken);
+
+            const welcome = document.getElementById("welcomeMessage");
+            welcome.textContent = "Login successful. Redirecting to dashboard...";
+            welcome.style.display = "block";
+
+            setTimeout(() => {
+                window.location.href = "dashboard.html";
+            }, 1200);
+        },
+    }).requestAccessToken();
+}
 </script>
+
 </body>
 </html>
-
