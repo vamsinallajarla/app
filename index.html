@@ -504,6 +504,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
 .btn-primary::after{content:'';position:absolute;inset:0;background:radial-gradient(circle,rgba(255,255,255,0.25) 0%,transparent 70%);
   opacity:0;transform:scale(0);transition:transform .4s,opacity .4s;}
 .btn-primary:active::after{opacity:1;transform:scale(2.5);transition:none;}
+
 </style>
 </head>
 <body>
@@ -1442,6 +1443,16 @@ create policy "allow all" on financeos_data for all using (true);</pre>
             <button class="btn btn-primary" onclick="firebaseSave()"><i class="ti ti-cloud-upload" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Save to Firebase</button>
             <button class="btn btn-ghost" onclick="firebaseLoad()"><i class="ti ti-cloud-download" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Load from Firebase</button>
             <div id="fb-sync-status" style="display:flex;align-items:center;font-size:12px;color:var(--text2);gap:6px;"></div>
+          </div>
+          <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);cursor:pointer;">
+              <input type="checkbox" id="fb-auto-sync" style="accent-color:var(--accent);width:14px;height:14px;" onchange="toggleFirebaseAutoSync(this.checked)"/>
+              Auto-sync to Firebase on every save
+            </label>
+            <div id="fb-auto-sync-indicator" style="display:none;font-size:11px;color:var(--text3);padding:6px 10px;background:rgba(240,165,0,0.08);border:1px solid rgba(240,165,0,0.2);border-radius:7px;">
+              <i class="ti ti-clock" style="font-size:12px;vertical-align:-1px;color:#f0a500;" aria-hidden="true"></i>
+              Auto-sync active — every change saves to Firebase within 3 seconds
+            </div>
           </div>
         </div>
 
@@ -3824,14 +3835,14 @@ function exportData(){
 </div>
 ${tabs.map((t,i)=>`<div class="tab-content${i===0?' active':''}" id="tab-${t.id}">${t.html}</div>`).join('')}
 <button class="print-btn" onclick="window.print()">🖨 Print / Save PDF</button>
-<script>
+${'<'+'script'+'>'}
 function showTab(id){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   document.querySelector('[onclick="showTab(\''+id+'\')"]').classList.add('active');
   document.getElementById('tab-'+id).classList.add('active');
 }
-<\/script>
+${'<'+'/script>'}
 </body></html>`;
 
   const w=window.open('','_blank');
@@ -4376,18 +4387,59 @@ function saveSyncCfg(){ localStorage.setItem('fos_sync_cfg', JSON.stringify(sync
 
 /* ── Auto-sync toggle ── */
 let _autoSyncEnabled = syncCfg.autoSync || false;
+let _fbAutoSyncEnabled = syncCfg.fbAutoSync || false;
+let _fbSyncTimer = null; // debounce timer
+
 function toggleAutoSync(on){
   _autoSyncEnabled = on;
   syncCfg.autoSync = on;
   saveSyncCfg();
-  setSyncStatus('sb', on ? '✓ Auto-sync enabled' : 'Auto-sync disabled', on ? 'var(--green)' : 'var(--text2)');
+  setSyncStatus('sb', on ? '✓ Auto-sync enabled — every save pushes to Supabase' : 'Auto-sync disabled', on ? 'var(--green)' : 'var(--text2)');
 }
 
-/* ── Override save() to also auto-sync ── */
+function toggleFirebaseAutoSync(on){
+  _fbAutoSyncEnabled = on;
+  syncCfg.fbAutoSync = on;
+  saveSyncCfg();
+  const indicator = document.getElementById('fb-auto-sync-indicator');
+  if(indicator) indicator.style.display = on ? 'block' : 'none';
+  if(on){
+    const {key,proj} = getFirebaseConfig();
+    if(!key || !proj){
+      setSyncStatus('fb', '⚠️ Enter your API Key and Project ID above first', 'var(--amber)');
+      // uncheck if not configured
+      const cb = document.getElementById('fb-auto-sync');
+      if(cb) cb.checked = false;
+      _fbAutoSyncEnabled = false;
+      syncCfg.fbAutoSync = false;
+      saveSyncCfg();
+      if(indicator) indicator.style.display = 'none';
+      return;
+    }
+    setSyncStatus('fb', '✓ Auto-sync active — changes save within 3s', 'var(--green)');
+  } else {
+    setSyncStatus('fb', 'Auto-sync disabled', 'var(--text2)');
+  }
+}
+
+/* ── Override save() to trigger auto-sync for both backends ── */
 const _origSave = save;
 save = function(){
   _origSave();
-  if(_autoSyncEnabled && syncCfg.sbUrl && syncCfg.sbKey){ supabaseSave(true); }
+  // Supabase: immediate
+  if(_autoSyncEnabled && syncCfg.sbUrl && syncCfg.sbKey){
+    supabaseSave(true);
+  }
+  // Firebase: debounced 3 seconds (avoids hammering on rapid changes)
+  if(_fbAutoSyncEnabled && syncCfg.fbKey && syncCfg.fbProj){
+    clearTimeout(_fbSyncTimer);
+    // Show pending indicator
+    const fbStatus = document.getElementById('fb-sync-status');
+    if(fbStatus) fbStatus.innerHTML = '<span style="color:var(--amber);"><i class="ti ti-loader-2" style="animation:spin 1s linear infinite;font-size:12px;"></i> Syncing in 3s…</span>';
+    _fbSyncTimer = setTimeout(()=>{
+      firebaseSave(true);
+    }, 3000);
+  }
 };
 
 function setSyncStatus(type, msg, color='var(--text2)'){
@@ -4405,6 +4457,10 @@ function renderDataSync(){
   if(syncCfg.fbDoc)  { const el=document.getElementById('fb-docid');  if(el) el.value=syncCfg.fbDoc; }
   const acs = document.getElementById('sb-auto-sync');
   if(acs) acs.checked = _autoSyncEnabled;
+  const facs = document.getElementById('fb-auto-sync');
+  if(facs) facs.checked = _fbAutoSyncEnabled;
+  const indicator = document.getElementById('fb-auto-sync-indicator');
+  if(indicator) indicator.style.display = _fbAutoSyncEnabled ? 'block' : 'none';
   if(syncCfg.sbConnected){ const b=document.getElementById('sb-connected-badge'); if(b) b.style.display=''; }
   if(syncCfg.fbConnected){ const b=document.getElementById('fb-connected-badge'); if(b) b.style.display=''; }
 
@@ -4538,7 +4594,7 @@ function getFireCreds(){
   return { key:syncCfg.fbKey, proj:syncCfg.fbProj, doc:syncCfg.fbDoc||'vamsi' };
 }
 
-async function firebaseSave(){
+async function firebaseSave(silent=false){
   const {key,proj,doc} = getFireCreds();
   if(!key||!proj){ toast('Enter Firebase API key and Project ID'); return; }
   setSyncStatus('fb','<i class="ti ti-loader-2" style="animation:spin 1s linear infinite;font-size:13px;"></i> Saving…','var(--text2)');
@@ -4550,10 +4606,10 @@ async function firebaseSave(){
     if(!res.ok){ const e=await res.text(); throw new Error(JSON.parse(e).error?.message||e); }
     syncCfg.fbConnected=true; syncCfg.lastSaved=new Date().toLocaleString('en-IN'); saveSyncCfg();
     const badge=document.getElementById('fb-connected-badge'); if(badge) badge.style.display='';
-    setSyncStatus('fb','✓ Saved at '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),'var(--green)');
-    toast('Saved to Firebase ✓');
-    renderDataSync();
-  } catch(e){ setSyncStatus('fb','✗ '+e.message,'var(--red)'); toast('Firebase save failed: '+e.message); }
+    setSyncStatus('fb','✓ '+(silent?'Auto-synced':'Saved')+' at '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),'var(--green)');
+    if(!silent) toast('Saved to Firebase ✓');
+    if(!silent) renderDataSync();
+  } catch(e){ setSyncStatus('fb','✗ '+e.message,'var(--red)'); if(!silent) toast('Firebase save failed: '+e.message); }
 }
 
 async function firebaseLoad(){
@@ -4650,6 +4706,9 @@ function clearAllData(){
   ['fos_state','fos_import_history','fos_notifs'].forEach(k=>localStorage.removeItem(k));
   location.reload();
 }
+
+
+
 
 </script>
 </body>
