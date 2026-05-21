@@ -1625,6 +1625,36 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
         <!-- Status bar -->
         <div id="sync-status-bar" style="display:none;margin-bottom:14px;padding:10px 16px;border-radius:10px;font-size:13px;display:flex;align-items:center;gap:10px;"></div>
 
+        <!-- Anthropic API Key -->
+        <div class="chart-card" style="margin-bottom:14px;">
+          <div class="ch-header">
+            <div>
+              <div class="ch-title"><i class="ti ti-sparkles" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>Google Gemini API Key <span style="font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(34,201,138,0.15);color:#22c98a;font-weight:600;margin-left:6px;">FREE</span></div>
+              <div class="ch-sub" style="margin-top:2px;">Required for AI Insights, SMS Parser and Document Scanner — completely free, no card needed</div>
+            </div>
+            <div id="api-key-badge" style="display:none;font-size:11px;padding:4px 10px;border-radius:20px;background:rgba(34,201,138,0.15);color:#22c98a;font-weight:500;"><i class="ti ti-circle-check" style="font-size:13px;vertical-align:-1px;" aria-hidden="true"></i> Key saved</div>
+          </div>
+          <div style="background:rgba(79,124,255,0.06);border:1px solid rgba(79,124,255,0.15);border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.7;">
+            <div style="font-weight:500;color:var(--text);margin-bottom:4px;">📋 How to get your API key:</div>
+            <div>1. Go to <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--accent);">aistudio.google.com/apikey</a> → Sign in with Google</div>
+            <div>2. Click <strong style="color:var(--text);">Create API Key</strong> → copy it</div>
+            <div>3. Paste it below and click Save — completely free, no credit card, 1,500 requests/day</div>
+          </div>
+          <div class="form-row" style="align-items:flex-end;">
+            <div class="form-group" style="flex:3;">
+              <label class="form-label">API Key</label>
+              <input class="form-input" id="anthropic-api-key" type="password" placeholder="AIzaSy..." style="font-family:'DM Mono',monospace;font-size:12px;"/>
+            </div>
+            <div class="form-group" style="max-width:120px;">
+              <button class="btn btn-primary" style="width:100%;margin-top:22px;" onclick="saveAnthropicKey()"><i class="ti ti-check" style="font-size:13px;vertical-align:-2px;" aria-hidden="true"></i> Save key</button>
+            </div>
+            <div class="form-group" style="max-width:120px;">
+              <button class="btn btn-ghost" style="width:100%;margin-top:22px;" onclick="testAnthropicKey()"><i class="ti ti-plug" style="font-size:13px;vertical-align:-2px;" aria-hidden="true"></i> Test</button>
+            </div>
+          </div>
+          <div id="api-key-status" style="font-size:12px;margin-top:6px;min-height:16px;"></div>
+        </div>
+
         <!-- Option 1: Supabase -->
         <div class="chart-card" style="margin-bottom:14px;">
           <div class="ch-header">
@@ -2127,6 +2157,7 @@ function completeLogin(em, name){
 
 function doLogout(){
   localStorage.removeItem('fos_session');
+  aiInsightCache = null;
   const app=document.getElementById('app');
   app.style.transition='opacity .3s ease';
   app.style.opacity='0';
@@ -2446,7 +2477,14 @@ function renderDashboard(){
 
   updateSidebarStats(inc,exp,sav);
   updateLoanBadge();
-  if(!aiInsightCache){fetchAIInsights();}else{renderAIInsights(aiInsightCache);}
+  if(aiInsightCache){renderAIInsights(aiInsightCache);}
+  else{
+    // Show idle state — user clicks Refresh to load
+    const txt=document.getElementById('ai-insight-text');
+    const status=document.getElementById('ai-status');
+    if(txt) txt.textContent='Click Refresh to get AI insights for your finances.';
+    if(status) status.textContent='';
+  }
 
   // Sparklines + card background gradients
   setTimeout(()=>{
@@ -2514,6 +2552,49 @@ function renderAIInsights(data){
   if(status) status.textContent=data.generated_at?'Last updated: '+data.generated_at:'';
 }
 
+/* ── GEMINI API HELPER ─────────────────────────────────────────────────────
+   Free tier: 1,500 req/day, no credit card, no expiry
+   Get key at: aistudio.google.com/apikey
+──────────────────────────────────────────────────────────────────────── */
+async function callGemini(prompt, keyOverride){
+  const key = keyOverride || getAnthropicKey();
+  if(!key) throw new Error('No Gemini API key set. Go to Data Sync → API Key and add your free Google Gemini key.');
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+  const body = {
+    contents:[{parts:[{text: prompt}]}],
+    generationConfig:{temperature:0.2, maxOutputTokens:1500}
+  };
+  const res = await fetch(url, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  if(data.error) throw new Error(`Gemini API ${res.status}: ${data.error.message||data.error.status}`);
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if(!text) throw new Error('Empty response from Gemini. Try again.');
+  return text.replace(/```json|```/g,'').trim();
+}
+
+async function callGeminiVision(base64data, mimeType, prompt){
+  const key = getAnthropicKey();
+  if(!key) throw new Error('No Gemini API key. Go to Data Sync → API Key.');
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+  const body = {
+    contents:[{parts:[
+      {inline_data:{mime_type: mimeType, data: base64data}},
+      {text: prompt}
+    ]}],
+    generationConfig:{temperature:0.1, maxOutputTokens:2000}
+  };
+  const res = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data = await res.json();
+  if(data.error) throw new Error(`Gemini API ${res.status}: ${data.error.message}`);
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if(!text) throw new Error('Empty response from Gemini.');
+  return text.replace(/```json|```/g,'').trim();
+}
+
 async function fetchAIInsights(){
   const btn=document.getElementById('ai-refresh-btn');
   const txt=document.getElementById('ai-insight-text');
@@ -2558,20 +2639,14 @@ Financial data for ${today.toLocaleString('en-IN',{month:'long',year:'numeric'})
 Return ONLY the JSON, no markdown, no explanation.`;
 
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:prompt}]})
-    });
-    const data=await res.json();
-    const raw=data.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
-    const parsed=JSON.parse(raw);
+    const raw = await callGemini(prompt);
+    const parsed = JSON.parse(raw);
     parsed.generated_at=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
     aiInsightCache=parsed;
     renderAIInsights(parsed);
   }catch(e){
-    if(txt) txt.textContent='Could not fetch AI insights. Check your connection or API key.';
-    if(status) status.textContent='Error: '+e.message;
+    if(txt) txt.textContent='Could not fetch AI insights.';
+    if(status) status.innerHTML=`<span style="color:var(--red);">${e.message}</span>`;
   }finally{
     if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-refresh" style="font-size:12px;" aria-hidden="true"></i> Refresh';}
   }
@@ -3842,10 +3917,7 @@ Return ONLY a JSON array. Each object must have: name (string, merchant or descr
 SMS messages:\n${raw}`;
 
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:prompt}]})});
-    const data=await res.json();
-    const raw2=data.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
+    const raw2 = await callGemini(prompt);
     const parsed=JSON.parse(raw2);
     smsParsedRows=Array.isArray(parsed)?parsed:[];
     if(!smsParsedRows.length){status.textContent='No transactions found in these messages.';status.style.color='var(--amber)';return;}
@@ -4395,23 +4467,7 @@ async function loadDocFile(file,type){
 }
 
 async function callVisionAPI(b64,mime,systemPrompt,userPrompt){
-  const isImage=mime!=='application/pdf';
-  const contentBlock=isImage
-    ?{type:'image',source:{type:'base64',media_type:mime,data:b64}}
-    :{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}};
-  const res=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      model:'claude-sonnet-4-20250514',
-      max_tokens:2000,
-      system:systemPrompt,
-      messages:[{role:'user',content:[contentBlock,{type:'text',text:userPrompt}]}]
-    })
-  });
-  const data=await res.json();
-  if(data.error) throw new Error(data.error.message);
-  return data.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
+  return await callGeminiVision(b64, mime, systemPrompt+'\n\n'+userPrompt);
 }
 
 function setScanState(type,scanning){
@@ -5373,6 +5429,53 @@ function addSparklinesToKPICards(months6){
     requestAnimationFrame(() => drawSparkline(canvas, datasets[i], colors[i]));
   });
 }
+
+/* ═══════════════════════════════════════
+   ANTHROPIC API KEY MANAGEMENT
+═══════════════════════════════════════ */
+function getAnthropicKey(){
+  return localStorage.getItem('fos_gemini_key') || '';
+}
+
+function saveAnthropicKey(){
+  const key = document.getElementById('anthropic-api-key')?.value.trim();
+  if(!key){ toast('Enter your API key'); return; }
+  if(!key.startsWith('AIza')){
+    document.getElementById('api-key-status').innerHTML = '<span style="color:var(--amber);">⚠️ Gemini keys start with AIza — double-check it</span>';
+  }
+  localStorage.setItem('fos_gemini_key', key);
+  document.getElementById('api-key-status').innerHTML = '<span style="color:var(--green);">✓ Gemini API key saved</span>';
+  const badge = document.getElementById('api-key-badge');
+  if(badge) badge.style.display = '';
+  toast('Gemini API key saved ✓');
+}
+
+async function testAnthropicKey(){
+  const key = getAnthropicKey() || document.getElementById('anthropic-api-key')?.value.trim();
+  if(!key){ document.getElementById('api-key-status').innerHTML = '<span style="color:var(--red);">Enter your API key first</span>'; return; }
+  document.getElementById('api-key-status').innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite;font-size:12px;"></i> Testing…';
+  try{
+    const res = await callGemini('Say hi', key);
+    if(res){
+      document.getElementById('api-key-status').innerHTML = '<span style="color:var(--green);">✓ Gemini API key is valid and working!</span>';
+      localStorage.setItem('fos_gemini_key', key);
+      const badge = document.getElementById('api-key-badge'); if(badge) badge.style.display='';
+    }
+  } catch(e){
+    document.getElementById('api-key-status').innerHTML = `<span style="color:var(--red);">✗ ${e.message}</span>`;
+  }
+}
+
+/* Restore saved API key into the input on Data Sync page load */
+const _origRenderDataSync = renderDataSync;
+renderDataSync = function(){
+  _origRenderDataSync();
+  const keyEl = document.getElementById('anthropic-api-key');
+  const key = getAnthropicKey();
+  if(keyEl && key) keyEl.value = key;
+  const badge = document.getElementById('api-key-badge');
+  if(badge) badge.style.display = key ? '' : 'none';
+};
 
 renderNotifPanel();
 updateNotifDot();
