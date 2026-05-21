@@ -1354,7 +1354,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
           </div>
           <textarea class="form-input" id="sms-bulk-input" style="min-height:130px;resize:vertical;font-family:'DM Mono',monospace;font-size:11px;line-height:1.6;" placeholder="Paste one or many SMS messages here, e.g.:&#10;&#10;Dear Customer, Rs.340.00 debited from A/c XX1234 on 02-05-2026 to PhonePe UPI. Avl Bal:Rs.47660.00&#10;&#10;INR 1,240.00 debited from account XX1234 on 03-05-2026. Info: TSSPDCL ELECTRICITY. Avl bal: INR 46,420.00"></textarea>
           <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;">
-            <button class="btn btn-primary" onclick="bulkParseSMS()"><i class="ti ti-wand" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Parse all with AI</button>
+            <button class="btn btn-primary" onclick="bulkParseSMS()"><i class="ti ti-scan" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Smart Parse</button>
             <span id="sms-parse-status" style="font-size:12px;color:var(--text2);"></span>
           </div>
           <div id="sms-preview-wrap" style="display:none;margin-top:16px;">
@@ -3846,30 +3846,158 @@ Dear UPI user, Rs.2000.00 debited from Kotak A/C XX1234 for UPI txn. Ref 789012 
 
 /* ── BULK SMS PARSE ── */
 let smsParsedRows=[];
-async function bulkParseSMS(){
-  const raw=document.getElementById('sms-bulk-input').value.trim();
-  if(!raw){toast('Paste SMS messages first');return;}
-  const status=document.getElementById('sms-parse-status');
-  status.textContent='Parsing with AI…';status.style.color='var(--text2)';
-  const btn=document.querySelector('[onclick="bulkParseSMS()"]');
-  if(btn){btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2" style="animation:spin 1s linear infinite;font-size:14px;vertical-align:-2px;"></i> Thinking…';}
+/* ══════════════════════════════════════════════════════
+   RULE-BASED INDIAN BANK SMS PARSER
+   Handles: SBI, HDFC, ICICI, Kotak, Axis, PhonePe,
+            IDBI, PNB, BOB, Canara, IndusInd, YES Bank
+   No AI required — works 100% offline
+══════════════════════════════════════════════════════ */
+function parseSMSText(smsText){
+  const results = [];
+  // Split into individual messages by blank lines or newlines
+  const messages = smsText.split(/\n{2,}|(?=Dear |INR |Rs\.|A\/c |Your |Txn |UPI )/g)
+    .map(m=>m.trim()).filter(m=>m.length>10);
 
-  const bankHint=document.getElementById('sms-bank-hint').value;
-  const prompt=`You are parsing Indian bank/UPI SMS alerts. Extract ALL transactions from the text below.
-Return ONLY a JSON array. Each object must have: name (string, merchant or description), amount (number, no commas), type ("cr" for credit/"dr" for debit), cat (one of: Food/Transfer/Salary/EMI/Shopping/Fuel/Bills/Other), src (bank/app name, e.g. "${bankHint||'PhonePe or Kotak 811'}"), date (YYYY-MM-DD, use ${todayStr} if not found).
-SMS messages:\n${raw}`;
+  messages.forEach(msg=>{
+    const tx = parseSingleSMS(msg);
+    if(tx) results.push(tx);
+  });
+  return results;
+}
+
+function parseSingleSMS(msg){
+  const m = msg.replace(/\s+/g,' ').trim();
+  const lower = m.toLowerCase();
+
+  // Skip OTPs, promotions, balance enquiry-only messages
+  if(/otp|password|cvv|pin |login|click here|offer|cashback promo|congratulations|dear customer, your|activate/i.test(m) && !/debited|credited|spent|paid|received|transferred/i.test(m)) return null;
+  if(m.length < 20) return null;
+
+  // ── 1. Determine transaction type ──────────────────────────────────────
+  const isDebit = /debited|debit|spent|paid|withdrawal|withdrawn|dr\b|purchase|charged/i.test(m);
+  const isCredit = /credited|credit|received|deposited|cr\b|refund|cashback|salary|added/i.test(m);
+  if(!isDebit && !isCredit) return null;
+  const type = isCredit && !isDebit ? 'cr' : 'dr';
+
+  // ── 2. Extract amount ───────────────────────────────────────────────────
+  // Patterns: Rs.1,234.56 | INR 1234.56 | ₹1,234 | Rs 1234 | 1,234.00
+  const amtPatterns = [
+    /(?:INR|Rs\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)/i,
+    /(?:amount|amt)[:\s]+(?:INR|Rs\.?|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i,
+    /(?:for|of)\s+(?:INR|Rs\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)/i,
+    /([\d,]+(?:\.\d{2}))\s*(?:INR|Rs|₹)/i,
+  ];
+  let amount = 0;
+  for(const p of amtPatterns){
+    const match = m.match(p);
+    if(match){ amount = parseFloat(match[1].replace(/,/g,'')); break; }
+  }
+  if(!amount || amount <= 0) return null;
+
+  // ── 3. Extract date ─────────────────────────────────────────────────────
+  const datePatterns = [
+    /(\d{2})[\/\-](\d{2})[\/\-](\d{4})/,   // DD/MM/YYYY or DD-MM-YYYY
+    /(\d{2})[\/\-](\d{2})[\/\-](\d{2})\b/,  // DD/MM/YY
+    /(\d{4})[\/\-](\d{2})[\/\-](\d{2})/,    // YYYY-MM-DD
+    /(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{2,4})/i,
+  ];
+  let date = todayStr;
+  for(const p of datePatterns){
+    const match = m.match(p);
+    if(match){
+      try{
+        if(p.source.startsWith('(\\d{4})')){
+          date = `${match[1]}-${match[2]}-${match[3]}`;
+        } else if(p.source.includes('Jan|Feb')){
+          const months={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+          const yr = match[3].length===2?'20'+match[3]:match[3];
+          date = `${yr}-${months[match[2].toLowerCase().slice(0,3)]}-${match[1].padStart(2,'0')}`;
+        } else {
+          const yr = match[3].length===2?'20'+match[3]:match[3];
+          date = `${yr}-${match[2].padStart(2,'0')}-${match[1].padStart(2,'0')}`;
+        }
+        // Validate
+        if(new Date(date).toString()==='Invalid Date') date = todayStr;
+      } catch(e){ date = todayStr; }
+      break;
+    }
+  }
+
+  // ── 4. Extract merchant / description ──────────────────────────────────
+  let name = '';
+  const merchantPatterns = [
+    /(?:at|to|merchant|for)\s+([A-Z][A-Za-z0-9\s&\-_\.]{2,30})(?:\s+on|\s+via|\s+ref|\.|,|$)/i,
+    /UPI[:\-\s]+([A-Za-z0-9@\.\-_]+)/i,
+    /VPA[:\s]+([A-Za-z0-9@\.\-_]+)/i,
+    /Info[:\s]+([A-Z][A-Za-z0-9\s\-\/]{2,30})/i,
+    /(?:paid|sent)\s+to\s+([A-Za-z0-9\s&]{2,25})/i,
+    /(?:from|by)\s+([A-Z][A-Za-z0-9\s]{2,20})/i,
+  ];
+  for(const p of merchantPatterns){
+    const match = m.match(p);
+    if(match && match[1].trim().length>2){ name = match[1].trim().replace(/\s+/g,' '); break; }
+  }
+  if(!name){
+    // Fallback — extract from UPI ID
+    const upiMatch = m.match(/([a-zA-Z0-9._-]+@[a-zA-Z]+)/);
+    if(upiMatch) name = upiMatch[1].split('@')[0].replace(/[._-]/g,' ');
+  }
+  if(!name) name = type==='cr'?'Credit received':'Debit transaction';
+
+  // ── 5. Detect source bank ───────────────────────────────────────────────
+  const bankMap = [
+    [/sbi|state bank/i,'SBI'],
+    [/hdfc/i,'HDFC'],
+    [/icici/i,'ICICI'],
+    [/kotak/i,'Kotak 811'],
+    [/axis/i,'Axis Bank'],
+    [/phonepe|phone pe/i,'PhonePe'],
+    [/paytm/i,'Paytm'],
+    [/gpay|google pay/i,'Google Pay'],
+    [/yes bank|yesbank/i,'YES Bank'],
+    [/indusind/i,'IndusInd'],
+    [/pnb|punjab national/i,'PNB'],
+    [/bob|bank of baroda/i,'Bank of Baroda'],
+    [/canara/i,'Canara Bank'],
+    [/idbi/i,'IDBI'],
+    [/ibl|indusland/i,'IndusInd'],
+    [/bankl|bank\//i,'Bank'],
+  ];
+  let src = 'Bank';
+  for(const [pattern, label] of bankMap){
+    if(pattern.test(m)){ src = label; break; }
+  }
+
+  // ── 6. Guess category ────────────────────────────────────────────────────
+  const cat = guessCategory(name + ' ' + m);
+
+  return { name: name.slice(0,50), amount, type, cat, src, date };
+}
+
+function bulkParseSMS(){
+  const raw = document.getElementById('sms-bulk-input').value.trim();
+  if(!raw){ toast('Paste SMS messages first'); return; }
+  const status = document.getElementById('sms-parse-status');
+  const btn = document.querySelector('[onclick="bulkParseSMS()"]');
+
+  status.textContent = 'Parsing…'; status.style.color = 'var(--text2)';
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="ti ti-loader-2" style="animation:spin 1s linear infinite;font-size:14px;vertical-align:-2px;"></i> Parsing…'; }
 
   try{
-    const raw2 = await callGemini(prompt);
-    const parsed=JSON.parse(raw2);
-    smsParsedRows=Array.isArray(parsed)?parsed:[];
-    if(!smsParsedRows.length){status.textContent='No transactions found in these messages.';status.style.color='var(--amber)';return;}
-    status.textContent=smsParsedRows.length+' transaction'+(smsParsedRows.length!==1?'s':'')+' found.';status.style.color='var(--green)';
-    renderSMSPreview();
-  }catch(e){
-    status.textContent='Parse failed: '+e.message;status.style.color='var(--red)';
-  }finally{
-    if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-wand" style="font-size:14px;vertical-align:-2px;"></i> Parse all with AI';}
+    smsParsedRows = parseSMSText(raw);
+    if(!smsParsedRows.length){
+      status.textContent = 'No transactions found. Check the format — paste raw SMS text.';
+      status.style.color = 'var(--amber)';
+    } else {
+      status.textContent = smsParsedRows.length + ' transaction' + (smsParsedRows.length!==1?'s':'') + ' found.';
+      status.style.color = 'var(--green)';
+      renderSMSPreview();
+    }
+  } catch(e){
+    status.textContent = 'Parse error: ' + e.message;
+    status.style.color = 'var(--red)';
+  } finally{
+    if(btn){ btn.disabled=false; btn.innerHTML='<i class="ti ti-scan" style="font-size:14px;vertical-align:-2px;"></i> Smart Parse'; }
   }
 }
 
