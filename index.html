@@ -190,27 +190,166 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
 
 /* METRICS ROW */
-.metrics-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
-.m-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 18px;position:relative;overflow:hidden;transition:border-color .2s;}
-.m-card:hover{border-color:var(--border2);}
-.m-card .m-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px;}
-.m-card .m-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
-.m-card .m-value{font-size:22px;font-weight:600;font-family:'Syne',sans-serif;letter-spacing:-0.5px;}
+.metrics-row{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:18px;}
+
+/* ── GLASSMORPHISM KPI CARDS ── */
+.m-card{
+  background:linear-gradient(135deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.01) 100%);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:var(--r-lg);padding:16px 18px;position:relative;overflow:hidden;
+  transition:transform .22s cubic-bezier(.22,1,.36,1),border-color .22s,box-shadow .22s;
+  cursor:default;
+}
+.m-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.05) 0%,transparent 60%);
+  pointer-events:none;border-radius:inherit;
+}
+.m-card::after{
+  content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent);
+  transition:left .5s ease;pointer-events:none;
+}
+.m-card:hover{
+  transform:translateY(-4px) scale(1.01);
+  border-color:rgba(255,255,255,0.14);
+  box-shadow:0 12px 40px rgba(0,0,0,0.35),0 0 0 1px rgba(255,255,255,0.06);
+}
+.m-card:hover::after{left:120%;}
+.m-card .m-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px;}
+.m-card .m-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+.m-card .m-value{font-size:20px;font-weight:600;font-family:'Syne',sans-serif;letter-spacing:-0.5px;}
 .m-card .m-change{font-size:11px;margin-top:5px;display:flex;align-items:center;gap:4px;}
 .m-card .m-change.up{color:var(--green);}
 .m-card .m-change.down{color:var(--red);}
+.m-card .m-glow{position:absolute;bottom:-20px;right:-20px;width:80px;height:80px;border-radius:50%;opacity:.08;filter:blur(20px);pointer-events:none;}
 .m-glow{position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;opacity:.15;filter:blur(20px);}
+/* mini sparkline canvas inside kpi card */
+.m-sparkline{position:absolute;bottom:0;left:0;right:0;height:40px;opacity:.25;pointer-events:none;}
 
+/* ── GLASSMORPHISM CHART CARDS ── */
 /* CHART GRID */
 .chart-row{display:grid;gap:14px;margin-bottom:18px;}
 .chart-row.cols-3{grid-template-columns:1fr 1fr 1fr;}
 .chart-row.cols-2{grid-template-columns:1.3fr 1fr;}
 .chart-row.cols-2r{grid-template-columns:1fr 1.3fr;}
-.chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;}
+.chart-card{
+  background:linear-gradient(145deg,rgba(255,255,255,0.035) 0%,rgba(255,255,255,0.008) 100%);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:var(--r-lg);padding:18px 20px;
+  position:relative;overflow:hidden;
+  transition:transform .22s cubic-bezier(.22,1,.36,1),border-color .22s,box-shadow .22s;
+}
+.chart-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.04) 0%,transparent 50%);
+  pointer-events:none;border-radius:inherit;
+}
+.chart-card:hover{
+  transform:translateY(-2px);
+  border-color:rgba(255,255,255,0.12);
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+}
 .chart-card .ch-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .chart-card .ch-title{font-size:14px;font-weight:600;font-family:'Syne',sans-serif;}
 .chart-card .ch-sub{font-size:11px;color:var(--text2);margin-top:1px;}
-.ch-pill{font-size:11px;padding:4px 10px;border-radius:20px;background:var(--card2);border:1px solid var(--border);color:var(--text2);}
+.ch-pill{font-size:11px;padding:4px 10px;border-radius:20px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);color:var(--text2);}
+
+/* ── RIPPLE CLICK EFFECT ── */
+.ripple-host{position:relative;overflow:hidden;}
+.ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,0.18);transform:scale(0);animation:rippleAnim .55s linear;pointer-events:none;}
+@keyframes rippleAnim{to{transform:scale(4);opacity:0;}}
+
+/* ── NAV ITEM ENHANCED ── */
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;
+  cursor:pointer;font-size:13px;color:var(--text2);
+  transition:background .15s,color .15s,transform .15s,box-shadow .15s;
+  position:relative;overflow:hidden;
+}
+.nav-item::before{
+  content:'';position:absolute;left:0;top:50%;transform:translateY(-50%) scaleY(0);
+  width:3px;height:60%;border-radius:2px;background:var(--accent);
+  transition:transform .2s cubic-bezier(.22,1,.36,1);
+}
+.nav-item:hover{
+  background:rgba(255,255,255,0.05);color:var(--text);
+  transform:translateX(3px);
+}
+.nav-item.active{
+  background:linear-gradient(90deg,rgba(79,124,255,0.15),rgba(79,124,255,0.05));
+  color:#fff;border:1px solid rgba(79,124,255,0.2);
+}
+.nav-item.active::before{transform:translateY(-50%) scaleY(1);}
+
+/* ── TABLE ROW HOVER ── */
+.data-table tbody tr{transition:background .12s;}
+.data-table tbody tr:hover td{background:rgba(79,124,255,0.05);}
+
+/* ── INPUT FOCUS GLOW ── */
+.form-input:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(79,124,255,0.15),0 2px 8px rgba(79,124,255,0.1);
+  background:rgba(255,255,255,0.04);
+}
+
+/* ── BUTTON ENHANCEMENTS ── */
+.btn{position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s,opacity .15s;}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,0.3);}
+.btn:active{transform:translateY(0) scale(.97);}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 2px 12px rgba(79,124,255,0.3);}
+.btn-primary:hover{box-shadow:0 6px 20px rgba(79,124,255,0.45);}
+
+/* ── SIDEBAR GLASS ── */
+.sidebar{
+  background:linear-gradient(180deg,rgba(10,10,18,0.92) 0%,rgba(12,12,22,0.96) 100%);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-right:1px solid rgba(255,255,255,0.06);
+}
+
+/* ── TOPBAR GLASS ── */
+.topbar{
+  background:linear-gradient(90deg,rgba(12,12,22,0.88) 0%,rgba(14,14,26,0.92) 100%);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+
+/* ── PAGE SECTION FADE-IN STAGGER ── */
+.chart-card:nth-child(1){animation:fadeUp .3s .05s both;}
+.chart-card:nth-child(2){animation:fadeUp .3s .10s both;}
+.chart-card:nth-child(3){animation:fadeUp .3s .15s both;}
+.chart-row .ai-card:nth-child(2){animation:fadeUp .3s .10s both;}
+
+/* ── LOAN / ACCOUNT CARD HOVER ── */
+#loan-cards-list .chart-card{transition:transform .2s,border-color .2s,box-shadow .2s;}
+#loan-cards-list .chart-card:hover{transform:translateY(-3px);border-color:rgba(255,92,92,0.25);box-shadow:0 8px 28px rgba(255,92,92,0.1);}
+
+/* ── TRANSACTION ROW SLIDE ── */
+.tx-row{
+  transition:background .12s,transform .12s;
+  position:relative;
+}
+.tx-row:hover{background:rgba(79,124,255,0.04);transform:translateX(2px);}
+
+/* ── MODAL GLASS ── */
+.modal-box{
+  background:linear-gradient(145deg,rgba(18,18,30,0.95),rgba(14,14,24,0.98));
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border:1px solid rgba(255,255,255,0.08);
+}
+
+/* ── TOAST GLASS ── */
+.toast{
+  background:linear-gradient(135deg,rgba(30,30,48,0.95),rgba(24,24,40,0.98));
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,0.1);
+}
+
+/* ── GRADIENT ACCENT BORDER ON HOVER for cards ── */
+@property --border-angle{syntax:'<angle>';inherits:true;initial-value:0deg;}
+@keyframes borderSpin{to{--border-angle:360deg;}}
 
 /* TX LIST */
 .tx-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);}
@@ -458,9 +597,11 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
 /* ── METRIC CARDS STAGGER ── */
 .m-card{opacity:0;animation:cardPop .45s cubic-bezier(.22,1,.36,1) forwards;}
 .metrics-row .m-card:nth-child(1){animation-delay:.05s;}
-.metrics-row .m-card:nth-child(2){animation-delay:.12s;}
-.metrics-row .m-card:nth-child(3){animation-delay:.19s;}
-.metrics-row .m-card:nth-child(4){animation-delay:.26s;}
+.metrics-row .m-card:nth-child(2){animation-delay:.10s;}
+.metrics-row .m-card:nth-child(3){animation-delay:.15s;}
+.metrics-row .m-card:nth-child(4){animation-delay:.20s;}
+.metrics-row .m-card:nth-child(5){animation-delay:.25s;}
+.metrics-row .m-card:nth-child(6){animation-delay:.30s;}
 @keyframes cardPop{from{opacity:0;transform:translateY(20px) scale(.97);}to{opacity:1;transform:none;}}
 .m-card:hover{transform:translateY(-2px);transition:transform .2s,border-color .2s;}
 
@@ -628,7 +769,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
       <div class="nav-section">
         <div class="nav-section-label">Finance</div>
         <div class="nav-item" onclick="showPage('cards')"><i class="ti ti-credit-card" aria-hidden="true"></i> Credit Cards</div>
-        <div class="nav-item" onclick="showPage('loans')"><i class="ti ti-building-bank" aria-hidden="true"></i> Loans <span class="nav-badge">2</span></div>
+        <div class="nav-item" onclick="showPage('loans')"><i class="ti ti-building-bank" aria-hidden="true"></i> Loans <span class="nav-badge" id="loan-count-badge">0</span></div>
         <div class="nav-item" onclick="showPage('budget')"><i class="ti ti-chart-pie" aria-hidden="true"></i> Budget</div>
         <div class="nav-item" onclick="showPage('investments')"><i class="ti ti-trending-up" aria-hidden="true"></i> Investments</div>
       </div>
@@ -638,6 +779,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
         <div class="nav-item" onclick="showPage('add')"><i class="ti ti-plus" aria-hidden="true"></i> Add Entry</div>
         <div class="nav-item" onclick="showPage('import')"><i class="ti ti-file-import" aria-hidden="true"></i> Import Data</div>
         <div class="nav-item" onclick="showPage('datasync')"><i class="ti ti-cloud" aria-hidden="true"></i> Data Sync</div>
+        <div class="nav-item" id="admin-nav-item" style="display:none;" onclick="showPage('admin')"><i class="ti ti-shield-lock" aria-hidden="true"></i> Admin Panel <span class="nav-badge" style="background:var(--red);">A</span></div>
       </div>
     </div>
 
@@ -700,50 +842,94 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
 
       <!-- DASHBOARD -->
       <div class="page active" id="page-dashboard">
+        <!-- KPI Metrics row -->
         <div class="metrics-row" id="dash-metrics"></div>
-        <div class="chart-row cols-3">
-          <div class="chart-card">
-            <div class="ch-header"><div><div class="ch-title">Income Breakdown</div><div class="ch-sub">This month</div></div><span class="ch-pill" id="dash-inc-total"></span></div>
-            <div style="position:relative;height:160px;"><canvas id="ch-donut" role="img" aria-label="Income breakdown donut chart">Income sources this month.</canvas></div>
-            <div class="legend" id="ch-donut-legend"></div>
+
+        <!-- Row 1: Trend + Spending Donut + Health Score — all equal -->
+        <div class="chart-row cols-3" style="margin-bottom:14px;">
+          <div class="chart-card" style="padding:16px 18px;">
+            <div class="ch-header"><div><div class="ch-title">Income vs Expenses</div><div class="ch-sub">6-month trend</div></div></div>
+            <div class="legend" style="margin-bottom:6px;">
+              <span class="legend-item"><span class="legend-dot" style="background:#22c98a;"></span>Income</span>
+              <span class="legend-item"><span class="legend-dot" style="background:#ff5c5c;border-radius:0;"></span>Expenses</span>
+            </div>
+            <div style="position:relative;height:160px;"><canvas id="ch-trend-dash" role="img" aria-label="Income vs expenses trend">Trend.</canvas></div>
           </div>
-          <div class="chart-card">
-            <div class="ch-header"><div><div class="ch-title">Spending by Category</div><div class="ch-sub">Expense split</div></div></div>
-            <div style="position:relative;height:160px;"><canvas id="ch-cat" role="img" aria-label="Category spending chart">Spending categories.</canvas></div>
-            <div class="legend" id="ch-cat-legend"></div>
+          <div class="chart-card" style="padding:16px 18px;">
+            <div class="ch-header"><div><div class="ch-title">Spending by Category</div><div class="ch-sub">This month</div></div><span class="ch-pill" id="dash-exp-total"></span></div>
+            <div style="position:relative;height:160px;"><canvas id="ch-donut" role="img" aria-label="Spending donut">Spending.</canvas></div>
+            <div class="legend" id="ch-donut-legend" style="margin-top:6px;margin-bottom:0;"></div>
           </div>
-          <div class="chart-card">
-            <div class="ch-header"><div><div class="ch-title">Projections vs Actuals</div><div class="ch-sub">Last 6 months</div></div></div>
-            <div style="position:relative;height:160px;"><canvas id="ch-proj" role="img" aria-label="Projection vs actual bar chart">Monthly comparison.</canvas></div>
+          <div class="chart-card" style="padding:16px 18px;">
+            <div class="ch-header"><div><div class="ch-title">Financial Health Score</div><div class="ch-sub">Based on your data</div></div></div>
+            <div id="health-score-display" style="display:flex;align-items:center;justify-content:center;flex-direction:column;height:160px;gap:8px;"></div>
           </div>
         </div>
-        <div class="chart-row cols-2">
+
+        <!-- Row 2: Cashflow + Savings Gauge + Budget Bars — all equal -->
+        <div class="chart-row cols-3" style="margin-bottom:14px;">
+          <div class="chart-card" style="padding:16px 18px;">
+            <div class="ch-header"><div><div class="ch-title">Monthly Cashflow</div><div class="ch-sub">Income → Expenses → Saved</div></div></div>
+            <div style="position:relative;height:160px;"><canvas id="ch-cashflow-dash" role="img" aria-label="Cashflow waterfall">Cashflow.</canvas></div>
+          </div>
+          <div class="chart-card" style="padding:16px 18px;">
+            <div class="ch-header"><div><div class="ch-title">Savings Rate</div><div class="ch-sub">% of income saved</div></div></div>
+            <div style="position:relative;height:140px;"><canvas id="ch-savings-gauge" role="img" aria-label="Savings gauge">Savings rate.</canvas></div>
+            <div id="savings-gauge-label" style="text-align:center;font-size:12px;color:var(--text2);margin-top:4px;"></div>
+          </div>
+          <div class="chart-card" style="padding:16px 18px;">
+            <div class="ch-header"><div><div class="ch-title">Budget Usage</div><div class="ch-sub">Top categories this month</div></div></div>
+            <div id="dash-budget-bars" style="padding-top:2px;"></div>
+          </div>
+        </div>
+
+        <!-- Row 3: Recent Tx + AI Insights + Upcoming EMIs — all equal -->
+        <div class="chart-row cols-3" style="margin-bottom:14px;">
           <div class="chart-card">
-            <div class="ch-header"><div class="ch-title">Recent Transactions</div><div class="topbar-btn" style="font-size:11px;padding:5px 10px;cursor:pointer;" onclick="showPage('transactions')">View all →</div></div>
+            <div class="ch-header">
+              <div class="ch-title">Recent Transactions</div>
+              <div class="topbar-btn" style="font-size:11px;padding:5px 10px;cursor:pointer;" onclick="showPage('transactions')">View all →</div>
+            </div>
             <div id="dash-recent-tx"></div>
           </div>
-          <div style="display:flex;flex-direction:column;gap:14px;">
-            <div class="ai-card" style="flex:none;">
-              <div class="ai-grid-bg"></div>
-              <div class="ai-content">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                  <div class="ai-label" style="margin-bottom:0;"><i class="ti ti-sparkles" style="font-size:13px;" aria-hidden="true"></i> AI Financial Insights</div>
-                  <button id="ai-refresh-btn" onclick="fetchAIInsights()" style="background:rgba(79,124,255,0.15);border:1px solid rgba(79,124,255,0.3);border-radius:6px;padding:4px 9px;color:#4f7cff;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;">
-                    <i class="ti ti-refresh" style="font-size:12px;" aria-hidden="true"></i> Refresh
-                  </button>
-                </div>
-                <div id="ai-insight-text" style="font-size:13px;font-weight:500;line-height:1.6;color:var(--text);min-height:48px;">Analysing your finances…</div>
-                <div id="ai-insight-list" style="margin-top:10px;display:flex;flex-direction:column;gap:6px;"></div>
-                <div id="ai-status" style="font-size:11px;color:var(--text3);margin-top:8px;"></div>
+          <div class="ai-card">
+            <div class="ai-grid-bg"></div>
+            <div class="ai-content">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <div class="ai-label" style="margin-bottom:0;"><i class="ti ti-sparkles" style="font-size:13px;" aria-hidden="true"></i> AI Financial Insights</div>
+                <button id="ai-refresh-btn" onclick="fetchAIInsights()" style="background:rgba(79,124,255,0.15);border:1px solid rgba(79,124,255,0.3);border-radius:6px;padding:4px 9px;color:#4f7cff;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;">
+                  <i class="ti ti-refresh" style="font-size:12px;" aria-hidden="true"></i> Refresh
+                </button>
               </div>
+              <div id="ai-insight-text" style="font-size:13px;font-weight:500;line-height:1.6;color:var(--text);min-height:48px;">Analysing your finances…</div>
+              <div id="ai-insight-list" style="margin-top:10px;display:flex;flex-direction:column;gap:6px;"></div>
+              <div id="ai-status" style="font-size:11px;color:var(--text3);margin-top:8px;"></div>
             </div>
-            <div class="chart-card" style="flex:1;">
-              <div class="ch-header"><div class="ch-title">Upcoming EMIs</div></div>
-              <div id="dash-emis"></div>
-            </div>
+          </div>
+          <div class="chart-card">
+            <div class="ch-header"><div class="ch-title">Upcoming EMIs</div></div>
+            <div id="dash-emis"></div>
+          </div>
+        </div>
+
+        <!-- Row 4: Net Worth + Portfolio + Top Spends — all equal -->
+        <div class="chart-row cols-3" style="margin-bottom:0;">
+          <div class="chart-card" style="padding:16px 18px;">
+            <div class="ch-header"><div><div class="ch-title">Net Worth Trend</div><div class="ch-sub">Estimated 6-month growth</div></div></div>
+            <div style="position:relative;height:160px;"><canvas id="ch-nw-dash" role="img" aria-label="Net worth trend">Net worth.</canvas></div>
+          </div>
+          <div class="chart-card" style="padding:16px 18px;">
+            <div class="ch-header"><div><div class="ch-title">Portfolio Split</div><div class="ch-sub">Investment allocation</div></div></div>
+            <div style="position:relative;height:160px;"><canvas id="ch-portfolio-dash" role="img" aria-label="Portfolio split">Portfolio.</canvas></div>
+            <div class="legend" id="portfolio-dash-legend" style="margin-top:6px;margin-bottom:0;"></div>
+          </div>
+          <div class="chart-card" style="padding:16px 18px;">
+            <div class="ch-header"><div><div class="ch-title">Top Spends This Month</div><div class="ch-sub">Largest transactions</div></div></div>
+            <div id="dash-top-spends"></div>
           </div>
         </div>
       </div>
+
 
       <!-- TRANSACTIONS -->
       <div class="page" id="page-transactions">
@@ -753,7 +939,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
           <select class="form-input" id="tf-cat" onchange="renderTxPage()" style="max-width:150px;"><option value="">All categories</option><option>Food</option><option>Transfer</option><option>Salary</option><option>EMI</option><option>Shopping</option><option>Fuel</option><option>Bills</option><option>Other</option></select>
           <select class="form-input" id="tf-type" onchange="renderTxPage()" style="max-width:120px;"><option value="">All types</option><option value="cr">Income</option><option value="dr">Expense</option></select>
           <select class="form-input" id="tf-src" onchange="renderTxPage()" style="max-width:140px;"><option value="">All sources</option><option>PhonePe</option><option>Kotak 811</option><option>SBI</option><option>HDFC</option><option>ICICI</option><option>Cash</option></select>
-          <button class="btn btn-ghost" id="tx-bulk-del-btn" style="display:none;font-size:12px;padding:7px 12px;color:var(--red);border-color:rgba(255,92,92,0.3);" onclick="bulkDeleteTx()"><i class="ti ti-trash" aria-hidden="true" style="font-size:13px;vertical-align:-1px;"></i> Delete selected</button>
+          <button class="btn btn-ghost" id="tx-bulk-del-btn" style="display:none;font-size:12px;padding:7px 12px;color:var(--red);border-color:rgba(255,92,92,0.3);" onclick="bulkDeleteTx()" title="Delete selected"><i class="ti ti-trash" aria-hidden="true" style="font-size:13px;vertical-align:-1px;"></i> Delete selected</button>
         </div>
 
         <!-- edit panel (hidden by default) -->
@@ -904,7 +1090,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
 
       <!-- CARDS -->
       <div class="page" id="page-cards">
-        <div class="metrics-row" id="card-metrics"></div>
+        <div class="metrics-row" id="card-metrics" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));"></div>
         <div id="card-visuals"></div>
         <div class="chart-card" style="margin-top:0;">
           <div class="ch-header"><div class="ch-title">Add / Update Card</div></div>
@@ -1016,7 +1202,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
 
       <!-- INVESTMENTS -->
       <div class="page" id="page-investments">
-        <div class="metrics-row" id="inv-metrics"></div>
+        <div class="metrics-row" id="inv-metrics" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));"></div>
         <div class="chart-row cols-2">
           <div class="chart-card">
             <div class="ch-header"><div class="ch-title">Portfolio Allocation</div></div>
@@ -1359,6 +1545,47 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
           <div id="import-history-list"></div>
         </div>
 
+      </div>
+
+      <!-- ADMIN PANEL PAGE -->
+      <div class="page" id="page-admin">
+        <div class="metrics-row" id="admin-metrics" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));"></div>
+
+        <div class="chart-card" style="margin-bottom:14px;">
+          <div class="ch-header">
+            <div>
+              <div class="ch-title"><i class="ti ti-users" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>User Management</div>
+              <div class="ch-sub" style="margin-top:2px;">All registered users — manage access, reset passwords, view activity</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input class="form-input" id="admin-search" placeholder="Search users…" oninput="filterAdminUsers()" style="max-width:200px;font-size:12px;"/>
+              <button class="btn btn-primary" style="font-size:12px;padding:7px 12px;" onclick="loadAllUsers()"><i class="ti ti-refresh" style="font-size:13px;vertical-align:-1px;" aria-hidden="true"></i> Refresh</button>
+            </div>
+          </div>
+          <div id="admin-users-list"><div class="empty">Loading users…</div></div>
+        </div>
+
+        <div class="chart-card" style="margin-bottom:14px;">
+          <div class="ch-header"><div class="ch-title"><i class="ti ti-user-plus" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>Create User Account</div></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Full name</label><input class="form-input" id="admin-new-name" placeholder="e.g. Ravi Kumar"/></div>
+            <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="admin-new-email" type="email" placeholder="ravi@example.com"/></div>
+            <div class="form-group"><label class="form-label">Password</label><input class="form-input" id="admin-new-pass" type="password" placeholder="Min 8 chars"/></div>
+            <div class="form-group"><label class="form-label">Role</label>
+              <select class="form-input" id="admin-new-role">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+          <div id="admin-create-status" style="font-size:12px;margin-bottom:10px;min-height:16px;"></div>
+          <button class="btn btn-primary" onclick="adminCreateUser()"><i class="ti ti-plus" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Create user</button>
+        </div>
+
+        <div class="chart-card">
+          <div class="ch-header"><div class="ch-title"><i class="ti ti-activity" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>Activity Log</div></div>
+          <div id="admin-activity-log"><div class="empty">No activity recorded yet.</div></div>
+        </div>
       </div>
 
       <!-- DATA SYNC PAGE -->
@@ -1850,7 +2077,7 @@ function completeLogin(em, name){
   const ls=document.getElementById('login-screen');
   ls.style.transition='opacity .4s ease, transform .4s ease';
   ls.style.opacity='0';ls.style.transform='scale(1.03)';
-  setTimeout(()=>{
+  setTimeout(async ()=>{
     ls.style.display='none';
     const app=document.getElementById('app');
     app.classList.add('visible');
@@ -1859,6 +2086,9 @@ function completeLogin(em, name){
     const fmtName=displayName.replace(/\b\w/g,c=>c.toUpperCase());
     document.getElementById('sb-name').textContent=fmtName;
     document.getElementById('sb-avatar').textContent=fmtName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    checkAdminAccess(em);
+    // Load this user's data
+    await loadUserState(em);
     renderDashboard();
     animateCounters();
   },420);
@@ -1886,9 +2116,36 @@ function doLogout(){
 // Auto-login if valid session exists (same browser)
 (function checkSession(){
   const sess=JSON.parse(localStorage.getItem('fos_session')||'null');
-  if(sess && sess.at && (Date.now()-sess.at)<86400000*7){ // 7 day session
-    // Wait for splash to finish then auto-login
-    setTimeout(()=>completeLogin(sess.em, sess.name),2100);
+  if(sess && sess.em && sess.at && (Date.now()-sess.at)<86400000*7){
+    // Valid session — skip login entirely, go straight to app after splash
+    const splash = document.getElementById('splash');
+    const loginScreen = document.getElementById('login-screen');
+    // Hide login immediately so it never flashes
+    if(loginScreen){ loginScreen.style.display='none'; loginScreen.style.opacity='0'; }
+    // After splash animation completes, show app directly
+    setTimeout(()=>{
+      if(splash) splash.classList.add('done');
+      setTimeout(()=>{
+        if(splash) splash.style.display='none';
+        const app = document.getElementById('app');
+        if(app && !app.classList.contains('visible')){
+          app.classList.add('visible');
+          initAppCurrencyBg();
+          const fmtName=(sess.name||sess.em.split('@')[0]).replace(/\b\w/g,c=>c.toUpperCase());
+          const sbName=document.getElementById('sb-name');
+          const sbAv=document.getElementById('sb-avatar');
+          if(sbName) sbName.textContent=fmtName;
+          if(sbAv) sbAv.textContent=fmtName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+          checkAdminAccess(sess.em);
+          // Restore readOnly banner if needed
+          if(sess.readOnly && sess.em.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) showSharedDataBanner('Admin');
+          loadUserState(sess.em).then(()=>{
+            renderDashboard();
+            animateCounters();
+          });
+        }
+      },650);
+    },1400);
   }
 })();
 
@@ -1913,56 +2170,30 @@ function animateCounters(){
   });
 }
 
-let state=JSON.parse(localStorage.getItem('fos_state')||'null')||{
-  transactions:[
-    {id:1,name:'Salary — Infosys',amount:85000,type:'cr',cat:'Salary',src:'Kotak 811',date:'2026-05-01'},
-    {id:2,name:'Swiggy order',amount:340,type:'dr',cat:'Food',src:'PhonePe',date:'2026-05-02'},
-    {id:3,name:'Electricity — TSSPDCL',amount:1240,type:'dr',cat:'Bills',src:'PhonePe',date:'2026-05-03'},
-    {id:4,name:'Petrol — HP Kondapur',amount:2000,type:'dr',cat:'Fuel',src:'PhonePe',date:'2026-05-05'},
-    {id:5,name:'Amazon order',amount:1899,type:'dr',cat:'Shopping',src:'Kotak 811',date:'2026-05-07'},
-    {id:6,name:'Home loan EMI',amount:22000,type:'dr',cat:'EMI',src:'Kotak 811',date:'2026-05-08'},
-    {id:7,name:'Zomato biryani',amount:280,type:'dr',cat:'Food',src:'PhonePe',date:'2026-05-10'},
-    {id:8,name:'Savings transfer',amount:10000,type:'dr',cat:'Transfer',src:'Kotak 811',date:'2026-05-12'},
-    {id:9,name:'Freelance — UI project',amount:12000,type:'cr',cat:'Other',src:'Kotak 811',date:'2026-05-15'},
-    {id:10,name:'Car loan EMI',amount:8500,type:'dr',cat:'EMI',src:'Kotak 811',date:'2026-05-15'},
-    {id:11,name:'Dominos pizza',amount:480,type:'dr',cat:'Food',src:'PhonePe',date:'2026-05-16'},
-    {id:12,name:'Reliance groceries',amount:2100,type:'dr',cat:'Food',src:'PhonePe',date:'2026-05-17'},
-    {id:13,name:'Airtel recharge',amount:599,type:'dr',cat:'Bills',src:'PhonePe',date:'2026-05-18'},
-    {id:14,name:'Salary — Apr',amount:85000,type:'cr',cat:'Salary',src:'Kotak 811',date:'2026-04-01'},
-    {id:15,name:'Rent — Apr',amount:18000,type:'dr',cat:'Transfer',src:'Kotak 811',date:'2026-04-05'},
-    {id:16,name:'Groceries — Apr',amount:3200,type:'dr',cat:'Food',src:'PhonePe',date:'2026-04-12'},
-    {id:17,name:'Home loan EMI — Apr',amount:22000,type:'dr',cat:'EMI',src:'Kotak 811',date:'2026-04-08'},
-    {id:18,name:'Car loan EMI — Apr',amount:8500,type:'dr',cat:'EMI',src:'Kotak 811',date:'2026-04-15'},
-    {id:19,name:'Shopping — Apr',amount:4500,type:'dr',cat:'Shopping',src:'Kotak 811',date:'2026-04-20'},
-    {id:20,name:'Salary — Mar',amount:85000,type:'cr',cat:'Salary',src:'Kotak 811',date:'2026-03-01'},
-    {id:21,name:'Expenses — Mar',amount:45000,type:'dr',cat:'Other',src:'Kotak 811',date:'2026-03-20'},
-  ],
-  loans:[
-    {id:1,name:'Home Loan — SBI',principal:3200000,emi:22000,months:180,due:8},
-    {id:2,name:'Car Loan — HDFC',principal:480000,emi:8500,months:48,due:15},
-  ],
-  budget:{Food:5000,Shopping:3000,Fuel:3000,Bills:2000,Transfer:15000,Other:5000,EMI:32000},
-  networth:{
-    assets:[{name:'Kotak savings',val:48000},{name:'PPF',val:120000},{name:'Stocks — Zerodha',val:85000},{name:'Gold (10g)',val:72000}],
-    liabilities:[{name:'Home loan outstanding',val:3100000},{name:'Car loan outstanding',val:380000}]
-  },
-  cards:[
-    {id:1,name:'HDFC Regalia',last4:'4821',limit:300000,used:42500,dueDate:5,minDue:850,network:'Visa',color:'linear-gradient(135deg,#1a1917,#3a3835)',payments:[]},
-    {id:2,name:'SBI SimplyCLICK',last4:'7703',limit:100000,used:18200,dueDate:15,minDue:365,network:'Visa',color:'linear-gradient(135deg,#0C447C,#185FA5)',payments:[]}
-  ],
-  investments:[
-    {id:201,name:'Zerodha — Nifty ETF',type:'Equity',invested:65000,current:85000,units:42,buyPrice:1547.62,buyDate:'2024-06-01',platform:'Zerodha',notes:''},
-    {id:202,name:'PPF Account',type:'Debt',invested:100000,current:120000,units:null,buyPrice:null,buyDate:'2023-04-01',platform:'SBI',notes:'15yr lock-in'},
-    {id:203,name:'Gold ETF',type:'Gold',invested:65000,current:72000,units:10,buyPrice:6500,buyDate:'2024-01-15',platform:'Groww',notes:''},
-    {id:204,name:'HDFC Mid Cap MF',type:'Mutual Fund',invested:40000,current:47500,units:1240.5,buyPrice:32.25,buyDate:'2024-03-10',platform:'Groww',notes:'SIP ₹2000/mo'},
-  ],
-  accounts:[
-    {id:101,name:'Kotak 811',bank:'Kotak Mahindra Bank',type:'Savings',acNo:'1234',ifsc:'KKBK0001234',balance:48000,rate:3.5,color:'#4f7cff',history:[{bal:42000,date:'2026-03-01'},{bal:44500,date:'2026-04-01'},{bal:48000,date:'2026-05-01'}]},
-    {id:102,name:'SBI Salary Account',bank:'State Bank of India',type:'Salary',acNo:'7890',ifsc:'SBIN0001234',balance:12000,rate:2.7,color:'#22c98a',history:[{bal:8000,date:'2026-03-01'},{bal:10000,date:'2026-04-01'},{bal:12000,date:'2026-05-01'}]},
-  ],
-  nextId:22
-};
-function save(){localStorage.setItem('fos_state',JSON.stringify(state));}
+/* ── FRESH EMPTY STATE for new users ── */
+function freshState(){
+  return {
+    transactions:[], loans:[], budget:{Food:5000,Shopping:3000,Fuel:3000,Bills:2000,Transfer:15000,Other:5000,EMI:32000},
+    networth:{assets:[],liabilities:[]}, cards:[], investments:[], accounts:[], nextId:1
+  };
+}
+
+let state = freshState(); // start empty — loadUserState() fills it after login
+
+function isReadOnly(){
+  const sess = JSON.parse(localStorage.getItem('fos_session')||'{}');
+  return sess.readOnly === true;
+}
+
+function save(){
+  if(isReadOnly()){
+    toast('⚠️ Read-only access — you cannot modify this data');
+    return;
+  }
+  localStorage.setItem('fos_state', JSON.stringify(state));
+  const sess = JSON.parse(localStorage.getItem('fos_session')||'{}');
+  if(sess.stateDoc) localStorage.setItem('fos_state_doc', sess.stateDoc);
+}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show';setTimeout(()=>t.className='toast',2600);}
 
 const catClr={Food:'#f0a500',Transfer:'#4f7cff',Salary:'#22c98a',EMI:'#a08aff',Shopping:'#ff5c96',Fuel:'#ff5c5c',Bills:'#8888a0',Other:'#555568'};
@@ -1975,10 +2206,15 @@ function dc(k){if(charts[k]){try{charts[k].destroy();}catch(e){}delete charts[k]
 function monthTx(m){return state.transactions.filter(t=>t.date.startsWith(m));}
 const curTx=()=>monthTx(curMonth);
 
-const pages={dashboard:'Dashboard',transactions:'Transactions',analytics:'Analytics',accounts:'Accounts',cards:'Credit Cards',loans:'Loans',budget:'Budget',investments:'Investments',networth:'Net Worth',add:'Add Entry',import:'Import Data',datasync:'Data Sync'};
-const renders={dashboard:renderDashboard,transactions:renderTxPage,analytics:renderAnalytics,accounts:renderAccounts,cards:renderCards,loans:renderLoans,budget:renderBudget,investments:renderInvestments,networth:renderNetWorth,import:renderImportPage,datasync:renderDataSync};
+const pages={dashboard:'Dashboard',transactions:'Transactions',analytics:'Analytics',accounts:'Accounts',cards:'Credit Cards',loans:'Loans',budget:'Budget',investments:'Investments',networth:'Net Worth',add:'Add Entry',import:'Import Data',datasync:'Data Sync',admin:'Admin Panel'};
+const renders={dashboard:renderDashboard,transactions:renderTxPage,analytics:renderAnalytics,accounts:renderAccounts,cards:renderCards,loans:renderLoans,budget:renderBudget,investments:renderInvestments,networth:renderNetWorth,import:renderImportPage,datasync:renderDataSync,admin:renderAdminPanel};
 
 function showPage(p){
+  // Block admin page for non-admin users
+  if(p==='admin' && !isAdmin()){
+    toast('Access denied — admin only');
+    return;
+  }
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
@@ -2004,61 +2240,196 @@ function renderDashboard(){
   const sav=inc-exp;
   const emi=state.loans.reduce((s,l)=>s+l.emi,0);
   const savPct=inc>0?Math.round((sav/inc)*100):0;
+  const totalBal=state.accounts.reduce((s,a)=>s+a.balance,0);
+  const totalInv=state.investments.reduce((s,i)=>s+i.current,0);
+  const totalA=totalBal+totalInv+state.networth.assets.reduce((s,a)=>s+a.val,0);
+  const totalL=state.loans.reduce((s,l)=>s+loanOutstanding(l),0)+state.cards.reduce((s,c)=>s+c.used,0)+state.networth.liabilities.reduce((s,l)=>s+l.val,0);
+  const nw=totalA-totalL;
+  const ccUtil=state.cards.length?Math.round(state.cards.reduce((s,c)=>s+c.used,0)/state.cards.reduce((s,c)=>s+c.limit,1)*100):0;
+
+  // ── KPI METRICS ──────────────────────────────────────────────────────────
   document.getElementById('dash-metrics').innerHTML=`
     <div class="m-card"><div class="m-icon" style="background:rgba(34,201,138,0.12);color:#22c98a;"><i class="ti ti-arrow-down-left" aria-hidden="true"></i></div><div class="m-label">Total Income</div><div class="m-value" style="color:#22c98a;">${fmt(inc)}</div><div class="m-change up"><i class="ti ti-trending-up" style="font-size:12px;" aria-hidden="true"></i> This month</div><div class="m-glow" style="background:#22c98a;"></div></div>
     <div class="m-card"><div class="m-icon" style="background:rgba(255,92,92,0.12);color:#ff5c5c;"><i class="ti ti-arrow-up-right" aria-hidden="true"></i></div><div class="m-label">Total Expenses</div><div class="m-value" style="color:#ff5c5c;">${fmt(exp)}</div><div class="m-change down"><i class="ti ti-trending-up" style="font-size:12px;" aria-hidden="true"></i> This month</div><div class="m-glow" style="background:#ff5c5c;"></div></div>
     <div class="m-card"><div class="m-icon" style="background:rgba(79,124,255,0.12);color:#4f7cff;"><i class="ti ti-piggy-bank" aria-hidden="true"></i></div><div class="m-label">Net Savings</div><div class="m-value" style="color:#4f7cff;">${fmt(sav)}</div><div class="m-change up">${savPct}% of income</div><div class="m-glow" style="background:#4f7cff;"></div></div>
-    <div class="m-card"><div class="m-icon" style="background:rgba(240,165,0,0.12);color:#f0a500;"><i class="ti ti-building-bank" aria-hidden="true"></i></div><div class="m-label">Monthly EMIs</div><div class="m-value" style="color:#f0a500;">${fmt(emi)}</div><div class="m-change">${state.loans.length} active loans</div><div class="m-glow" style="background:#f0a500;"></div></div>`;
+    <div class="m-card"><div class="m-icon" style="background:rgba(240,165,0,0.12);color:#f0a500;"><i class="ti ti-building-bank" aria-hidden="true"></i></div><div class="m-label">Monthly EMIs</div><div class="m-value" style="color:#f0a500;">${fmt(emi)}</div><div class="m-change">${state.loans.length} active loans</div><div class="m-glow" style="background:#f0a500;"></div></div>
+    <div class="m-card"><div class="m-icon" style="background:rgba(34,212,224,0.12);color:#22d4e0;"><i class="ti ti-scale" aria-hidden="true"></i></div><div class="m-label">Net Worth</div><div class="m-value" style="color:${nw>=0?'#22c98a':'#ff5c5c'};">${nw>=0?'+':''}${fmt(Math.abs(nw))}</div><div class="m-change">${state.accounts.length} accounts</div><div class="m-glow" style="background:#22d4e0;"></div></div>
+    <div class="m-card"><div class="m-icon" style="background:rgba(255,92,150,0.12);color:#ff5c96;"><i class="ti ti-credit-card" aria-hidden="true"></i></div><div class="m-label">CC Utilisation</div><div class="m-value" style="color:${ccUtil>75?'#ff5c5c':ccUtil>50?'#f0a500':'#22c98a'};">${ccUtil}%</div><div class="m-change">${state.cards.length} cards</div><div class="m-glow" style="background:#ff5c96;"></div></div>`;
 
-  const catSpend={};
-  txs.filter(t=>t.type==='dr').forEach(t=>catSpend[t.cat]=(catSpend[t.cat]||0)+t.amount);
-  const incSplit={Salary:txs.filter(t=>t.cat==='Salary').reduce((s,t)=>s+t.amount,0),Freelance:txs.filter(t=>t.cat==='Other'&&t.type==='cr').reduce((s,t)=>s+t.amount,0)};
-  const incCats=Object.keys(incSplit).filter(k=>incSplit[k]>0);
-
-  dc('donut');
-  charts['donut']=new Chart(document.getElementById('ch-donut'),{
-    type:'doughnut',
-    data:{labels:incCats,datasets:[{data:incCats.map(k=>incSplit[k]),backgroundColor:['#22c98a','#4f7cff','#f0a500'],borderWidth:0,hoverOffset:4}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+fmt(ctx.raw)}}}}
-  });
-  document.getElementById('ch-donut-legend').innerHTML=incCats.map((k,i)=>`<span class="legend-item"><span class="legend-dot" style="background:${['#22c98a','#4f7cff','#f0a500'][i]};"></span>${k} ${fmt(incSplit[k])}</span>`).join('');
-  document.getElementById('dash-inc-total').textContent=fmt(inc);
-
-  const cats=Object.keys(catSpend).sort((a,b)=>catSpend[b]-catSpend[a]).slice(0,6);
-  dc('cat');
-  charts['cat']=new Chart(document.getElementById('ch-cat'),{
-    type:'doughnut',
-    data:{labels:cats,datasets:[{data:cats.map(c=>catSpend[c]),backgroundColor:cats.map(c=>catClr[c]||'#555568'),borderWidth:0,hoverOffset:4}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+fmt(ctx.raw)}}}}
-  });
-  document.getElementById('ch-cat-legend').innerHTML=cats.slice(0,4).map(c=>`<span class="legend-item"><span class="legend-dot" style="background:${catClr[c]};"></span>${c}</span>`).join('');
-
-  const [_cy,_cm]=curMonth.split('-').map(Number);const months=[-5,-4,-3,-2,-1,0].map(i=>{const d=new Date(_cy,_cm-1+i,1);return d.toISOString().slice(0,7);});
-  const mL=months.map(m=>new Date(m+'-01').toLocaleString('en-IN',{month:'short'}));
-  const mInc=months.map(m=>monthTx(m).filter(t=>t.type==='cr').reduce((s,t)=>s+t.amount,0));
-  const mExp=months.map(m=>monthTx(m).filter(t=>t.type==='dr').reduce((s,t)=>s+t.amount,0));
-  const mProj=mInc.map(v=>Math.round(v*0.85+Math.random()*5000));
-
-  dc('proj');
-  charts['proj']=new Chart(document.getElementById('ch-proj'),{
-    type:'bar',
+  // ── 6-MONTH TREND ─────────────────────────────────────────────────────────
+  const [_cy,_cm]=curMonth.split('-').map(Number);
+  const months6=[-5,-4,-3,-2,-1,0].map(i=>{const d=new Date(_cy,_cm-1+i,1);return d.toISOString().slice(0,7);});
+  const mL=months6.map(m=>new Date(m+'-01').toLocaleString('en-IN',{month:'short'}));
+  const mInc=months6.map(m=>monthTx(m).filter(t=>t.type==='cr').reduce((s,t)=>s+t.amount,0));
+  const mExp=months6.map(m=>monthTx(m).filter(t=>t.type==='dr').reduce((s,t)=>s+t.amount,0));
+  dc('trend-dash');
+  charts['trend-dash']=new Chart(document.getElementById('ch-trend-dash'),{
+    type:'line',
     data:{labels:mL,datasets:[
-      {label:'Projected',data:mProj,backgroundColor:'rgba(79,124,255,0.35)',borderRadius:4,barPercentage:0.45},
-      {label:'Actual',data:mInc,backgroundColor:'rgba(79,124,255,0.85)',borderRadius:4,barPercentage:0.45}
+      {label:'Income',data:mInc,borderColor:'#22c98a',backgroundColor:'rgba(34,201,138,0.07)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#22c98a',borderWidth:2},
+      {label:'Expenses',data:mExp,borderColor:'#ff5c5c',backgroundColor:'rgba(255,92,92,0.07)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#ff5c5c',borderWidth:2}
     ]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.dataset.label+': '+fmt(ctx.raw)}}},
-      scales:{x:{grid:{display:false},ticks:{color:'#555568',font:{size:10}}},y:{display:false}}}
+      scales:{x:{grid:{display:false},ticks:{color:'#555568',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555568',font:{size:10},callback:v=>v>=100000?'₹'+(v/100000).toFixed(1)+'L':v>=1000?'₹'+(v/1000)+'k':'₹'+v}}}}
   });
 
-  document.getElementById('dash-recent-tx').innerHTML=[...state.transactions].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6).map(txRowHTML).join('');
-  updateSidebarStats(inc,exp,sav);
-  if(!aiInsightCache){fetchAIInsights();}else{renderAIInsights(aiInsightCache);}
+  // ── SPENDING DONUT ────────────────────────────────────────────────────────
+  const catSpend={};
+  txs.filter(t=>t.type==='dr').forEach(t=>catSpend[t.cat]=(catSpend[t.cat]||0)+t.amount);
+  const cats=Object.keys(catSpend).sort((a,b)=>catSpend[b]-catSpend[a]).slice(0,6);
+  dc('donut');
+  if(cats.length){
+    charts['donut']=new Chart(document.getElementById('ch-donut'),{
+      type:'doughnut',
+      data:{labels:cats,datasets:[{data:cats.map(c=>catSpend[c]),backgroundColor:cats.map(c=>catClr[c]||'#555568'),borderWidth:0,hoverOffset:5}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+fmt(ctx.raw)+' ('+Math.round(ctx.raw/exp*100)+'%)'}}}}
+    });
+    document.getElementById('ch-donut-legend').innerHTML=cats.slice(0,4).map(c=>`<span class="legend-item"><span class="legend-dot" style="background:${catClr[c]||'#555568'};"></span>${c} ${fmt(catSpend[c])}</span>`).join('');
+  }
+  document.getElementById('dash-exp-total').textContent=fmt(exp);
 
+  // ── HEALTH SCORE ──────────────────────────────────────────────────────────
+  let score=0, tips=[];
+  if(savPct>=20){score+=25;}else if(savPct>=10){score+=15;tips.push('Increase savings rate to 20%+');}else{tips.push('Savings rate is low — reduce discretionary spending');}
+  const emiPct=inc>0?Math.round((emi/inc)*100):0;
+  if(emiPct<=30){score+=25;}else if(emiPct<=50){score+=15;tips.push('EMI burden above 30% of income');}else{tips.push('High EMI burden (>50%) — consider prepayment');}
+  if(ccUtil<=30){score+=25;}else if(ccUtil<=60){score+=15;tips.push('Keep CC utilisation below 30% for good CIBIL');}else{tips.push('CC utilisation very high — pay down balance');}
+  const runway=exp>0?totalBal/exp:12;
+  if(runway>=6){score+=25;}else if(runway>=3){score+=15;tips.push('Build emergency fund to cover 6 months expenses');}else{tips.push('Emergency fund critical — less than 3 months runway');}
+  const scoreColor=score>=80?'#22c98a':score>=60?'#4f7cff':score>=40?'#f0a500':'#ff5c5c';
+  const scoreLabel=score>=80?'Excellent':score>=60?'Good':score>=40?'Fair':'Needs Work';
+  document.getElementById('health-score-display').innerHTML=`
+    <div style="position:relative;width:100px;height:100px;">
+      <svg viewBox="0 0 100 100" style="width:100px;height:100px;transform:rotate(-90deg);">
+        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="9"/>
+        <circle cx="50" cy="50" r="42" fill="none" stroke="${scoreColor}" stroke-width="9"
+          stroke-dasharray="${Math.round(2*Math.PI*42*score/100)} ${Math.round(2*Math.PI*42)}"
+          stroke-linecap="round"/>
+      </svg>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div style="font-size:24px;font-weight:700;color:${scoreColor};line-height:1;">${score}</div>
+        <div style="font-size:9px;color:var(--text3);">/ 100</div>
+      </div>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:${scoreColor};margin-top:4px;">${scoreLabel}</div>
+    ${tips.length
+      ? `<div style="font-size:11px;color:var(--text2);text-align:center;max-width:180px;line-height:1.5;">${tips[0]}</div>`
+      : `<div style="font-size:11px;color:#22c98a;text-align:center;">All metrics look healthy 👍</div>`}`;
+
+  // ── CASHFLOW WATERFALL ────────────────────────────────────────────────────
+  const cfData=[inc,-exp, sav];
+  const cfColors=['#22c98a','#ff5c5c',sav>=0?'#4f7cff':'#f0a500'];
+  dc('cashflow-dash');
+  charts['cashflow-dash']=new Chart(document.getElementById('ch-cashflow-dash'),{
+    type:'bar',
+    data:{labels:['Income','Expenses','Net Saved'],datasets:[{
+      data:cfData.map(v=>Math.abs(v)),
+      backgroundColor:cfColors,
+      borderRadius:8,barPercentage:0.5
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)}}},
+      scales:{x:{grid:{display:false},ticks:{color:'#555568',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555568',font:{size:10},callback:v=>v>=100000?'₹'+(v/100000).toFixed(1)+'L':v>=1000?'₹'+(v/1000)+'k':'₹'+v}}}}
+  });
+
+  // ── SAVINGS GAUGE ─────────────────────────────────────────────────────────
+  const gaugeTarget=30;
+  dc('savings-gauge');
+  charts['savings-gauge']=new Chart(document.getElementById('ch-savings-gauge'),{
+    type:'doughnut',
+    data:{labels:['Saved','Remaining to target','Expenses'],datasets:[{
+      data:[Math.min(savPct,gaugeTarget), Math.max(0,gaugeTarget-savPct), Math.max(0,100-gaugeTarget)],
+      backgroundColor:[savPct>=gaugeTarget?'#22c98a':'#4f7cff','rgba(255,255,255,0.06)','rgba(255,255,255,0.03)'],
+      borderWidth:0,circumference:240,rotation:240
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'75%',plugins:{legend:{display:false},tooltip:{enabled:false}}}
+  });
+  document.getElementById('savings-gauge-label').innerHTML=`<span style="font-size:22px;font-weight:700;color:${savPct>=gaugeTarget?'#22c98a':'#4f7cff'};">${savPct}%</span> <span style="font-size:11px;color:var(--text2);">saved · target ${gaugeTarget}%</span>`;
+
+  // ── BUDGET BARS ───────────────────────────────────────────────────────────
+  const budgetEl=document.getElementById('dash-budget-bars');
+  const topBudget=Object.entries(state.budget).sort((a,b)=>(catSpend[b[0]]||0)-(catSpend[a[0]]||0)).slice(0,5);
+  budgetEl.innerHTML=topBudget.map(([cat,lim])=>{
+    const spent=catSpend[cat]||0;
+    const pct=Math.min(100,Math.round(spent/lim*100));
+    const bc=pct>90?'#ff5c5c':pct>70?'#f0a500':'#22c98a';
+    return `<div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+        <span style="font-weight:500;">${cat}</span>
+        <span style="color:${pct>90?'var(--red)':'var(--text2)'};">${fmt(spent)} <span style="color:var(--text3);">/ ${fmt(lim)}</span></span>
+      </div>
+      <div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:${bc};border-radius:3px;transition:width .6s ease;"></div>
+      </div>
+    </div>`;
+  }).join('')+(topBudget.length===0?'<div class="empty" style="font-size:12px;">No budget set</div>':'');
+
+  // ── RECENT TRANSACTIONS ───────────────────────────────────────────────────
+  document.getElementById('dash-recent-tx').innerHTML=[...state.transactions].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6).map(txRowHTML).join('');
+
+  // ── NET WORTH TREND ───────────────────────────────────────────────────────
+  const nwTrend=months6.map((_,i)=>Math.round(nw*(0.7+i*0.06)));
+  dc('nw-dash');
+  charts['nw-dash']=new Chart(document.getElementById('ch-nw-dash'),{
+    type:'line',
+    data:{labels:mL,datasets:[{data:nwTrend,borderColor:nw>=0?'#22c98a':'#ff5c5c',backgroundColor:nw>=0?'rgba(34,201,138,0.07)':'rgba(255,92,92,0.07)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:nw>=0?'#22c98a':'#ff5c5c',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' Net Worth: '+fmt(ctx.raw)}}},
+      scales:{x:{grid:{display:false},ticks:{color:'#555568',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555568',font:{size:10},callback:v=>v<0?'-₹'+(Math.abs(v)/100000).toFixed(1)+'L':'₹'+(v/100000).toFixed(1)+'L'}}}}
+  });
+
+  // ── PORTFOLIO SPLIT ───────────────────────────────────────────────────────
+  const typeClr2={'Equity':'#4f7cff','Debt':'#22c98a','Gold':'#f0a500','Mutual Fund':'#a08aff','FD':'#22d4e0','RD':'#22d4e0','Crypto':'#ff5c96','Real Estate':'#f0a500','Other':'#8888a0'};
+  const invByType={};
+  state.investments.forEach(i=>invByType[i.type]=(invByType[i.type]||0)+i.current);
+  const invTypes=Object.keys(invByType);
+  dc('portfolio-dash');
+  if(invTypes.length){
+    charts['portfolio-dash']=new Chart(document.getElementById('ch-portfolio-dash'),{
+      type:'doughnut',
+      data:{labels:invTypes,datasets:[{data:invTypes.map(t=>invByType[t]),backgroundColor:invTypes.map(t=>typeClr2[t]||'#555568'),borderWidth:0,hoverOffset:5}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+fmt(ctx.raw)}}}}
+    });
+    document.getElementById('portfolio-dash-legend').innerHTML=invTypes.map(t=>`<span class="legend-item"><span class="legend-dot" style="background:${typeClr2[t]||'#555568'};"></span>${t}</span>`).join('');
+  } else {
+    document.getElementById('ch-portfolio-dash').getContext('2d').clearRect(0,0,300,300);
+    document.getElementById('portfolio-dash-legend').innerHTML='<span style="font-size:11px;color:var(--text2);">No investments added</span>';
+  }
+
+  // ── TOP SPENDS ────────────────────────────────────────────────────────────
+  const topSpends=[...txs].filter(t=>t.type==='dr').sort((a,b)=>b.amount-a.amount).slice(0,5);
+  document.getElementById('dash-top-spends').innerHTML=topSpends.length?topSpends.map((t,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);${i===topSpends.length-1?'border-bottom:none;':''}">
+      <div style="width:22px;height:22px;border-radius:50%;background:rgba(255,92,92,0.12);color:#ff5c5c;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
+        <div style="font-size:10px;color:var(--text3);">${t.date} · ${t.cat}</div>
+      </div>
+      <div style="font-size:13px;font-weight:600;color:var(--red);">-${fmt(t.amount)}</div>
+    </div>`).join(''):`<div class="empty" style="font-size:12px;">No expenses this month</div>`;
+
+  // ── UPCOMING EMIs ─────────────────────────────────────────────────────────
   const upcoming=state.loans.filter(l=>l.due>=today.getDate()).sort((a,b)=>a.due-b.due);
   document.getElementById('dash-emis').innerHTML=upcoming.length?upcoming.map(l=>`
     <div class="tx-row"><div class="tx-ico" style="background:rgba(160,138,255,0.15);color:#a08aff;"><i class="ti ti-building-bank" aria-hidden="true"></i></div>
     <div class="tx-info"><div class="tx-name">${l.name}</div><div class="tx-meta">Due ${l.due}th · ${l.months} months left</div></div>
     <div class="tx-amt dr">-${fmt(l.emi)}</div></div>`).join(''):`<div class="empty">No upcoming EMIs</div>`;
+
+  updateSidebarStats(inc,exp,sav);
+  updateLoanBadge();
+  if(!aiInsightCache){fetchAIInsights();}else{renderAIInsights(aiInsightCache);}
+
+  // Sparklines + card background gradients
+  setTimeout(()=>{
+    addSparklinesToKPICards(months6);
+    // Per-card gradient tint
+    const cardColors=[
+      'rgba(34,201,138,0.08)','rgba(255,92,92,0.08)',
+      'rgba(79,124,255,0.08)','rgba(240,165,0,0.08)',
+      'rgba(34,212,224,0.08)','rgba(255,92,150,0.08)'
+    ];
+    document.querySelectorAll('#dash-metrics .m-card').forEach((c,i)=>{
+      c.style.background=`linear-gradient(135deg,${cardColors[i]||'rgba(255,255,255,0.03)'} 0%,rgba(255,255,255,0.01) 100%)`;
+    });
+  },100);
 }
 
 function updateSidebarStats(inc,exp,sav){
@@ -2221,8 +2592,9 @@ function renderTxPage(){
         <td style="font-size:12px;color:var(--text2);">${t.src}</td>
         <td style="text-align:right;font-weight:600;color:${t.type==='cr'?'var(--green)':'var(--red)'};">${t.type==='cr'?'+':'-'}${fmt(t.amount)}</td>
         <td style="text-align:right;white-space:nowrap;">
+          ${isReadOnly()?'<span style="font-size:10px;color:var(--amber);padding:3px 8px;">read-only</span>':`
           <button data-tx-edit="${t.id}" class="btn btn-ghost" style="font-size:11px;padding:4px 7px;margin-right:3px;" title="Edit"><i class="ti ti-edit" aria-hidden="true"></i></button>
-          <button data-tx-del="${t.id}" class="btn btn-danger" style="font-size:11px;padding:4px 7px;" title="Delete"><i class="ti ti-trash" aria-hidden="true"></i></button>
+          <button data-tx-del="${t.id}" class="btn btn-danger" style="font-size:11px;padding:4px 7px;" title="Delete"><i class="ti ti-trash" aria-hidden="true"></i></button>`}
         </td>
       </tr>`;
     }).join('');
@@ -2261,11 +2633,13 @@ function updateBulkDeleteBtn(){
   const count = document.querySelectorAll('.tx-row-chk:checked').length;
   const btn   = document.getElementById('tx-bulk-del-btn');
   const info  = document.getElementById('tx-selected-info');
-  if(btn) btn.style.display = count>0?'':'none';
+  // Never show delete button in read-only mode
+  if(btn) btn.style.display = (count>0 && !isReadOnly())?'':'none';
   if(info) info.textContent = count>0?`${count} selected`:'';
 }
 
 function bulkDeleteTx(){
+  if(isReadOnly()){ toast('⚠️ Read-only access — you cannot modify this data'); return; }
   const ids = [...document.querySelectorAll('.tx-row-chk:checked')].map(c=>+c.dataset.txId);
   if(!ids.length) return;
   if(!confirm(`Delete ${ids.length} transaction${ids.length>1?'s':''}? This cannot be undone.`)) return;
@@ -2275,6 +2649,7 @@ function bulkDeleteTx(){
 }
 
 function deleteTx(id){
+  if(isReadOnly()){ toast('⚠️ Read-only access — you cannot modify this data'); return; }
   const tx = state.transactions.find(t=>t.id===id);
   if(!confirm(`Delete "${tx?tx.name:'this transaction'}"?`)) return;
   state.transactions = state.transactions.filter(t=>t.id!==id);
@@ -2308,6 +2683,7 @@ function closeTxEdit(){
 }
 
 function saveTxEdit(){
+  if(isReadOnly()){ toast('⚠️ Read-only access — you cannot modify this data'); return; }
   const id     = +document.getElementById('te-id').value;
   const name   = document.getElementById('te-name').value.trim();
   const amount = +document.getElementById('te-amount').value;
@@ -2685,6 +3061,15 @@ function renderLoans(){
     const delBtn=e.target.closest('[data-loan-del]');
     if(delBtn){ deleteLoan(+delBtn.dataset.loanDel); }
   };
+  updateLoanBadge();
+}
+
+function updateLoanBadge(){
+  const el = document.getElementById('loan-count-badge');
+  if(!el) return;
+  const count = state.loans.length;
+  el.textContent = count;
+  el.style.display = count > 0 ? '' : 'none';
 }
 
 function autoCalcLoan(){
@@ -2775,7 +3160,7 @@ function saveLoan(){
     });
     toast('Loan added');
   }
-  save();clearLoanForm();renderLoans();
+  save();clearLoanForm();renderLoans();updateLoanBadge();
 }
 
 function startEditLoan(id){
@@ -2814,7 +3199,7 @@ function deleteLoan(id){
   if(!confirm('Delete '+(l?l.name:'this loan')+'? This cannot be undone.')) return;
   state.loans=state.loans.filter(x=>x.id!==id);
   if(_loanEditId===id) clearLoanForm();
-  save();renderLoans();
+  save();renderLoans();updateLoanBadge();
   toast('Loan removed');
 }
 
@@ -3050,6 +3435,7 @@ function autoCalcInv(){
 let _invEditId = null; // tracks which investment is being edited
 
 function saveInvestment(){
+  if(isReadOnly()){ toast('⚠️ Read-only access — you cannot modify this data'); return; }
   const name     = document.getElementById('inv-name').value.trim();
   const type     = document.getElementById('inv-type').value;
   const invested = +document.getElementById('inv-invested').value;
@@ -3281,6 +3667,7 @@ function addNetWorth(){
 }
 
 function addManual(){
+  if(isReadOnly()){ toast('⚠️ Read-only access — you cannot modify this data'); return; }
   const name=document.getElementById('m-name').value.trim();
   const amount=+document.getElementById('m-amount').value;
   if(!name||!amount){toast('Fill description and amount');return;}
@@ -4374,6 +4761,517 @@ renderDashboard = function(){
   setTimeout(generateSmartNotifs, 800);
 };
 
+/* ═══════════════════════════════════════════════════
+   ADMIN PANEL
+   - Only visible to users with role="admin" in Firestore
+   - Admin email hardcoded: vamsi@financeos.in
+   - All user data read from financeos_auth collection
+═══════════════════════════════════════════════════ */
+
+const ADMIN_EMAIL = 'vamsi@financeos.in';
+let _allUsers = [];    // cached user list
+let _activityLog = JSON.parse(localStorage.getItem('fos_admin_log') || '[]');
+
+function saveActivityLog(){ localStorage.setItem('fos_admin_log', JSON.stringify(_activityLog.slice(0,100))); }
+function logActivity(action, target){
+  _activityLog.unshift({ action, target, at: new Date().toLocaleString('en-IN'), by: ADMIN_EMAIL });
+  saveActivityLog();
+}
+
+function isAdmin(){
+  const sess = JSON.parse(localStorage.getItem('fos_session')||'{}');
+  return sess.em && sess.em.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+}
+
+function requireAdmin(){
+  if(!isAdmin()){
+    toast('Access denied — admin only');
+    return false;
+  }
+  return true;
+}
+
+/* ── Load the right state for this user ──────────────────────────────────
+   - Admin email          → load from Firebase doc "vamsi" (their own doc)
+   - User with dataAccess:'admin' → load from Firebase doc "vamsi" (admin's data, read-only)
+   - Normal user          → load from Firebase doc = their email hash
+   - No Firebase          → load from localStorage or start fresh
+──────────────────────────────────────────────────────────────────────── */
+async function loadUserState(em){
+  const {key,proj} = getFirebaseConfig();
+
+  // Always start with a clean fresh state
+  state = freshState();
+
+  // Determine which Firestore document to load from
+  let docId = null;
+  let readOnly = false;
+
+  try{
+    if(key && proj){
+      const emailHash = await sha256(em);
+      const authFields = await fbAuthGet(emailHash);
+
+      if(em.toLowerCase() === ADMIN_EMAIL.toLowerCase()){
+        // Admin always loads their own doc — never read-only
+        docId = 'vamsi';
+        readOnly = false;
+        // Clear any stale readOnly from previous sessions
+        const sessTmp = JSON.parse(localStorage.getItem('fos_session')||'{}');
+        sessTmp.readOnly = false;
+        localStorage.setItem('fos_session', JSON.stringify(sessTmp));
+      } else if(authFields && authFields.dataAccess?.stringValue === 'admin'){
+        // User granted admin data access — load admin doc, read-only
+        docId = 'vamsi';
+        readOnly = true;
+        // Show banner indicating shared view
+        setTimeout(()=>showSharedDataBanner(authFields.dataAccessGrantedBy?.stringValue||'Admin'), 800);
+      } else {
+        // Normal user — their own doc keyed by email hash
+        docId = emailHash;
+        readOnly = false;
+      }
+
+      // Store docId in session for auto-sync
+      const sess = JSON.parse(localStorage.getItem('fos_session')||'{}');
+      sess.stateDoc = docId;
+      sess.readOnly = readOnly;
+      localStorage.setItem('fos_session', JSON.stringify(sess));
+      syncCfg.fbDoc = docId;
+      saveSyncCfg();
+
+      // Try to load from Firebase
+      const url = `https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/financeos/${docId}?key=${key}`;
+      const res = await fetch(url);
+      if(res.ok){
+        const result = await res.json();
+        if(result.fields?.data?.stringValue){
+          const d = JSON.parse(result.fields.data.stringValue);
+          if(d.transactions) state.transactions = d.transactions;
+          if(d.accounts)     state.accounts     = d.accounts;
+          if(d.cards)        state.cards        = d.cards;
+          if(d.loans)        state.loans        = d.loans;
+          if(d.investments)  state.investments  = d.investments;
+          if(d.budget)       state.budget       = d.budget;
+          if(d.networth)     state.networth     = d.networth;
+          if(d.nextId)       state.nextId       = d.nextId;
+          localStorage.setItem('fos_state', JSON.stringify(state));
+          return;
+        }
+      }
+      // 404 = new user, no data yet → stay with freshState
+    } else {
+      // No Firebase — try localStorage
+      const cached = JSON.parse(localStorage.getItem('fos_state')||'null');
+      if(cached && cached.transactions !== undefined){
+        state = cached;
+      }
+    }
+  } catch(e){
+    // Fallback to localStorage if Firebase fails
+    const cached = JSON.parse(localStorage.getItem('fos_state')||'null');
+    if(cached && cached.transactions !== undefined) state = cached;
+  }
+}
+
+function showSharedDataBanner(grantedBy){
+  // Remove existing banner
+  document.getElementById('shared-data-banner')?.remove();
+  const banner = document.createElement('div');
+  banner.id = 'shared-data-banner';
+  banner.style.cssText = 'position:fixed;top:56px;left:220px;right:0;z-index:900;background:rgba(240,165,0,0.15);border-bottom:1px solid rgba(240,165,0,0.3);padding:8px 20px;font-size:12px;color:#f0a500;display:flex;align-items:center;gap:8px;';
+  banner.innerHTML = `<i class="ti ti-eye" style="font-size:14px;" aria-hidden="true"></i> You are viewing <strong>${grantedBy}'s</strong> financial data (read-only access granted by admin) <button onclick="this.parentElement.remove()" style="margin-left:auto;background:none;border:none;color:#f0a500;cursor:pointer;font-size:16px;">×</button>`;
+  document.getElementById('app')?.appendChild(banner);
+}
+
+async function checkAdminAccess(em){
+  const navItem = document.getElementById('admin-nav-item');
+  if(!navItem) return;
+  if(!em){ navItem.style.display='none'; return; }
+
+  // Immediately show for the hardcoded admin email — no Firebase lookup needed
+  if(em.toLowerCase() === ADMIN_EMAIL.toLowerCase()){
+    navItem.style.display='flex';
+    return;
+  }
+
+  // For other users — check Firebase role field
+  try{
+    const {key,proj} = getFirebaseConfig();
+    if(!key||!proj){ navItem.style.display='none'; return; }
+    const emailHash = await sha256(em);
+    const fields = await fbAuthGet(emailHash);
+    navItem.style.display = (fields && fields.role?.stringValue === 'admin') ? 'flex' : 'none';
+  } catch(e){ navItem.style.display='none'; }
+}
+
+async function renderAdminPanel(){
+  if(!requireAdmin()) return;
+  renderAdminMetrics();
+  await loadAllUsers();
+  renderAdminActivityLog();
+}
+
+function renderAdminMetrics(){
+  const el = document.getElementById('admin-metrics');
+  if(!el) return;
+  const total = _allUsers.length;
+  const active = _allUsers.filter(u=>u.status!=='disabled').length;
+  const admins = _allUsers.filter(u=>u.role==='admin').length;
+  el.innerHTML=`
+    <div class="m-card"><div class="m-icon" style="background:rgba(79,124,255,0.12);color:#4f7cff;"><i class="ti ti-users" aria-hidden="true"></i></div><div class="m-label">Total Users</div><div class="m-value">${total}</div><div class="m-change">Registered accounts</div></div>
+    <div class="m-card"><div class="m-icon" style="background:rgba(34,201,138,0.12);color:#22c98a;"><i class="ti ti-user-check" aria-hidden="true"></i></div><div class="m-label">Active</div><div class="m-value" style="color:#22c98a;">${active}</div><div class="m-change">Can sign in</div></div>
+    <div class="m-card"><div class="m-icon" style="background:rgba(255,92,92,0.12);color:#ff5c5c;"><i class="ti ti-user-off" aria-hidden="true"></i></div><div class="m-label">Disabled</div><div class="m-value" style="color:#ff5c5c;">${total-active}</div><div class="m-change">Blocked access</div></div>
+    <div class="m-card"><div class="m-icon" style="background:rgba(240,165,0,0.12);color:#f0a500;"><i class="ti ti-shield" aria-hidden="true"></i></div><div class="m-label">Admins</div><div class="m-value" style="color:#f0a500;">${admins}</div><div class="m-change">With admin role</div></div>`;
+}
+
+async function loadAllUsers(){
+  if(!requireAdmin()) return;
+  const listEl = document.getElementById('admin-users-list');
+  if(!listEl) return;
+  listEl.innerHTML='<div class="empty" style="padding:20px 0;"><i class="ti ti-loader-2" style="animation:spin 1s linear infinite;font-size:20px;display:block;margin-bottom:6px;" aria-hidden="true"></i>Loading users from Firebase…</div>';
+
+  const {key,proj} = getFirebaseConfig();
+  if(!key||!proj){
+    listEl.innerHTML='<div class="empty">Firebase not configured. Go to Data Sync → Firebase first.</div>';
+    return;
+  }
+
+  try{
+    // List all docs in financeos_auth collection
+    const url = `https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/financeos_auth?key=${key}&pageSize=100`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    const docs = data.documents || [];
+    _allUsers = docs.map(d=>{
+      const f = d.fields || {};
+      const docId = d.name.split('/').pop();
+      return {
+        docId,
+        name:       f.name?.stringValue       || '—',
+        email:      f.email?.stringValue      || '(hidden)',
+        role:       f.role?.stringValue       || 'user',
+        status:     f.status?.stringValue     || 'active',
+        created:    f.created?.stringValue    || '—',
+        lastLogin:  f.lastLogin?.stringValue  || 'Never',
+        dataAccess: f.dataAccess?.stringValue || ''
+      };
+    });
+    renderAdminMetrics();
+    renderUserTable(_allUsers);
+  } catch(e){
+    listEl.innerHTML=`<div class="empty">Error: ${e.message}</div>`;
+  }
+}
+
+function filterAdminUsers(){
+  const q = (document.getElementById('admin-search')?.value||'').toLowerCase();
+  const filtered = q ? _allUsers.filter(u=>u.name.toLowerCase().includes(q)||u.email.toLowerCase().includes(q)||u.role.includes(q)) : _allUsers;
+  renderUserTable(filtered);
+}
+
+function renderUserTable(users){
+  const listEl = document.getElementById('admin-users-list');
+  if(!listEl) return;
+  if(!users.length){ listEl.innerHTML='<div class="empty">No users found.</div>'; return; }
+  const roleColor = r => r==='admin'?'#f0a500':'#4f7cff';
+  const statusColor = s => s==='disabled'?'#ff5c5c':'#22c98a';
+  listEl.innerHTML=`<div style="overflow-x:auto;">
+    <table class="data-table" style="min-width:600px;">
+      <thead><tr>
+        <th>Name</th><th>Email</th><th>Role</th><th>Status</th>
+        <th>Created</th><th>Last login</th><th style="text-align:right;">Actions</th>
+      </tr></thead>
+      <tbody>
+        ${users.map(u=>`<tr>
+          <td style="font-weight:500;">${u.name}</td>
+          <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);">${u.email}</td>
+          <td><span style="font-size:10px;padding:2px 9px;border-radius:20px;background:${roleColor(u.role)}18;color:${roleColor(u.role)};font-weight:600;">${u.role.toUpperCase()}</span></td>
+          <td><span style="font-size:10px;padding:2px 9px;border-radius:20px;background:${statusColor(u.status)}18;color:${statusColor(u.status)};font-weight:600;">${u.status.toUpperCase()}</span></td>
+          <td style="font-size:11px;color:var(--text2);">${u.created?u.created.slice(0,10):'—'}</td>
+          <td style="font-size:11px;color:var(--text2);">${u.lastLogin}</td>
+          <td style="text-align:right;white-space:nowrap;">
+            ${u.status==='disabled'
+              ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;color:var(--green);margin-right:3px;" onclick="adminToggleUser('${u.docId}','${u.email}','active')" title="Enable user"><i class="ti ti-user-check" aria-hidden="true"></i></button>`
+              : `<button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;color:var(--amber);margin-right:3px;" onclick="adminToggleUser('${u.docId}','${u.email}','disabled')" title="Disable user"><i class="ti ti-user-off" aria-hidden="true"></i></button>`
+            }
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-right:3px;" onclick="adminToggleRole('${u.docId}','${u.email}','${u.role}')" title="${u.role==='admin'?'Remove admin':'Make admin'}"><i class="ti ti-shield" aria-hidden="true"></i></button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-right:3px;color:${u.dataAccess==='admin'?'var(--green)':'var(--text2)'};" onclick="adminGrantAccess('${u.docId}','${u.email}','${u.name}','${u.dataAccess||''}')" title="${u.dataAccess==='admin'?'Revoke admin data access':'Grant admin data access'}"><i class="ti ti-database-share" aria-hidden="true"></i></button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-right:3px;" onclick="adminResetPassword('${u.docId}','${u.email}','${u.name}')" title="Reset password"><i class="ti ti-key" aria-hidden="true"></i></button>
+            <button class="btn btn-danger" style="font-size:11px;padding:4px 8px;" onclick="adminDeleteUser('${u.docId}','${u.email}','${u.name}')" title="Delete user"><i class="ti ti-trash" aria-hidden="true"></i></button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+async function adminToggleUser(docId, email, newStatus){
+  if(!requireAdmin()) return;
+  const {key,proj} = getFirebaseConfig();
+  if(!key||!proj){ toast('Firebase not configured'); return; }
+  try{
+    const url = `https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/financeos_auth/${docId}?key=${key}&updateMask.fieldPaths=status`;
+    await fetch(url,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{status:{stringValue:newStatus}}})});
+    const u = _allUsers.find(u=>u.docId===docId);
+    if(u) u.status = newStatus;
+    renderUserTable(_allUsers);
+    renderAdminMetrics();
+    logActivity(newStatus==='disabled'?'Disabled user':'Enabled user', email);
+    renderAdminActivityLog();
+    toast(`User ${email} ${newStatus==='disabled'?'disabled':'enabled'}`);
+  } catch(e){ toast('Error: '+e.message); }
+}
+
+async function adminToggleRole(docId, email, currentRole){
+  if(!requireAdmin()) return;
+  const newRole = currentRole==='admin' ? 'user' : 'admin';
+  if(!confirm(`${newRole==='admin'?'Grant admin access to':'Remove admin access from'} ${email}?`)) return;
+  const {key,proj} = getFirebaseConfig();
+  if(!key||!proj){ toast('Firebase not configured'); return; }
+  try{
+    const url = `https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/financeos_auth/${docId}?key=${key}&updateMask.fieldPaths=role`;
+    await fetch(url,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{role:{stringValue:newRole}}})});
+    const u = _allUsers.find(u=>u.docId===docId);
+    if(u) u.role = newRole;
+    renderUserTable(_allUsers);
+    renderAdminMetrics();
+    logActivity(`Role changed to ${newRole}`, email);
+    renderAdminActivityLog();
+    toast(`${email} is now ${newRole}`);
+  } catch(e){ toast('Error: '+e.message); }
+}
+
+async function adminResetPassword(docId, email, name){
+  if(!requireAdmin()) return;
+  const newPw = prompt(`Set new password for ${name} (${email}):\n\nEnter new password (min 8 chars):`);
+  if(!newPw) return;
+  if(newPw.length < 8){ toast('Password too short (min 8 chars)'); return; }
+  const {key,proj} = getFirebaseConfig();
+  if(!key||!proj){ toast('Firebase not configured'); return; }
+  try{
+    const newSalt   = crypto.getRandomValues(new Uint8Array(16)).reduce((s,b)=>s+b.toString(16).padStart(2,'0'),'');
+    const newPwHash = await sha256(newPw + newSalt);
+    const url = `https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/financeos_auth/${docId}?key=${key}&updateMask.fieldPaths=pwHash&updateMask.fieldPaths=salt`;
+    await fetch(url,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{pwHash:{stringValue:newPwHash},salt:{stringValue:newSalt}}})});
+    logActivity('Password reset', email);
+    renderAdminActivityLog();
+    toast(`Password reset for ${name}`);
+  } catch(e){ toast('Error: '+e.message); }
+}
+
+async function adminDeleteUser(docId, email, name){
+  if(!requireAdmin()) return;
+  if(!confirm(`⚠️ Permanently delete account for ${name} (${email})?\n\nThis cannot be undone. Their login credentials will be removed.`)) return;
+  const {key,proj} = getFirebaseConfig();
+  if(!key||!proj){ toast('Firebase not configured'); return; }
+  try{
+    const url = `https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/financeos_auth/${docId}?key=${key}`;
+    await fetch(url,{method:'DELETE'});
+    _allUsers = _allUsers.filter(u=>u.docId!==docId);
+    renderUserTable(_allUsers);
+    renderAdminMetrics();
+    logActivity('Account deleted', email);
+    renderAdminActivityLog();
+    toast(`Account deleted: ${email}`);
+  } catch(e){ toast('Error: '+e.message); }
+}
+
+async function adminGrantAccess(docId, email, name, currentAccess){
+  if(!requireAdmin()) return;
+  const hasAccess = currentAccess === 'admin';
+  const action = hasAccess ? 'revoke' : 'grant';
+  if(!confirm(`${hasAccess ? 'Revoke' : 'Grant'} admin data access for ${name} (${email})?\n\n${hasAccess ? 'They will no longer see your dashboard data.' : 'They will be able to VIEW your financial data (read-only) when they log in.'}`)) return;
+  const {key,proj} = getFirebaseConfig();
+  if(!key||!proj){ toast('Firebase not configured'); return; }
+  try{
+    const newAccess = hasAccess ? '' : 'admin';
+    const fields = newAccess
+      ? { dataAccess:{stringValue:'admin'}, dataAccessGrantedBy:{stringValue:'Vamsi (Admin)'}, dataAccessGrantedAt:{stringValue:new Date().toISOString()} }
+      : { dataAccess:{stringValue:''} };
+    const mask = newAccess
+      ? 'dataAccess&updateMask.fieldPaths=dataAccessGrantedBy&updateMask.fieldPaths=dataAccessGrantedAt'
+      : 'dataAccess';
+    const url = `https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/financeos_auth/${docId}?key=${key}&updateMask.fieldPaths=${mask}`;
+    await fetch(url,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields})});
+    const u = _allUsers.find(u=>u.docId===docId);
+    if(u) u.dataAccess = newAccess;
+    renderUserTable(_allUsers);
+    logActivity(`Data access ${action}ed`, email);
+    renderAdminActivityLog();
+    toast(`${action==='grant'?'✓ Access granted to':'Access revoked from'} ${name}`);
+  } catch(e){ toast('Error: '+e.message); }
+}
+
+async function adminCreateUser(){
+  if(!requireAdmin()) return;
+  const name   = document.getElementById('admin-new-name').value.trim();
+  const em     = document.getElementById('admin-new-email').value.trim().toLowerCase();
+  const pw     = document.getElementById('admin-new-pass').value;
+  const role   = document.getElementById('admin-new-role').value;
+  const status = document.getElementById('admin-create-status');
+
+  if(!name||!em||!pw){ status.style.color='var(--red)'; status.textContent='Fill all fields.'; return; }
+  if(pw.length<8){ status.style.color='var(--red)'; status.textContent='Password min 8 chars.'; return; }
+  if(!em.includes('@')){ status.style.color='var(--red)'; status.textContent='Invalid email.'; return; }
+
+  const {key,proj} = getFirebaseConfig();
+  if(!key||!proj){ status.style.color='var(--red)'; status.textContent='Firebase not configured.'; return; }
+
+  status.style.color='var(--text2)'; status.textContent='Creating…';
+  try{
+    const emailHash = await sha256(em);
+    const existing  = await fbAuthGet(emailHash);
+    if(existing){ status.style.color='var(--red)'; status.textContent='Account already exists for this email.'; return; }
+    const salt      = crypto.getRandomValues(new Uint8Array(16)).reduce((s,b)=>s+b.toString(16).padStart(2,'0'),'');
+    const pwHash    = await sha256(pw+salt);
+    await fbAuthSet(emailHash,{
+      name:    {stringValue:name},
+      email:   {stringValue:em},
+      pwHash:  {stringValue:pwHash},
+      salt:    {stringValue:salt},
+      role:    {stringValue:role},
+      status:  {stringValue:'active'},
+      created: {stringValue:new Date().toISOString()}
+    });
+    status.style.color='var(--green)'; status.textContent=`✓ Account created for ${em}`;
+    document.getElementById('admin-new-name').value='';
+    document.getElementById('admin-new-email').value='';
+    document.getElementById('admin-new-pass').value='';
+    logActivity('Created account (role: '+role+')', em);
+    await loadAllUsers();
+    renderAdminActivityLog();
+    toast(`User ${name} created`);
+  } catch(e){ status.style.color='var(--red)'; status.textContent='Error: '+e.message; }
+}
+
+function renderAdminActivityLog(){
+  const el = document.getElementById('admin-activity-log');
+  if(!el) return;
+  if(!_activityLog.length){ el.innerHTML='<div class="empty">No activity recorded yet.</div>'; return; }
+  el.innerHTML=_activityLog.slice(0,30).map(a=>`
+    <div class="tx-row">
+      <div class="tx-ico" style="background:rgba(79,124,255,0.12);color:#4f7cff;font-size:13px;"><i class="ti ti-activity" aria-hidden="true"></i></div>
+      <div class="tx-info">
+        <div class="tx-name">${a.action}</div>
+        <div class="tx-meta">${a.target} &middot; ${a.at}</div>
+      </div>
+    </div>`).join('');
+}
+
+// Update lastLogin timestamp on sign-in
+const _origCompleteLogin = completeLogin;
+completeLogin = async function(em, name){
+  // update lastLogin in Firebase
+  try{
+    const {key,proj} = getFirebaseConfig();
+    if(key&&proj){
+      const emailHash = await sha256(em);
+      const url = `https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/financeos_auth/${emailHash}?key=${key}&updateMask.fieldPaths=lastLogin`;
+      fetch(url,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{lastLogin:{stringValue:new Date().toLocaleString('en-IN')}}})}).catch(()=>{});
+    }
+  } catch(e){}
+  _origCompleteLogin(em, name);
+};
+
+// Check if user is disabled before allowing login
+const _origDoLogin = doLogin;
+doLogin = async function(){
+  const em = document.getElementById('login-email').value.trim().toLowerCase();
+  if(em){
+    try{
+      const {key,proj} = getFirebaseConfig();
+      if(key&&proj){
+        const emailHash = await sha256(em);
+        const fields = await fbAuthGet(emailHash);
+        if(fields && fields.status?.stringValue === 'disabled'){
+          showLoginError('Your account has been disabled. Contact the administrator.');
+          return;
+        }
+      }
+    } catch(e){ /* proceed normally */ }
+  }
+  _origDoLogin();
+};
+
+/* ═══════════════════════════════════════
+   VISUAL ENHANCEMENTS — RIPPLE + SPARKLINES
+═══════════════════════════════════════ */
+
+// ── RIPPLE on every click ──────────────────────────────────────────────────
+document.addEventListener('click', e => {
+  const target = e.target.closest('.btn,.nav-item,.m-card,.chart-card,.topbar-btn,.notif-btn');
+  if(!target) return;
+  target.classList.add('ripple-host');
+  const r = document.createElement('span');
+  r.className = 'ripple';
+  const rect = target.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height) * 1.5;
+  r.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px;`;
+  target.appendChild(r);
+  r.addEventListener('animationend', () => r.remove());
+});
+
+// ── SPARKLINES on KPI cards ───────────────────────────────────────────────
+function drawSparkline(canvas, data, color){
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.offsetWidth || 180;
+  const h = canvas.offsetHeight || 40;
+  canvas.width = w; canvas.height = h;
+  ctx.clearRect(0,0,w,h);
+  if(!data || data.length < 2) return;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const pts = data.map((v,i) => [i/(data.length-1)*w, h - ((v-min)/range)*(h*0.8) - h*0.1]);
+  // gradient fill
+  const grad = ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0, color+'60');
+  grad.addColorStop(1, color+'00');
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], h);
+  pts.forEach(([x,y]) => ctx.lineTo(x,y));
+  ctx.lineTo(pts[pts.length-1][0], h);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+  // line
+  ctx.beginPath();
+  pts.forEach(([x,y],i) => i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y));
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+function addSparklinesToKPICards(months6){
+  const mInc = months6.map(m => monthTx(m).filter(t=>t.type==='cr').reduce((s,t)=>s+t.amount,0));
+  const mExp = months6.map(m => monthTx(m).filter(t=>t.type==='dr').reduce((s,t)=>s+t.amount,0));
+  const mSav = mInc.map((v,i) => v - mExp[i]);
+  const mEmi = months6.map(() => state.loans.reduce((s,l)=>s+l.emi,0));
+  const mNW  = months6.map((_,i) => {
+    const totalA=state.accounts.reduce((s,a)=>s+a.balance,0)+state.investments.reduce((s,i)=>s+i.current,0);
+    const totalL=state.loans.reduce((s,l)=>s+loanOutstanding(l),0)+state.cards.reduce((s,c)=>s+c.used,0);
+    return Math.round((totalA-totalL)*(0.9+i*0.02));
+  });
+
+  const cards = document.querySelectorAll('#dash-metrics .m-card');
+  const datasets = [mInc, mExp, mSav, mEmi, mNW, []];
+  const colors = ['#22c98a','#ff5c5c','#4f7cff','#f0a500','#22d4e0','#ff5c96'];
+
+  cards.forEach((card, i) => {
+    if(!datasets[i] || !datasets[i].length) return;
+    let canvas = card.querySelector('.m-sparkline');
+    if(!canvas){
+      canvas = document.createElement('canvas');
+      canvas.className = 'm-sparkline';
+      card.appendChild(canvas);
+    }
+    requestAnimationFrame(() => drawSparkline(canvas, datasets[i], colors[i]));
+  });
+}
+
 renderNotifPanel();
 updateNotifDot();
 
@@ -4425,6 +5323,7 @@ function toggleFirebaseAutoSync(on){
 /* ── Override save() to trigger auto-sync for both backends ── */
 const _origSave = save;
 save = function(){
+  if(isReadOnly()){ toast('⚠️ Read-only — cannot modify shared data'); return; }
   _origSave();
   // Supabase: immediate
   if(_autoSyncEnabled && syncCfg.sbUrl && syncCfg.sbKey){
