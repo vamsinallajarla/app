@@ -2,8 +2,29 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
 <title>FinanceOS — Personal Finance Dashboard</title>
+
+<!-- PWA / Add to Home Screen -->
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="FinanceOS"/>
+<meta name="application-name" content="FinanceOS"/>
+<meta name="theme-color" content="#0d0d14"/>
+<meta name="description" content="Your personal finance command centre"/>
+
+<!-- App icon for iPhone home screen -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%230d0d14'/><rect x='20' y='20' width='140' height='140' rx='28' fill='url(%23g)'/><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%234f7cff'/><stop offset='1' stop-color='%237c5cff'/></linearGradient></defs><text x='90' y='118' font-size='80' text-anchor='middle' fill='white'>💹</text></svg>"/>
+
+<!-- Splash screen background -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<style>
+  /* Safe area insets for iPhone notch/Dynamic Island */
+  body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+  .topbar { padding-top: env(safe-area-inset-top); height: calc(56px + env(safe-area-inset-top)); }
+  .sidebar { padding-top: env(safe-area-inset-top); }
+</style>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
@@ -124,6 +145,33 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
 #app{display:none;height:100vh;overflow:hidden;flex-direction:row;}
 #app.visible{display:flex;}
 
+/* ── MOBILE RESPONSIVE ── */
+@media(max-width:768px){
+  :root{--sidebar:0px;}
+  .sidebar{
+    position:fixed;left:-240px;top:0;bottom:0;z-index:1100;
+    width:240px;transition:left .3s cubic-bezier(.22,1,.36,1);
+    box-shadow:none;
+  }
+  .sidebar.open{left:0;box-shadow:8px 0 32px rgba(0,0,0,0.6);}
+  .sidebar-overlay{display:none;position:fixed;inset:0;z-index:1099;background:rgba(0,0,0,0.5);}
+  .sidebar.open~.sidebar-overlay,.sidebar-overlay.visible{display:block;}
+  .content{margin-left:0!important;width:100%;}
+  .topbar{padding-left:12px!important;}
+  .topbar-left{gap:8px;}
+  .chart-row.cols-3{grid-template-columns:1fr!important;}
+  .chart-row.cols-2{grid-template-columns:1fr!important;}
+  .metrics-row{grid-template-columns:1fr 1fr!important;}
+  .form-row{flex-direction:column;}
+  .cc-grid{grid-template-columns:1fr!important;}
+  /* Mobile menu button */
+  .mobile-menu-btn{display:flex!important;}
+}
+@media(min-width:769px){
+  .mobile-menu-btn{display:none!important;}
+  .sidebar-overlay{display:none!important;}
+}
+
 /* SIDEBAR */
 .sidebar{
   width:var(--sidebar);flex-shrink:0;
@@ -190,7 +238,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
 
 /* METRICS ROW */
-.metrics-row{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:18px;}
+.metrics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:18px;}
+@media(min-width:1200px){.metrics-row{grid-template-columns:repeat(6,1fr);}}
 
 /* ── GLASSMORPHISM KPI CARDS ── */
 .m-card{
@@ -438,6 +487,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
 .form-group{margin-bottom:14px;}
 .form-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;display:block;}
 .form-input{width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s;}
+select.form-input option,select option{background:#16161e;color:#e8e8f0;}
+select.form-input option:hover,select option:hover,select.form-input option:checked{background:#4f7cff;color:#fff;}
 .form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
 .form-row{display:flex;gap:10px;flex-wrap:wrap;}
 .form-row .form-group{flex:1;min-width:120px;}
@@ -770,7 +821,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
   <div id="app-currency-bg" aria-hidden="true"></div>
 
   <!-- SIDEBAR -->
-  <div class="sidebar">
+  <div class="sidebar" id="sidebar">
+    <div id="sidebar-overlay" onclick="closeSidebar()" style="display:none;position:fixed;inset:0;z-index:-1;background:rgba(0,0,0,0.5);"></div>
     <div class="sidebar-top">
       <div class="brand">
         <div class="bicon"><i class="ti ti-chart-line" aria-hidden="true"></i></div>
@@ -810,6 +862,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
         <div class="nav-item" onclick="showPage('add')"><i class="ti ti-plus" aria-hidden="true"></i> Add Entry</div>
         <div class="nav-item" onclick="showPage('import')"><i class="ti ti-file-import" aria-hidden="true"></i> Import Data</div>
         <div class="nav-item" onclick="showPage('datasync')"><i class="ti ti-cloud" aria-hidden="true"></i> Data Sync</div>
+        <div class="nav-item" onclick="showPage('autoimport')"><i class="ti ti-bolt" aria-hidden="true"></i> Auto Import <span class="nav-badge" style="background:var(--green);font-size:9px;">NEW</span></div>
         <div class="nav-item" id="admin-nav-item" style="display:none;" onclick="showPage('admin')"><i class="ti ti-shield-lock" aria-hidden="true"></i> Admin Panel <span class="nav-badge" style="background:var(--red);">A</span></div>
       </div>
     </div>
@@ -832,6 +885,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
   <div class="main">
     <div class="topbar">
       <div class="topbar-left">
+        <button class="mobile-menu-btn" onclick="openSidebar()" style="display:none;background:none;border:none;color:var(--text);font-size:20px;padding:4px 8px;cursor:pointer;margin-right:4px;" aria-label="Menu"><i class="ti ti-menu-2" aria-hidden="true"></i></button>
         <div class="topbar-title" id="topbar-title">Dashboard</div>
         <div class="month-picker-wrap">
           <div class="period-pill" id="period-pill" onclick="toggleMonthPicker(event)">
@@ -1314,18 +1368,81 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
       <!-- ADD ENTRY -->
       <div class="page" id="page-add">
         <div class="chart-card" style="margin-bottom:14px;">
-          <div class="ch-header"><div class="ch-title"><i class="ti ti-pencil" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>Manual Entry</div></div>
+          <div class="ch-header">
+            <div>
+              <div class="ch-title"><i class="ti ti-pencil" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>Manual Entry</div>
+              <div class="ch-sub" style="margin-top:2px;">Add a transaction — optionally enter the available balance shown in your UPI/bank alert to auto-update account balance</div>
+            </div>
+          </div>
           <div class="form-row">
             <div class="form-group" style="flex:3;"><label class="form-label">Description</label><input class="form-input" id="m-name" placeholder="e.g. Swiggy dinner"/></div>
-            <div class="form-group"><label class="form-label">Amount ₹</label><input class="form-input" id="m-amount" type="number"/></div>
+            <div class="form-group"><label class="form-label">Amount ₹</label><input class="form-input" id="m-amount" type="number" placeholder="0"/></div>
           </div>
           <div class="form-row">
             <div class="form-group"><label class="form-label">Type</label><select class="form-input" id="m-type"><option value="dr">Expense (Dr)</option><option value="cr">Income (Cr)</option></select></div>
             <div class="form-group"><label class="form-label">Category</label><select class="form-input" id="m-cat"><option>Food</option><option>Transfer</option><option>Salary</option><option>EMI</option><option>Shopping</option><option>Fuel</option><option>Bills</option><option>Other</option></select></div>
-            <div class="form-group"><label class="form-label">Source</label><select class="form-input" id="m-src"><option>PhonePe</option><option>Kotak 811</option><option>SBI</option><option>HDFC</option><option>ICICI</option><option>Axis</option><option>Cash</option></select></div>
+            <div class="form-group"><label class="form-label">Source / Account</label>
+              <select class="form-input" id="m-src" onchange="updateBalanceHint()">
+                <option value="PhonePe">PhonePe</option>
+                <option value="Kotak 811">Kotak 811</option>
+                <option value="SBI">SBI</option>
+                <option value="HDFC">HDFC</option>
+                <option value="ICICI">ICICI</option>
+                <option value="Axis">Axis</option>
+                <option value="Cash">Cash</option>
+              </select>
+            </div>
             <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-date" type="date"/></div>
           </div>
-          <button class="btn btn-primary" onclick="addManual()">Add transaction</button>
+
+          <!-- Available balance row -->
+          <div style="background:rgba(79,124,255,0.06);border:1px solid rgba(79,124,255,0.15);border-radius:10px;padding:14px;margin-bottom:14px;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <div style="flex:1;min-width:200px;">
+                <label class="form-label" style="display:flex;align-items:center;gap:6px;">
+                  <i class="ti ti-refresh" style="color:#4f7cff;font-size:13px;" aria-hidden="true"></i>
+                  Available balance after transaction ₹
+                  <span style="font-size:10px;color:var(--text3);">(optional — from UPI/bank SMS)</span>
+                </label>
+                <input class="form-input" id="m-avail-bal" type="number" placeholder="e.g. 47,660 — as shown in SMS or UPI app"/>
+              </div>
+              <div id="m-bal-hint" style="font-size:12px;color:var(--text2);min-width:160px;"></div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="addManual()">
+            <i class="ti ti-plus" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Add transaction
+          </button>
+        </div>
+
+        <!-- Quick balance update (standalone) -->
+        <div class="chart-card">
+          <div class="ch-header">
+            <div>
+              <div class="ch-title"><i class="ti ti-refresh" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>Quick Balance Update</div>
+              <div class="ch-sub" style="margin-top:2px;">Just got an SMS with your balance? Update it here directly without adding a transaction</div>
+            </div>
+          </div>
+          <div class="form-row" style="align-items:flex-end;">
+            <div class="form-group" style="flex:2;">
+              <label class="form-label">Account</label>
+              <select class="form-input" id="qb-account">
+                <option value="">Select account…</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">New balance ₹</label>
+              <input class="form-input" id="qb-balance" type="number" placeholder="Enter current balance"/>
+            </div>
+            <div class="form-group" style="max-width:160px;">
+              <button class="btn btn-primary" style="width:100%;" onclick="quickUpdateBalance()">
+                <i class="ti ti-check" style="font-size:13px;vertical-align:-2px;" aria-hidden="true"></i> Update balance
+              </button>
+            </div>
+          </div>
+          <div id="qb-status" style="font-size:12px;margin-top:6px;min-height:16px;"></div>
+          <!-- Current balances snapshot -->
+          <div id="qb-accounts-list" style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;"></div>
         </div>
       </div>
 
@@ -1362,7 +1479,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
               <div style="font-size:13px;font-weight:500;">Parsed transactions — review before importing</div>
               <div style="display:flex;gap:8px;">
                 <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px;" onclick="clearSMSPreview()">Clear</button>
-                <button class="btn btn-primary" style="font-size:12px;padding:6px 14px;" onclick="commitSMSImport()"><i class="ti ti-check" style="font-size:13px;vertical-align:-1px;" aria-hidden="true"></i> Import all <span id="sms-commit-count"></span></button>
+                <button class="btn btn-primary" style="font-size:12px;padding:6px 14px;" onclick="commitBulkSMSImport()"><i class="ti ti-check" style="font-size:13px;vertical-align:-1px;" aria-hidden="true"></i> Import all <span id="sms-commit-count"></span></button>
               </div>
             </div>
             <div style="overflow-x:auto;">
@@ -1449,8 +1566,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
         <div class="chart-card" style="margin-bottom:14px;">
           <div class="ch-header">
             <div>
-              <div class="ch-title"><i class="ti ti-scan" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>Document Scanner <span style="font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(79,124,255,0.15);color:var(--accent);font-weight:600;margin-left:6px;">AI</span></div>
-              <div class="ch-sub" style="margin-top:2px;">Upload a photo or PDF of any bank statement, credit card bill, or passbook — AI extracts all details</div>
+              <div class="ch-title"><i class="ti ti-scan" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>Document Scanner <span style="font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(34,201,138,0.15);color:#22c98a;font-weight:600;margin-left:6px;">PDF / Image</span></div>
+              <div class="ch-sub" style="margin-top:2px;">Upload a PDF of any bank statement, credit card bill, or passbook — text is extracted automatically</div>
             </div>
           </div>
 
@@ -1462,39 +1579,85 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
 
           <!-- TAB: TRANSACTIONS -->
           <div class="doc-section active" id="doc-section-transactions">
-            <div class="doc-drop-zone" id="doc-tx-dropzone" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDocDrop(event,'tx')">
-              <input type="file" accept="image/*,.pdf" onchange="handleDocFile(event,'tx')" id="doc-tx-input"/>
-              <div class="dz-icon"><i class="ti ti-file-text" aria-hidden="true"></i></div>
-              <div class="dz-title">Drop statement image or PDF here</div>
-              <div class="dz-sub">Supports photos, scanned PDFs, screenshots — Kotak, SBI, HDFC, ICICI, PhonePe, credit cards</div>
+            <div style="background:rgba(79,124,255,0.06);border:1px solid rgba(79,124,255,0.2);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+              <div style="font-weight:600;color:#4f7cff;margin-bottom:8px;font-size:13px;"><i class="ti ti-copy" style="font-size:14px;vertical-align:-2px;margin-right:5px;" aria-hidden="true"></i>How to import from any bank statement PDF</div>
+              <div style="font-size:12px;color:var(--text2);line-height:1.9;">
+                1. Open your bank statement PDF in <strong style="color:var(--text);">Chrome / Adobe / any PDF viewer</strong><br>
+                2. Press <kbd style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:11px;">Ctrl+A</kbd> to select all text, then <kbd style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:11px;">Ctrl+C</kbd> to copy<br>
+                3. Paste below and click <strong style="color:var(--text);">Parse Transactions</strong>
+              </div>
             </div>
-            <div id="doc-tx-preview" style="display:none;margin-top:14px;">
-              <div class="doc-scan-overlay" id="doc-tx-img-wrap">
-                <div class="doc-scan-line"></div>
-                <img id="doc-tx-img" class="doc-preview-img" alt="Uploaded statement preview" style="display:none;"/>
+
+            <div class="form-group">
+              <label class="form-label">Paste statement text here</label>
+              <textarea id="doc-paste-input" class="form-input" rows="8"
+                style="font-family:'DM Mono',monospace;font-size:12px;resize:vertical;line-height:1.6;"
+                placeholder="Paste the copied text from your PDF here...&#10;&#10;Example:&#10;01-05-2026  UPI/SWIGGY TECHNOLOGIES  -340.00  47,620.00&#10;02-05-2026  SALARY CREDIT  85,000.00  1,32,620.00&#10;03-05-2026  TSSPDCL ELECTRICITY  -1,240.00  1,31,380.00"></textarea>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
+              <button class="btn btn-primary" onclick="parseDocPaste()">
+                <i class="ti ti-scan" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Parse Transactions
+              </button>
+              <button class="btn btn-ghost" style="font-size:12px;" onclick="document.getElementById('doc-paste-input').value='';document.getElementById('doc-paste-results').style.display='none';document.getElementById('doc-paste-status').textContent='';">Clear</button>
+              <span id="doc-paste-status" style="font-size:12px;color:var(--text2);"></span>
+            </div>
+
+            <div id="doc-paste-results" style="display:none;margin-top:14px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <div style="font-size:13px;font-weight:500;" id="doc-paste-count"></div>
+                <div style="display:flex;gap:8px;">
+                  <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" onclick="document.querySelectorAll('.doc-paste-chk').forEach(c=>c.checked=true)">Select all</button>
+                  <button class="btn btn-primary" style="font-size:12px;padding:5px 12px;" onclick="commitDocPasteImport()">
+                    <i class="ti ti-check" style="font-size:13px;vertical-align:-1px;" aria-hidden="true"></i> Import checked
+                  </button>
+                </div>
               </div>
-              <div style="display:flex;gap:8px;margin:10px 0;align-items:center;flex-wrap:wrap;">
-                <button class="btn btn-primary" onclick="scanDocTransactions()" id="doc-tx-scan-btn"><i class="ti ti-wand" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Extract transactions with AI</button>
-                <span id="doc-tx-status" style="font-size:12px;color:var(--text2);"></span>
-                <button class="btn btn-ghost" style="font-size:12px;padding:6px 10px;margin-left:auto;" onclick="clearDocTx()">Clear</button>
+              <div style="overflow-x:auto;">
+                <table class="data-table" style="min-width:560px;">
+                  <thead><tr><th style="width:30px;"></th><th>Date</th><th>Description</th><th>Category</th><th style="text-align:right;">Amount</th><th>Type</th></tr></thead>
+                  <tbody id="doc-paste-tbody"></tbody>
+                </table>
               </div>
-              <div id="doc-tx-results" style="display:none;margin-top:10px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                  <div style="font-size:13px;font-weight:500;">Extracted transactions — review &amp; edit before importing</div>
-                  <div style="display:flex;gap:8px;">
-                    <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" onclick="document.querySelectorAll('.doc-tx-chk').forEach(c=>c.checked=true)">All</button>
-                    <button class="btn btn-primary" style="font-size:12px;padding:5px 12px;" onclick="commitDocTxImport()"><i class="ti ti-check" style="font-size:13px;vertical-align:-1px;" aria-hidden="true"></i> Import checked</button>
+              <div id="doc-paste-dup-warn" style="display:none;margin-top:8px;font-size:12px;padding:8px 12px;background:rgba(240,165,0,0.1);border:1px solid rgba(240,165,0,0.25);border-radius:8px;color:var(--amber);"></div>
+            </div>
+
+            <!-- Still allow PDF drop as fallback -->
+            <details style="margin-top:16px;">
+              <summary style="font-size:12px;color:var(--text3);cursor:pointer;padding:6px 0;">Or try uploading a digital PDF directly (unreliable for scanned PDFs)</summary>
+              <div style="margin-top:10px;">
+                <div class="doc-drop-zone" id="doc-tx-dropzone" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDocDrop(event,'tx')">
+                  <input type="file" accept=".pdf" onchange="handleDocFile(event,'tx')" id="doc-tx-input"/>
+                  <div class="dz-icon"><i class="ti ti-file-text" aria-hidden="true"></i></div>
+                  <div class="dz-title">Drop digital PDF here</div>
+                  <div class="dz-sub">Text-layer PDFs only — not scanned or printed statements</div>
+                </div>
+                <div id="doc-tx-preview" style="display:none;margin-top:10px;">
+                  <div class="doc-scan-overlay" id="doc-tx-img-wrap"><div class="doc-scan-line"></div><img id="doc-tx-img" class="doc-preview-img" alt="" style="display:none;"/></div>
+                  <div style="display:flex;gap:8px;margin:10px 0;align-items:center;">
+                    <button class="btn btn-primary" onclick="scanDocTransactions()" id="doc-tx-scan-btn"><i class="ti ti-scan" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Extract</button>
+                    <span id="doc-tx-status" style="font-size:12px;color:var(--text2);"></span>
+                    <button class="btn btn-ghost" style="font-size:12px;padding:6px 10px;margin-left:auto;" onclick="clearDocTx()">Clear</button>
+                  </div>
+                  <div id="doc-tx-results" style="display:none;margin-top:10px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                      <div style="font-size:13px;font-weight:500;">Review before importing</div>
+                      <div style="display:flex;gap:8px;">
+                        <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" onclick="document.querySelectorAll('.doc-tx-chk').forEach(c=>c.checked=true)">All</button>
+                        <button class="btn btn-primary" style="font-size:12px;padding:5px 12px;" onclick="commitDocTxImport()"><i class="ti ti-check" style="font-size:13px;vertical-align:-1px;" aria-hidden="true"></i> Import</button>
+                      </div>
+                    </div>
+                    <div style="overflow-x:auto;">
+                      <table class="data-table" style="min-width:560px;">
+                        <thead><tr><th style="width:30px;"></th><th>Date</th><th>Description</th><th>Category</th><th style="text-align:right;">Amount</th><th>Type</th></tr></thead>
+                        <tbody id="doc-tx-tbody"></tbody>
+                      </table>
+                    </div>
+                    <div id="doc-tx-dup-warn" style="display:none;margin-top:8px;font-size:12px;padding:8px 12px;background:rgba(240,165,0,0.1);border:1px solid rgba(240,165,0,0.25);border-radius:8px;color:var(--amber);"></div>
                   </div>
                 </div>
-                <div style="overflow-x:auto;">
-                  <table class="data-table" style="min-width:560px;">
-                    <thead><tr><th style="width:30px;"></th><th>Date</th><th>Description</th><th>Category</th><th style="text-align:right;">Amount</th><th>Type</th></tr></thead>
-                    <tbody id="doc-tx-tbody"></tbody>
-                  </table>
-                </div>
-                <div id="doc-tx-dup-warn" style="display:none;margin-top:8px;font-size:12px;padding:8px 12px;background:rgba(240,165,0,0.1);border:1px solid rgba(240,165,0,0.25);border-radius:8px;color:var(--amber);"></div>
               </div>
-            </div>
+            </details>
           </div>
 
           <!-- TAB: CREDIT CARD BILL -->
@@ -1511,7 +1674,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
                 <img id="doc-cc-img" class="doc-preview-img" alt="Credit card bill preview" style="display:none;"/>
               </div>
               <div style="display:flex;gap:8px;margin:10px 0;align-items:center;flex-wrap:wrap;">
-                <button class="btn btn-primary" onclick="scanCCBill()" id="doc-cc-scan-btn"><i class="ti ti-wand" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Extract bill details with AI</button>
+                <button class="btn btn-primary" onclick="scanCCBill()" id="doc-cc-scan-btn"><i class="ti ti-wand" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Extract bill details</button>
                 <span id="doc-cc-status" style="font-size:12px;color:var(--text2);"></span>
                 <button class="btn btn-ghost" style="font-size:12px;padding:6px 10px;margin-left:auto;" onclick="clearDocCC()">Clear</button>
               </div>
@@ -1540,7 +1703,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
                 <img id="doc-acc-img" class="doc-preview-img" alt="Account document preview" style="display:none;"/>
               </div>
               <div style="display:flex;gap:8px;margin:10px 0;align-items:center;flex-wrap:wrap;">
-                <button class="btn btn-primary" onclick="scanAccountDoc()" id="doc-acc-scan-btn"><i class="ti ti-wand" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Extract account details with AI</button>
+                <button class="btn btn-primary" onclick="scanAccountDoc()" id="doc-acc-scan-btn"><i class="ti ti-wand" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Extract account details</button>
                 <span id="doc-acc-status" style="font-size:12px;color:var(--text2);"></span>
                 <button class="btn btn-ghost" style="font-size:12px;padding:6px 10px;margin-left:auto;" onclick="clearDocAcc()">Clear</button>
               </div>
@@ -1560,6 +1723,173 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
         <div class="chart-card">
           <div class="ch-header"><div class="ch-title"><i class="ti ti-history" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>Import History</div></div>
           <div id="import-history-list"></div>
+        </div>
+
+      </div>
+
+      <!-- AUTO IMPORT PAGE -->
+      <div class="page" id="page-autoimport">
+
+        <!-- How it works banner -->
+        <div class="chart-card" style="margin-bottom:14px;background:linear-gradient(135deg,rgba(34,201,138,0.08),rgba(79,124,255,0.08));border-color:rgba(34,201,138,0.2);">
+          <div class="ch-header">
+            <div>
+              <div class="ch-title"><i class="ti ti-bolt" style="font-size:15px;vertical-align:-2px;margin-right:6px;color:#22c98a;" aria-hidden="true"></i>Auto Import — How It Works</div>
+              <div class="ch-sub" style="margin-top:2px;">Your bank sends you an SMS for every transaction → your phone forwards it → FinanceOS imports it automatically</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:4px;">
+            <div style="text-align:center;padding:12px;">
+              <div style="font-size:28px;margin-bottom:6px;">📱</div>
+              <div style="font-size:12px;font-weight:500;">Bank sends SMS</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:3px);">After every UPI/card transaction</div>
+            </div>
+            <div style="text-align:center;padding:12px;">
+              <div style="font-size:28px;margin-bottom:6px;">🔄</div>
+              <div style="font-size:12px;font-weight:500;">App forwards SMS</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:3px;">SMS Forwarder app on your phone</div>
+            </div>
+            <div style="text-align:center;padding:12px;">
+              <div style="font-size:28px;margin-bottom:6px;">☁️</div>
+              <div style="font-size:12px;font-weight:500;">Firebase receives it</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:3px;">Stored in your Firestore DB</div>
+            </div>
+            <div style="text-align:center;padding:12px;">
+              <div style="font-size:28px;margin-bottom:6px;">✅</div>
+              <div style="font-size:12px;font-weight:500;">FinanceOS imports</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:3px;">Parsed and added automatically</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 1: Firebase check -->
+        <div class="chart-card" style="margin-bottom:14px;">
+          <div class="ch-header"><div><div class="ch-title">Step 1 — Firebase Setup</div><div class="ch-sub">Required — your SMS messages are stored here</div></div><div id="ai-step1-badge" style="font-size:11px;padding:4px 10px;border-radius:20px;background:rgba(34,201,138,0.15);color:#22c98a;font-weight:500;display:none;"><i class="ti ti-circle-check" aria-hidden="true"></i> Connected</div></div>
+          <div id="ai-step1-status" style="font-size:13px;color:var(--text2);padding:10px 0;"></div>
+          <button class="btn btn-ghost" style="font-size:12px;" onclick="showPage('datasync')"><i class="ti ti-arrow-right" style="font-size:13px;vertical-align:-1px;" aria-hidden="true"></i> Go to Data Sync to configure Firebase</button>
+        </div>
+
+        <!-- Step 2: Firestore collection setup -->
+        <div class="chart-card" style="margin-bottom:14px;">
+          <div class="ch-header"><div><div class="ch-title">Step 2 — Create SMS Collection in Firestore</div><div class="ch-sub">One-time setup — run this SQL in Firebase Console</div></div></div>
+          <div style="background:rgba(79,124,255,0.06);border:1px solid rgba(79,124,255,0.15);border-radius:8px;padding:14px;margin-bottom:12px;font-size:12px;line-height:1.8;color:var(--text2);">
+            <div style="font-weight:500;color:var(--text);margin-bottom:8px;">In Firebase Console → Firestore → Rules — add this collection rule:</div>
+            <pre style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;font-size:11px;color:var(--green);overflow-x:auto;">match /financeos_sms/{document} {
+  allow read, write: if true;
+}</pre>
+            <div style="margin-top:8px;">This allows the SMS forwarder app to write incoming SMS to Firestore.</div>
+          </div>
+          <div style="font-size:12px;color:var(--text2);">Your Firestore collection path: <code style="background:var(--bg3);padding:2px 8px;border-radius:4px;color:var(--accent);">financeos_sms</code> · Document auto-generated per SMS</div>
+        </div>
+
+        <!-- Step 3: SMS Forwarder setup -->
+        <div class="chart-card" style="margin-bottom:14px;">
+          <div class="ch-header"><div><div class="ch-title">Step 3 — Set up on iPhone (iOS Shortcuts)</div><div class="ch-sub">Use Apple's free Shortcuts app to forward bank notifications to Firebase</div></div></div>
+
+          <!-- iOS warning -->
+          <div style="background:rgba(79,124,255,0.08);border:1px solid rgba(79,124,255,0.2);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--text2);margin-bottom:14px;">
+            <strong style="color:#4f7cff;">ℹ️ iPhone limitation:</strong> iOS does not allow any app to read your SMS messages directly. However, you can use <strong style="color:var(--text);">Apple Shortcuts + Automation</strong> to capture bank notification text and send it to Firebase automatically.
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+
+            <!-- Option A: iOS Shortcuts -->
+            <div style="background:var(--bg3);border:1px solid rgba(34,201,138,0.2);border-radius:10px;padding:14px;">
+              <div style="font-weight:600;font-size:13px;margin-bottom:8px;color:#22c98a;">✅ Option A — iOS Shortcuts Automation</div>
+              <div style="font-size:12px;color:var(--text2);line-height:1.9;">
+                1. Open <strong style="color:var(--text);">Shortcuts</strong> app → tap <strong style="color:var(--text);">Automation</strong> tab<br>
+                2. Tap <strong style="color:var(--text);">+</strong> → <strong style="color:var(--text);">App</strong> → select your bank app (SBI YONO, HDFC, ICICI iMobile etc.)<br>
+                3. Choose <strong style="color:var(--text);">"When Opened"</strong> — or better: <strong style="color:var(--text);">Notification</strong> trigger<br>
+                4. Add action: <strong style="color:var(--text);">Get Contents of URL</strong><br>
+                5. Set URL to your Firebase webhook (shown below)<br>
+                6. Method: POST · Body: JSON with notification text<br>
+                7. Turn off "Ask Before Running"
+              </div>
+            </div>
+
+            <!-- Option B: Email alerts -->
+            <div style="background:var(--bg3);border:1px solid rgba(79,124,255,0.2);border-radius:10px;padding:14px;">
+              <div style="font-weight:600;font-size:13px;margin-bottom:8px;color:#4f7cff;">✅ Option B — Bank Email Alerts</div>
+              <div style="font-size:12px;color:var(--text2);line-height:1.9;">
+                Most banks send transaction emails too:<br>
+                1. Log in to your bank app/website<br>
+                2. Enable <strong style="color:var(--text);">email alerts</strong> for all transactions<br>
+                3. Use <strong style="color:var(--text);">iOS Shortcuts → Email trigger</strong> on Gmail/Mail app<br>
+                4. When email from bank arrives → forward to Firebase<br><br>
+                <strong style="color:var(--green);">Works reliably on iPhone ✓</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Shortcut setup guide -->
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;">
+            <div style="font-weight:600;font-size:13px;margin-bottom:10px;"><i class="ti ti-brand-apple" aria-hidden="true" style="margin-right:6px;"></i>iOS Shortcut — Exact steps</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.9;">
+              In Shortcuts app → Automation → New Automation:<br>
+              • Trigger: <strong style="color:var(--text);">Notification received</strong> from your bank app<br>
+              • Action 1: <strong style="color:var(--text);">Get Details of Notification</strong> → get "Body"<br>
+              • Action 2: <strong style="color:var(--text);">Get Contents of URL</strong>:<br>
+            </div>
+            <div style="margin-top:8px;">
+              <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Firebase URL (copy this):</div>
+              <code id="sms-webhook-url" style="font-size:10px;background:var(--bg);padding:6px 10px;border-radius:6px;color:var(--accent);word-break:break-all;display:block;line-height:1.6;">Configure Firebase first (Data Sync page)</code>
+            </div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.9;margin-top:10px;">
+              • Method: <strong style="color:var(--text);">POST</strong> · Content Type: <strong style="color:var(--text);">JSON</strong><br>
+              • Body: <code style="font-size:10px;background:var(--bg);padding:2px 6px;border-radius:4px;">{"fields":{"msg":{"stringValue":"&lt;Shortcut Input&gt;"}}}</code><br>
+              • Replace <code style="font-size:10px;">&lt;Shortcut Input&gt;</code> with the notification body variable<br>
+              • Turn off <strong style="color:var(--text);">"Ask Before Running"</strong>
+            </div>
+          </div>
+
+          <!-- Practical reality -->
+          <div style="background:rgba(240,165,0,0.08);border:1px solid rgba(240,165,0,0.2);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--text2);">
+            <strong style="color:#f0a500;">💡 Most practical iPhone approach:</strong> Enable bank email alerts → copy the week's transaction emails → paste into <strong style="color:var(--text);">Bulk SMS Import</strong> (it parses email text too). Takes 1 minute for a week of transactions. The iOS Shortcuts method works but requires initial setup and may need re-authorization after iOS updates.
+          </div>
+        </div>
+
+        <!-- Step 4: Pull & import -->
+        <div class="chart-card" style="margin-bottom:14px;">
+          <div class="ch-header">
+            <div><div class="ch-title">Step 4 — Pull & Import Pending SMS</div><div class="ch-sub">Check Firebase for new bank SMS and import them</div></div>
+            <button class="btn btn-primary" style="font-size:12px;padding:7px 14px;" onclick="pullSMSFromFirebase()">
+              <i class="ti ti-cloud-download" style="font-size:13px;vertical-align:-1px;" aria-hidden="true"></i> Pull from Firebase
+            </button>
+          </div>
+          <div id="ai-sms-status" style="font-size:12px;color:var(--text2);margin-bottom:10px;"></div>
+          <div id="ai-sms-pending" style="display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <div style="font-size:13px;font-weight:500;" id="ai-sms-count"></div>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" onclick="document.querySelectorAll('.ai-sms-chk').forEach(c=>c.checked=true)">All</button>
+                <button class="btn btn-primary" style="font-size:12px;" onclick="commitBulkSMSImport()"><i class="ti ti-check" style="font-size:13px;vertical-align:-1px;" aria-hidden="true"></i> Import checked</button>
+              </div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table" style="min-width:540px;">
+                <thead><tr><th style="width:30px;"></th><th>Date</th><th>Description</th><th>Category</th><th style="text-align:right;">Amount</th><th>Type</th></tr></thead>
+                <tbody id="ai-sms-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Auto-poll toggle -->
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+            <div>
+              <div style="font-size:13px;font-weight:500;">Auto-poll Firebase every 30 seconds</div>
+              <div style="font-size:11px;color:var(--text2);">Automatically check for new SMS when app is open</div>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="ai-auto-poll" style="accent-color:var(--accent);width:16px;height:16px;" onchange="toggleSMSAutoPoll(this.checked)"/>
+              <span style="font-size:13px;">Enable auto-poll</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Processed SMS log -->
+        <div class="chart-card">
+          <div class="ch-header"><div class="ch-title">Recent Auto-Imports</div><button class="btn btn-ghost" style="font-size:12px;" onclick="clearProcessedSMS()"><i class="ti ti-trash" style="font-size:13px;vertical-align:-1px;" aria-hidden="true"></i> Clear log</button></div>
+          <div id="ai-processed-log"></div>
         </div>
 
       </div>
@@ -2172,8 +2502,8 @@ function dc(k){if(charts[k]){try{charts[k].destroy();}catch(e){}delete charts[k]
 function monthTx(m){return state.transactions.filter(t=>t.date.startsWith(m));}
 const curTx=()=>monthTx(curMonth);
 
-const pages={dashboard:'Dashboard',transactions:'Transactions',analytics:'Analytics',accounts:'Accounts',cards:'Credit Cards',loans:'Loans',budget:'Budget',investments:'Investments',networth:'Net Worth',add:'Add Entry',import:'Import Data',datasync:'Data Sync',admin:'Admin Panel'};
-const renders={dashboard:renderDashboard,transactions:renderTxPage,analytics:renderAnalytics,accounts:renderAccounts,cards:renderCards,loans:renderLoans,budget:renderBudget,investments:renderInvestments,networth:renderNetWorth,import:renderImportPage,datasync:renderDataSync,admin:renderAdminPanel};
+const pages={dashboard:'Dashboard',transactions:'Transactions',analytics:'Analytics',accounts:'Accounts',cards:'Credit Cards',loans:'Loans',budget:'Budget',investments:'Investments',networth:'Net Worth',add:'Add Entry',import:'Import Data',datasync:'Data Sync',admin:'Admin Panel',autoimport:'Auto Import'};
+const renders={dashboard:renderDashboard,transactions:renderTxPage,analytics:renderAnalytics,accounts:renderAccounts,cards:renderCards,loans:renderLoans,budget:renderBudget,investments:renderInvestments,networth:renderNetWorth,import:renderImportPage,datasync:renderDataSync,admin:renderAdminPanel,add:function(){updateBalanceHint();renderQuickBalanceSection();},autoimport:renderAutoImportPage};
 
 function showPage(p){
   // Block admin page for non-admin users
@@ -2216,11 +2546,11 @@ function renderDashboard(){
   // ── KPI METRICS ──────────────────────────────────────────────────────────
   document.getElementById('dash-metrics').innerHTML=`
     <div class="m-card"><div class="m-icon" style="background:rgba(34,201,138,0.12);color:#22c98a;"><i class="ti ti-arrow-down-left" aria-hidden="true"></i></div><div class="m-label">Total Income</div><div class="m-value" style="color:#22c98a;">${fmt(inc)}</div><div class="m-change up"><i class="ti ti-trending-up" style="font-size:12px;" aria-hidden="true"></i> This month</div><div class="m-glow" style="background:#22c98a;"></div></div>
-    <div class="m-card"><div class="m-icon" style="background:rgba(255,92,92,0.12);color:#ff5c5c;"><i class="ti ti-arrow-up-right" aria-hidden="true"></i></div><div class="m-label">Total Expenses</div><div class="m-value" style="color:#ff5c5c;">${fmt(exp)}</div><div class="m-change down"><i class="ti ti-trending-up" style="font-size:12px;" aria-hidden="true"></i> This month</div><div class="m-glow" style="background:#ff5c5c;"></div></div>
-    <div class="m-card"><div class="m-icon" style="background:rgba(79,124,255,0.12);color:#4f7cff;"><i class="ti ti-piggy-bank" aria-hidden="true"></i></div><div class="m-label">Net Savings</div><div class="m-value" style="color:#4f7cff;">${fmt(sav)}</div><div class="m-change up">${savPct}% of income</div><div class="m-glow" style="background:#4f7cff;"></div></div>
-    <div class="m-card"><div class="m-icon" style="background:rgba(240,165,0,0.12);color:#f0a500;"><i class="ti ti-building-bank" aria-hidden="true"></i></div><div class="m-label">Monthly EMIs</div><div class="m-value" style="color:#f0a500;">${fmt(emi)}</div><div class="m-change">${state.loans.length} active loans</div><div class="m-glow" style="background:#f0a500;"></div></div>
-    <div class="m-card"><div class="m-icon" style="background:rgba(34,212,224,0.12);color:#22d4e0;"><i class="ti ti-scale" aria-hidden="true"></i></div><div class="m-label">Net Worth</div><div class="m-value" style="color:${nw>=0?'#22c98a':'#ff5c5c'};">${nw>=0?'+':''}${fmt(Math.abs(nw))}</div><div class="m-change">${state.accounts.length} accounts</div><div class="m-glow" style="background:#22d4e0;"></div></div>
-    <div class="m-card"><div class="m-icon" style="background:rgba(255,92,150,0.12);color:#ff5c96;"><i class="ti ti-credit-card" aria-hidden="true"></i></div><div class="m-label">CC Utilisation</div><div class="m-value" style="color:${ccUtil>75?'#ff5c5c':ccUtil>50?'#f0a500':'#22c98a'};">${ccUtil}%</div><div class="m-change">${state.cards.length} cards</div><div class="m-glow" style="background:#ff5c96;"></div></div>`;
+    <div class="m-card"><div class="m-icon" style="background:rgba(255,92,92,0.12);color:#ff5c5c;"><i class="ti ti-arrow-up-right" aria-hidden="true"></i></div><div class="m-label">Total Expenses</div><div class="m-value" style="color:#ff5c5c;">${fmt(exp)}</div><div class="m-change down"><i class="ti ti-trending-down" style="font-size:12px;" aria-hidden="true"></i> This month</div><div class="m-glow" style="background:#ff5c5c;"></div></div>
+    <div class="m-card"><div class="m-icon" style="background:${sav>=0?'rgba(79,124,255,0.12)':'rgba(255,92,92,0.12)'};color:${sav>=0?'#4f7cff':'#ff5c5c'};"><i class="ti ti-piggy-bank" aria-hidden="true"></i></div><div class="m-label">${sav>=0?'Savings':'Deficit'}</div><div class="m-value" style="color:${sav>=0?'#4f7cff':'#ff5c5c'};">${sav>=0?'+':''}${fmt(sav)}</div><div class="m-change ${sav>=0?'up':'down'}">${Math.abs(savPct)}% ${sav>=0?'of income':'over income'}</div><div class="m-glow" style="background:${sav>=0?'#4f7cff':'#ff5c5c'};"></div></div>
+    <div class="m-card"><div class="m-icon" style="background:rgba(240,165,0,0.12);color:#f0a500;"><i class="ti ti-building-bank" aria-hidden="true"></i></div><div class="m-label">Monthly EMIs</div><div class="m-value" style="color:#f0a500;">${fmt(emi)}</div><div class="m-change">${state.loans.length} active loan${state.loans.length!==1?'s':''}</div><div class="m-glow" style="background:#f0a500;"></div></div>
+    <div class="m-card"><div class="m-icon" style="background:rgba(34,212,224,0.12);color:#22d4e0;"><i class="ti ti-scale" aria-hidden="true"></i></div><div class="m-label">Net Worth</div><div class="m-value" style="color:${nw>=0?'#22c98a':'#ff5c5c'};">${nw>=0?'+':''}${fmt(Math.abs(nw))}</div><div class="m-change">${state.accounts.length} account${state.accounts.length!==1?'s':''}</div><div class="m-glow" style="background:#22d4e0;"></div></div>
+    <div class="m-card"><div class="m-icon" style="background:rgba(255,92,150,0.12);color:#ff5c96;"><i class="ti ti-credit-card" aria-hidden="true"></i></div><div class="m-label">CC Utilisation</div><div class="m-value" style="color:${ccUtil>75?'#ff5c5c':ccUtil>50?'#f0a500':'#22c98a'};">${ccUtil}%</div><div class="m-change">${state.cards.length} card${state.cards.length!==1?'s':''}</div><div class="m-glow" style="background:#ff5c96;"></div></div>`;
 
   // ── 6-MONTH TREND ─────────────────────────────────────────────────────────
   const [_cy,_cm]=curMonth.split('-').map(Number);
@@ -2236,7 +2566,23 @@ function renderDashboard(){
       {label:'Expenses',data:mExp,borderColor:'#ff5c5c',backgroundColor:'rgba(255,92,92,0.07)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#ff5c5c',borderWidth:2}
     ]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.dataset.label+': '+fmt(ctx.raw)}}},
-      scales:{x:{grid:{display:false},ticks:{color:'#555568',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555568',font:{size:10},callback:v=>v>=100000?'₹'+(v/100000).toFixed(1)+'L':v>=1000?'₹'+(v/1000)+'k':'₹'+v}}}}
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#555568',font:{size:10}}},
+        y:{
+          grid:{color:'rgba(255,255,255,0.04)'},
+          ticks:{color:'#555568',font:{size:10},callback:v=>{
+            if(v>=10000000) return '₹'+(v/10000000).toFixed(1)+'Cr';
+            if(v>=100000)  return '₹'+(v/100000).toFixed(1)+'L';
+            if(v>=1000)    return '₹'+(v/1000).toFixed(0)+'k';
+            return '₹'+v;
+          }},
+          // Ensure Y axis starts at 0 and has a sensible min range
+          beginAtZero:true,
+          min:0,
+          suggestedMax: Math.max(...mInc,...mExp,10000)*1.15
+        }
+      }
+    }
   });
 
   // ── SPENDING DONUT ────────────────────────────────────────────────────────
@@ -2399,14 +2745,14 @@ function renderDashboard(){
 }
 
 function updateSidebarStats(inc,exp,sav){
-  const si  = document.getElementById('sb-income');
-  const se  = document.getElementById('sb-expense');
-  const sms = document.getElementById('sb-monthly-saved');
-  const sbb = document.getElementById('sb-bank-balance');
-  const snw = document.getElementById('sb-savings');
-  const slbl= document.getElementById('sb-month-label');
+  const si   = document.getElementById('sb-income');
+  const se   = document.getElementById('sb-expense');
+  const sms  = document.getElementById('sb-monthly-saved');
+  const sbb  = document.getElementById('sb-bank-balance');
+  const snw  = document.getElementById('sb-savings');
+  const slbl = document.getElementById('sb-month-label');
 
-  // monthly label reflects selected month
+  // Monthly label
   if(slbl){
     const isCurrentMonth = curMonth === todayMonthStr;
     slbl.textContent = isCurrentMonth ? 'This month' : new Date(curMonth+'-01').toLocaleString('en-IN',{month:'short',year:'numeric'});
@@ -2414,13 +2760,17 @@ function updateSidebarStats(inc,exp,sav){
 
   if(si) si.innerHTML=`<span style="color:var(--text2);">Income</span><span style="color:var(--green);font-weight:500;">${fmt(inc)}</span>`;
   if(se) se.innerHTML=`<span style="color:var(--text2);">Expenses</span><span style="color:var(--red);font-weight:500;">${fmt(exp)}</span>`;
-  if(sms) sms.innerHTML=`<span style="color:var(--text2);">Monthly saved</span><span style="color:${sav>=0?'var(--accent)':'var(--red)'};font-weight:500;">${sav>=0?'+':''}${fmt(sav)}</span>`;
 
-  // actual bank balance — sum of all accounts
+  // Monthly saved — show clearly as surplus/deficit for that month only
+  const savColor = sav>=0?'var(--accent)':'var(--red)';
+  const savLabel = sav>=0 ? 'Savings' : 'Deficit';
+  if(sms) sms.innerHTML=`<span style="color:var(--text2);">${savLabel}</span><span style="color:${savColor};font-weight:500;">${sav>=0?'+':''}${fmt(sav)}</span>`;
+
+  // Bank balance — sum of all account balances (manually maintained)
   const totalBal = state.accounts.reduce((s,a)=>s+a.balance,0);
   if(sbb) sbb.innerHTML=`<span style="color:var(--text2);">Bank balance</span><span style="color:var(--green);font-weight:600;">${fmt(totalBal)}</span>`;
 
-  // real net worth
+  // Net worth
   const totalA = state.accounts.reduce((s,a)=>s+a.balance,0)
     + state.investments.reduce((s,i)=>s+i.current,0)
     + state.networth.assets.reduce((s,a)=>s+a.val,0);
@@ -3786,14 +4136,112 @@ function addNetWorth(){
   toast(ex?'Updated':'Added');
 }
 
+function updateBalanceHint(){
+  const src = document.getElementById('m-src')?.value||'';
+  const hint = document.getElementById('m-bal-hint');
+  if(!hint) return;
+  const acc = findAccountBySrc(src);
+  if(acc){
+    hint.innerHTML=`<span style="color:#22c98a;">✓ Linked to <strong>${acc.name}</strong></span><br><span style="color:var(--text3);">Current balance: ${fmt(acc.balance)}</span>`;
+  } else {
+    hint.innerHTML=`<span style="color:var(--text3);">No linked account for "${src}".<br>Add in Accounts page first.</span>`;
+  }
+}
+
+function findAccountBySrc(src){
+  if(!src) return null;
+  const s = src.toLowerCase();
+  return state.accounts.find(a=>{
+    const n = (a.bank||a.name||'').toLowerCase();
+    return n.includes(s) || s.includes(n.split(' ')[0]);
+  });
+}
+
 function addManual(){
   if(isReadOnly()){ toast('⚠️ Read-only access — you cannot modify this data'); return; }
-  const name=document.getElementById('m-name').value.trim();
-  const amount=+document.getElementById('m-amount').value;
-  if(!name||!amount){toast('Fill description and amount');return;}
-  state.transactions.push({id:state.nextId++,name,amount,type:document.getElementById('m-type').value,cat:document.getElementById('m-cat').value,src:document.getElementById('m-src').value,date:document.getElementById('m-date').value||todayStr});
-  save();document.getElementById('m-name').value='';document.getElementById('m-amount').value='';
-  toast('Transaction added');
+  const name    = document.getElementById('m-name').value.trim();
+  const amount  = +document.getElementById('m-amount').value;
+  const type    = document.getElementById('m-type').value;
+  const cat     = document.getElementById('m-cat').value;
+  const src     = document.getElementById('m-src').value;
+  const date    = document.getElementById('m-date').value||todayStr;
+  const availEl = document.getElementById('m-avail-bal');
+  const availBal= availEl?.value.trim();
+
+  if(!name||!amount){ toast('Fill description and amount'); return; }
+
+  state.transactions.push({id:state.nextId++, name, amount, type, cat, src, date});
+
+  // Auto-update linked account balance if available balance entered
+  if(availBal){
+    const newBal = parseFloat(availBal.replace(/,/g,''));
+    if(!isNaN(newBal) && newBal>=0){
+      const acc = findAccountBySrc(src);
+      if(acc){
+        const oldBal = acc.balance;
+        acc.balance = newBal;
+        if(!acc.history) acc.history=[];
+        acc.history.push({bal:newBal, date});
+        toast(`✓ Added & ${acc.name} balance updated to ${fmt(newBal)}`);
+        addNotif('Balance auto-updated: '+acc.name, fmt(oldBal)+' → '+fmt(newBal)+' after "'+name+'"', 'money');
+      } else {
+        toast('Transaction added ✓ — no matching account found');
+      }
+    } else { toast('Transaction added ✓'); }
+  } else { toast('Transaction added ✓'); }
+
+  save();
+  document.getElementById('m-name').value='';
+  document.getElementById('m-amount').value='';
+  if(availEl) availEl.value='';
+  updateBalanceHint();
+  renderDashboard();
+  renderQuickBalanceSection();
+}
+
+function renderQuickBalanceSection(){
+  const sel = document.getElementById('qb-account');
+  const list = document.getElementById('qb-accounts-list');
+  if(sel) sel.innerHTML='<option value="">Select account…</option>'+
+    state.accounts.map(a=>`<option value="${a.id}">${a.name} — ${fmt(a.balance)}</option>`).join('');
+  if(list){
+    list.innerHTML = state.accounts.length
+      ? state.accounts.map(a=>`
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:3px;">${a.bank||a.name}</div>
+          <div style="font-size:16px;font-weight:600;color:var(--green);">${fmt(a.balance)}</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px;">${a.type} · XXXX${a.acNo}</div>
+          <input type="number" placeholder="New balance → Enter" style="width:100%;margin-top:8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:12px;"
+            onkeydown="if(event.key==='Enter'&&this.value){updateAccountBalanceDirect(${a.id},parseFloat(this.value.replace(/,/g,'')));this.value='';}" />
+        </div>`).join('')
+      : '<div style="font-size:12px;color:var(--text2);">Add accounts in the Accounts page first.</div>';
+  }
+}
+
+function quickUpdateBalance(){
+  const accId = +document.getElementById('qb-account')?.value;
+  const newBal = parseFloat(document.getElementById('qb-balance')?.value||'');
+  const status = document.getElementById('qb-status');
+  if(!accId){ if(status) status.innerHTML='<span style="color:var(--red);">Select an account</span>'; return; }
+  if(isNaN(newBal)||newBal<0){ if(status) status.innerHTML='<span style="color:var(--red);">Enter a valid balance</span>'; return; }
+  updateAccountBalanceDirect(accId, newBal);
+  if(document.getElementById('qb-balance')) document.getElementById('qb-balance').value='';
+}
+
+function updateAccountBalanceDirect(id, newBal){
+  const acc = state.accounts.find(a=>a.id===id);
+  if(!acc){ toast('Account not found'); return; }
+  const oldBal = acc.balance;
+  acc.balance = newBal;
+  if(!acc.history) acc.history=[];
+  acc.history.push({bal:newBal, date:todayStr});
+  save();
+  const status = document.getElementById('qb-status');
+  if(status) status.innerHTML=`<span style="color:var(--green);">✓ ${acc.name}: ${fmt(oldBal)} → ${fmt(newBal)}</span>`;
+  renderQuickBalanceSection();
+  renderDashboard();
+  toast(`${acc.name} balance → ${fmt(newBal)} ✓`);
+  addNotif('Balance updated: '+acc.name, fmt(oldBal)+' → '+fmt(newBal), 'money');
 }
 
 /* ── IMPORT HISTORY ── */
@@ -4028,7 +4476,7 @@ function renderSMSPreview(){
 }
 function toggleAllSMSRows(checked){document.querySelectorAll('.sms-row-chk').forEach(c=>c.checked=checked);}
 function clearSMSPreview(){smsParsedRows=[];document.getElementById('sms-preview-wrap').style.display='none';document.getElementById('sms-parse-status').textContent='';}
-function commitSMSImport(){
+function commitBulkSMSImport(){
   const checked=[...document.querySelectorAll('.sms-row-chk:checked')].map(c=>+c.dataset.idx);
   if(!checked.length){toast('Select at least one transaction');return;}
   checked.forEach(i=>{
@@ -4545,31 +4993,82 @@ function setScanState(type,scanning){
   const wrap=document.getElementById('doc-'+type+'-img-wrap');
   const btn=document.getElementById('doc-'+type+'-scan-btn');
   if(wrap) wrap.classList[scanning?'add':'remove']('scanning');
-  if(btn){btn.disabled=scanning;btn.innerHTML=scanning?'<i class="ti ti-loader-2" style="animation:spin 1s linear infinite;font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Scanning…':'<i class="ti ti-wand" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Extract with AI';}
+  if(btn){btn.disabled=scanning;btn.innerHTML=scanning?'<i class="ti ti-loader-2" style="animation:spin 1s linear infinite;font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Scanning…':'<i class="ti ti-scan" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Extract';}
 }
 
 /* ── TRANSACTION SCANNER ── */
+/* ── PDF TEXT EXTRACTOR (no AI needed) ───────────────────────────────────
+   For PDFs: decode base64 → read raw text → run SMS parser on each line
+   For images: show message that text extraction from images needs manual entry
+──────────────────────────────────────────────────────────────────────── */
+function extractTextFromBase64PDF(b64){
+  // Decode base64 to binary string and extract readable text
+  try{
+    const binary = atob(b64);
+    // Extract printable ASCII text from PDF binary
+    let text = '';
+    for(let i=0;i<binary.length;i++){
+      const c = binary.charCodeAt(i);
+      if(c>=32 && c<127) text += binary[i];
+      else if(c===10||c===13) text += '\n';
+    }
+    // PDF text streams are between BT and ET markers, or just readable strings
+    // Extract text between parentheses (PDF string objects)
+    const pdfStrings = [];
+    const re = /\(([^\)]{2,80})\)/g;
+    let m;
+    while((m=re.exec(text))!==null){
+      const s = m[1].replace(/\\n/g,'\n').replace(/\\\(/g,'(').replace(/\\\)/g,')').trim();
+      if(s.length>2 && !/^[\s\d\.]+$/.test(s)) pdfStrings.push(s);
+    }
+    return pdfStrings.join('\n');
+  } catch(e){ return ''; }
+}
+
 async function scanDocTransactions(){
   const ds=docState.tx;
   if(!ds.b64){toast('Upload a document first');return;}
   const status=document.getElementById('doc-tx-status');
   setScanState('tx',true);
-  status.textContent='Scanning document…';status.style.color='var(--text2)';
+  status.textContent='Extracting text…';status.style.color='var(--text2)';
+
   try{
-    const raw=await callVisionAPI(ds.b64,ds.mime,
-      'You are extracting financial transactions from Indian bank statements, passbooks, or UPI history screenshots. Be thorough and extract every transaction visible.',
-      `Extract ALL transactions from this document. Return ONLY a JSON array where each object has:
-name (string: merchant/description), amount (number, no commas/symbols), type ("cr" for credit/"dr" for debit),
-cat (one of: Food/Transfer/Salary/EMI/Shopping/Fuel/Bills/Other), date (YYYY-MM-DD or use ${todayStr} if unclear), src (bank name if visible).
-If no transactions found return [].`
-    );
-    const rows=JSON.parse(raw);
-    if(!Array.isArray(rows)||!rows.length){status.textContent='No transactions found in document.';status.style.color='var(--amber)';setScanState('tx',false);return;}
+    let textContent = '';
+    if(ds.mime==='application/pdf'){
+      textContent = extractTextFromBase64PDF(ds.b64);
+    } else {
+      // For images — we can't extract text without AI
+      // Show instructions to use copy-paste method
+      status.textContent='For images, please copy the text from the statement and use Bulk SMS Import instead.';
+      status.style.color='var(--amber)';
+      setScanState('tx',false);
+      return;
+    }
+
+    if(!textContent || textContent.trim().length < 20){
+      status.textContent='Could not extract text from this PDF. Try copying text from the PDF and using Bulk SMS Import.';
+      status.style.color='var(--amber)';
+      setScanState('tx',false);
+      return;
+    }
+
+    // Run the rule-based parser on extracted text
+    const rows = parseSMSText(textContent);
+
+    if(!rows.length){
+      status.textContent='No transactions found. The PDF may be scanned (image-based). Copy the text manually and use Bulk SMS Import.';
+      status.style.color='var(--amber)';
+      setScanState('tx',false);
+      return;
+    }
+
     docState.tx.rows=rows;
-    status.textContent=rows.length+' transaction'+(rows.length!==1?'s':'')+' extracted.';status.style.color='var(--green)';
+    status.textContent=rows.length+' transaction'+(rows.length!==1?'s':'')+' found.';
+    status.style.color='var(--green)';
     renderDocTxResults(rows);
   }catch(err){
-    status.textContent='Extraction failed: '+err.message;status.style.color='var(--red)';
+    status.textContent='Extraction failed: '+err.message;
+    status.style.color='var(--red)';
   }
   setScanState('tx',false);
 }
@@ -4618,36 +5117,78 @@ function clearDocTx(){
   document.getElementById('doc-tx-input').value='';
 }
 
-/* ── CREDIT CARD BILL SCANNER ── */
+/* ── CREDIT CARD BILL SCANNER (rule-based) ── */
 async function scanCCBill(){
   const ds=docState.cc;
   if(!ds.b64){toast('Upload a document first');return;}
   const status=document.getElementById('doc-cc-status');
   setScanState('cc',true);
-  status.textContent='Reading credit card bill…';status.style.color='var(--text2)';
+  status.textContent='Extracting text from PDF…';status.style.color='var(--text2)';
   try{
-    const raw=await callVisionAPI(ds.b64,ds.mime,
-      'You are reading Indian credit card statements and bills. Extract all relevant account details accurately.',
-      `Extract credit card details from this bill/statement. Return ONLY a JSON object with these keys (use null if not found):
-cardName (string: bank + card name e.g. "HDFC Regalia"),
-last4 (string: last 4 digits of card number),
-network (string: Visa/Mastercard/Rupay/Amex),
-statementBalance (number: total outstanding/statement balance),
-minimumDue (number),
-dueDate (string: day of month as number),
-creditLimit (number),
-availableCredit (number),
-statementDate (string: YYYY-MM-DD),
-transactions (array of {name,amount,type,date} — optional, include if visible on bill).`
-    );
-    const data=JSON.parse(raw);
-    docState.cc.data=data;
-    status.textContent='Bill details extracted.';status.style.color='var(--green)';
-    renderCCFields(data);
+    if(ds.mime!=='application/pdf'){
+      status.textContent='Please upload a PDF. For image-based bills, enter details manually below.';
+      status.style.color='var(--amber)';setScanState('cc',false);return;
+    }
+    const text = extractTextFromBase64PDF(ds.b64);
+    if(!text||text.length<20){
+      status.textContent='Could not extract text. Enter details manually in the fields below.';
+      status.style.color='var(--amber)';setScanState('cc',false);
+      // Show empty form for manual entry
+      renderCCFields({cardName:'',last4:'',network:'',statementBalance:null,creditLimit:null,minimumDue:null,dueDate:null,availableCredit:null});
+      return;
+    }
+    // Parse CC details from text
+    const d = parseCCText(text);
+    docState.cc.data=d;
+    status.textContent='Details extracted — review and edit below.';status.style.color='var(--green)';
+    renderCCFields(d);
   }catch(err){
-    status.textContent='Could not read bill: '+err.message;status.style.color='var(--red)';
+    status.textContent='Error: '+err.message;status.style.color='var(--red)';
   }
   setScanState('cc',false);
+}
+
+function parseCCText(text){
+  const n = s => { const m=s.match(/([\d,]+(?:\.\d{1,2})?)/); return m?parseFloat(m[1].replace(/,/g,'')):null; };
+  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+  const all = lines.join(' ');
+
+  // Card name — look for bank name patterns
+  const banks=['HDFC','SBI','ICICI','Axis','Kotak','IndusInd','YES','Amex','Citi','Standard Chartered'];
+  let cardName = '';
+  for(const b of banks){ if(all.toLowerCase().includes(b.toLowerCase())){ cardName=b+' Credit Card'; break; } }
+
+  // Last 4 digits
+  const last4Match = all.match(/(?:card|ending|no\.?)[:\s]*(?:\d{4}[\s\-]*){3}(\d{4})|XXXX[\s\-]*(\d{4})|ending\s+(\d{4})/i);
+  const last4 = last4Match ? (last4Match[1]||last4Match[2]||last4Match[3]) : '';
+
+  // Network
+  const network = /visa/i.test(all)?'Visa':/mastercard|master card/i.test(all)?'Mastercard':/rupay/i.test(all)?'Rupay':/amex|american express/i.test(all)?'Amex':'Visa';
+
+  // Amounts — look for labeled amounts
+  const getAmt = (...keywords) => {
+    for(const kw of keywords){
+      const re = new RegExp(kw+'[^\\d]{0,20}([\\d,]+(?:\\.\\d{1,2})?)', 'i');
+      const m = all.match(re);
+      if(m) return parseFloat(m[1].replace(/,/g,''));
+    }
+    return null;
+  };
+
+  const statementBalance = getAmt('total amount due','total outstanding','statement balance','amount due','total due');
+  const minimumDue = getAmt('minimum (?:amount )?due','min(?:imum)? due','minimum payment');
+  const creditLimit = getAmt('credit limit','total limit','sanctioned limit');
+  const availableCredit = getAmt('available (?:credit)?limit','available balance','available credit');
+
+  // Due date
+  const dueDateMatch = all.match(/(?:payment due|due date|pay by)[:\s]+(?:\d{1,2}[\/\-])(\d{1,2})/i)
+    || all.match(/due[:\s]+\w+\s+(\d{1,2}),?\s+\d{4}/i);
+  const dueDate = dueDateMatch ? parseInt(dueDateMatch[1]) : null;
+
+  // Also extract transactions from the bill
+  const transactions = parseSMSText(text).map(t=>({...t, type:'dr'}));
+
+  return {cardName, last4, network, statementBalance, minimumDue, creditLimit, availableCredit, dueDate, transactions};
 }
 
 function renderCCFields(d){
@@ -4706,30 +5247,74 @@ function clearDocCC(){
   document.getElementById('doc-cc-input').value='';
 }
 
-/* ── BANK ACCOUNT SCANNER ── */
+/* ── BANK ACCOUNT SCANNER (rule-based) ── */
 async function scanAccountDoc(){
   const ds=docState.acc;
   if(!ds.b64){toast('Upload a document first');return;}
   const status=document.getElementById('doc-acc-status');
   setScanState('acc',true);
-  status.textContent='Reading account document…';status.style.color='var(--text2)';
+  status.textContent='Extracting text from PDF…';status.style.color='var(--text2)';
   try{
-    const raw=await callVisionAPI(ds.b64,ds.mime,
-      'You are reading Indian bank passbooks and account statements to extract account details.',
-      `Extract bank account details from this document. Return ONLY a JSON object with these keys (null if not found):
-bankName (string), accountType (string: Savings/Current/Salary/FD/RD), accountNumber (string: last 4 digits only),
-ifsc (string), balance (number: current/closing balance), interestRate (number: annual % if shown),
-holderName (string: account holder name),
-transactions (array of {name,amount,type:"cr"/"dr",date:"YYYY-MM-DD"} — include if statement shows them).`
-    );
-    const data=JSON.parse(raw);
-    docState.acc.data=data;
-    status.textContent='Account details extracted.';status.style.color='var(--green)';
-    renderAccFields(data);
+    if(ds.mime!=='application/pdf'){
+      status.textContent='Please upload a PDF. For passbook photos, enter details manually below.';
+      status.style.color='var(--amber)';setScanState('acc',false);
+      renderAccFields({bankName:'',accountType:'Savings',accountNumber:'',ifsc:'',balance:null,interestRate:null,holderName:''});
+      return;
+    }
+    const text = extractTextFromBase64PDF(ds.b64);
+    if(!text||text.length<20){
+      status.textContent='Could not extract text. Enter details manually below.';
+      status.style.color='var(--amber)';setScanState('acc',false);
+      renderAccFields({bankName:'',accountType:'Savings',accountNumber:'',ifsc:'',balance:null,interestRate:null,holderName:''});
+      return;
+    }
+    const d = parseAccountText(text);
+    docState.acc.data=d;
+    status.textContent='Details extracted — review and edit below.';status.style.color='var(--green)';
+    renderAccFields(d);
   }catch(err){
-    status.textContent='Could not read document: '+err.message;status.style.color='var(--red)';
+    status.textContent='Error: '+err.message;status.style.color='var(--red)';
   }
   setScanState('acc',false);
+}
+
+function parseAccountText(text){
+  const all = text.replace(/\n/g,' ');
+
+  // Bank name
+  const banks=['SBI','HDFC','ICICI','Kotak','Axis','IndusInd','YES Bank','PNB','Canara','Bank of Baroda','IDBI','Union Bank'];
+  let bankName='';
+  for(const b of banks){ if(all.toLowerCase().includes(b.toLowerCase())){ bankName=b; break; } }
+
+  // Account type
+  const accountType = /salary/i.test(all)?'Salary':/current/i.test(all)?'Current':/savings/i.test(all)?'Savings':'Savings';
+
+  // Account number — last 4 digits
+  const acMatch = all.match(/(?:a\/c|account|ac)[\s#:no\.]*(?:\d{4,8}[\s\-]*){2,3}(\d{4})/i)
+    || all.match(/(?:xxxx|XXXX)[\s\-]*(\d{4})/);
+  const accountNumber = acMatch?acMatch[1]:'';
+
+  // IFSC
+  const ifscMatch = all.match(/[A-Z]{4}0[A-Z0-9]{6}/);
+  const ifsc = ifscMatch?ifscMatch[0]:'';
+
+  // Balance
+  const balMatch = all.match(/(?:balance|bal|closing)[:\s]+(?:INR|Rs\.?|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i);
+  const balance = balMatch?parseFloat(balMatch[1].replace(/,/g,'')):null;
+
+  // Interest rate
+  const rateMatch = all.match(/(?:interest|rate)[:\s]+([\d.]+)\s*%/i);
+  const interestRate = rateMatch?parseFloat(rateMatch[1]):null;
+
+  // Holder name — usually near "Name" label
+  const nameMatch = all.match(/(?:name|holder)[:\s]+([A-Z][A-Za-z\s]{3,30})(?:\s+A\/C|\s+Account|\s+D\/O|\s+S\/O)/i)
+    || all.match(/(?:Mr\.|Mrs\.|Ms\.)\s+([A-Za-z\s]{3,30})/i);
+  const holderName = nameMatch?(nameMatch[1]||'').trim():'';
+
+  // Transactions
+  const transactions = parseSMSText(text);
+
+  return {bankName, accountType, accountNumber, ifsc, balance, interestRate, holderName, transactions};
 }
 
 function renderAccFields(d){
@@ -5555,6 +6140,220 @@ renderDataSync = function(){
   if(badge) badge.style.display = key ? '' : 'none';
 };
 
+/* ═══════════════════════════════════════════════════
+   AUTO IMPORT — SMS → Firebase → FinanceOS
+   Flow: Android SMS Forwarder app → Firebase Firestore
+         financeos_sms collection → pull here → parse → import
+═══════════════════════════════════════════════════ */
+
+let _smsAutoPollTimer = null;
+let _processedSMSIds = new Set(JSON.parse(localStorage.getItem('fos_processed_sms')||'[]'));
+
+function saveProcessedSMS(){ localStorage.setItem('fos_processed_sms', JSON.stringify([..._processedSMSIds].slice(-500))); }
+
+function renderAutoImportPage(){
+  const {key,proj} = getFirebaseConfig();
+
+  // Step 1 status
+  const step1 = document.getElementById('ai-step1-status');
+  const step1badge = document.getElementById('ai-step1-badge');
+  if(step1){
+    if(key && proj){
+      step1.innerHTML = `<span style="color:#22c98a;">✓ Firebase configured — Project: <strong>${proj}</strong></span>`;
+      if(step1badge) step1badge.style.display='';
+    } else {
+      step1.innerHTML = '<span style="color:var(--red);">Firebase not configured. Go to Data Sync → Firebase and enter your API key + Project ID.</span>';
+      if(step1badge) step1badge.style.display='none';
+    }
+  }
+
+  // Update webhook URL display
+  const urlEl = document.getElementById('sms-webhook-url');
+  if(urlEl && key && proj){
+    urlEl.textContent = `https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/financeos_sms?key=${key}`;
+  }
+
+  // Restore auto-poll state
+  const pollCb = document.getElementById('ai-auto-poll');
+  if(pollCb) pollCb.checked = !!_smsAutoPollTimer;
+
+  // Render processed log
+  renderProcessedLog();
+}
+
+async function pullSMSFromFirebase(){
+  const {key,proj} = getFirebaseConfig();
+  const status = document.getElementById('ai-sms-status');
+  const pending = document.getElementById('ai-sms-pending');
+
+  if(!key||!proj){
+    if(status) status.innerHTML='<span style="color:var(--red);">Configure Firebase first (Data Sync page)</span>';
+    return;
+  }
+
+  if(status){ status.innerHTML='<i class="ti ti-loader-2" style="animation:spin 1s linear infinite;font-size:13px;"></i> Checking Firebase for new SMS…'; }
+
+  try{
+    const url = `https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/financeos_sms?key=${key}&pageSize=50`;
+    const res = await fetch(url);
+    if(!res.ok){
+      const e = await res.json();
+      if(res.status===404){ if(status) status.innerHTML='<span style="color:var(--amber);">No SMS collection yet. Set up SMS Forwarder app first (Step 3).</span>'; return; }
+      throw new Error(e.error?.message||'HTTP '+res.status);
+    }
+    const data = await res.json();
+    const docs = data.documents||[];
+
+    // Filter unprocessed
+    const newDocs = docs.filter(d => !_processedSMSIds.has(d.name.split('/').pop()));
+
+    if(!newDocs.length){
+      if(status) status.innerHTML='<span style="color:var(--text2);">No new SMS found. All caught up ✓</span>';
+      if(pending) pending.style.display='none';
+      return;
+    }
+
+    // Parse each SMS
+    const parsed = [];
+    newDocs.forEach(doc => {
+      const f = doc.fields||{};
+      const msg = f.msg?.stringValue || f.body?.stringValue || f.text?.stringValue || f.message?.stringValue || '';
+      const docId = doc.name.split('/').pop();
+      if(!msg) return;
+      const txs = parseSMSText(msg);
+      txs.forEach(tx => parsed.push({...tx, _docId: docId, _rawMsg: msg}));
+    });
+
+    if(!parsed.length){
+      if(status) status.innerHTML=`<span style="color:var(--amber);">${newDocs.length} SMS found but no transactions extracted. They may not be bank SMS.</span>`;
+      if(pending) pending.style.display='none';
+      return;
+    }
+
+    if(status) status.innerHTML=`<span style="color:#22c98a;">Found ${parsed.length} transaction${parsed.length!==1?'s':''} in ${newDocs.length} new SMS</span>`;
+    renderSMSPendingTable(parsed);
+
+  } catch(e){
+    if(status) status.innerHTML=`<span style="color:var(--red);">Error: ${e.message}</span>`;
+  }
+}
+
+let _pendingSMSRows = [];
+
+function renderSMSPendingTable(rows){
+  _pendingSMSRows = rows;
+  const pending = document.getElementById('ai-sms-pending');
+  const tbody = document.getElementById('ai-sms-tbody');
+  const countEl = document.getElementById('ai-sms-count');
+  if(!pending||!tbody) return;
+  pending.style.display='block';
+  if(countEl) countEl.textContent = rows.length + ' transaction'+(rows.length!==1?'s':'')+' ready to import';
+
+  const cats=['Food','Transfer','Salary','EMI','Shopping','Fuel','Bills','Other'];
+  let dups=0;
+  tbody.innerHTML = rows.map((tx,i)=>{
+    const dup=isDuplicate(tx); if(dup) dups++;
+    return `<tr>
+      <td><input type="checkbox" class="ai-sms-chk" data-idx="${i}" ${dup?'':'checked'} style="width:14px;height:14px;accent-color:var(--accent);cursor:pointer;"/></td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);">${tx.date}</td>
+      <td style="font-size:12px;" title="${(tx._rawMsg||'').replace(/"/g,'&quot;')}">${tx.name}</td>
+      <td><select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 6px;color:var(--text);font-size:11px;" onchange="_pendingSMSRows[${i}].cat=this.value">${cats.map(c=>`<option ${c===tx.cat?'selected':''}>${c}</option>`).join('')}</select></td>
+      <td style="text-align:right;font-weight:500;color:${tx.type==='cr'?'var(--green)':'var(--red)'};">${tx.type==='cr'?'+':'-'}₹${Math.round(tx.amount).toLocaleString('en-IN')}</td>
+      <td><select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 6px;color:var(--text);font-size:11px;" onchange="_pendingSMSRows[${i}].type=this.value"><option value="dr" ${tx.type==='dr'?'selected':''}>Dr</option><option value="cr" ${tx.type==='cr'?'selected':''}>Cr</option></select></td>
+    </tr>`;
+  }).join('');
+}
+
+function commitSMSImport(){
+  const checked = [...document.querySelectorAll('.ai-sms-chk:checked')].map(c=>+c.dataset.idx);
+  if(!checked.length){ toast('Select at least one transaction'); return; }
+  let imported=0;
+  const docIds = new Set();
+  checked.forEach(i=>{
+    const tx = _pendingSMSRows[i];
+    if(!tx) return;
+    state.transactions.push({id:state.nextId++, name:tx.name, amount:tx.amount, type:tx.type, cat:tx.cat, src:tx.src, date:tx.date});
+    docIds.add(tx._docId);
+    imported++;
+  });
+  // Mark all SMS from these docs as processed
+  _pendingSMSRows.forEach(tx=>{ if(tx._docId) _processedSMSIds.add(tx._docId); });
+  saveProcessedSMS();
+  save();
+  document.getElementById('ai-sms-pending').style.display='none';
+  document.getElementById('ai-sms-status').innerHTML=`<span style="color:#22c98a;">✓ ${imported} transactions imported</span>`;
+  saveImportHistory('Auto SMS Import', imported, 'Firebase SMS');
+  toast(imported+' transactions auto-imported ✓');
+  addNotif('Auto Import complete', imported+' transactions imported from SMS', 'success');
+  renderDashboard();
+  renderProcessedLog();
+
+  // Delete processed SMS from Firebase to keep collection clean
+  deleteProcessedFirebaseSMS([...docIds]);
+}
+
+async function deleteProcessedFirebaseSMS(docIds){
+  const {key,proj} = getFirebaseConfig();
+  if(!key||!proj) return;
+  docIds.forEach(async docId=>{
+    try{
+      await fetch(`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/financeos_sms/${docId}?key=${key}`,{method:'DELETE'});
+    }catch(e){}
+  });
+}
+
+function renderProcessedLog(){
+  const el = document.getElementById('ai-processed-log');
+  if(!el) return;
+  const recent = state.transactions.slice(-10).reverse();
+  if(!recent.length){ el.innerHTML='<div class="empty">No auto-imports yet.</div>'; return; }
+  el.innerHTML = recent.map(t=>`
+    <div class="tx-row">
+      <div class="tx-ico" style="background:rgba(34,201,138,0.12);color:#22c98a;"><i class="ti ti-bolt" aria-hidden="true"></i></div>
+      <div class="tx-info"><div class="tx-name">${t.name}</div><div class="tx-meta">${t.date} · ${t.src}</div></div>
+      <div class="tx-amt ${t.type==='cr'?'cr':'dr'}">${t.type==='cr'?'+':'-'}${fmt(t.amount)}</div>
+    </div>`).join('');
+}
+
+function toggleSMSAutoPoll(on){
+  if(on){
+    pullSMSFromFirebase(); // immediate first pull
+    _smsAutoPollTimer = setInterval(pullSMSFromFirebase, 30000);
+    toast('Auto-poll enabled — checking every 30 seconds');
+  } else {
+    clearInterval(_smsAutoPollTimer);
+    _smsAutoPollTimer = null;
+    toast('Auto-poll disabled');
+  }
+}
+
+function clearProcessedSMS(){
+  _processedSMSIds.clear();
+  saveProcessedSMS();
+  renderProcessedLog();
+  toast('Processed log cleared');
+}
+
+/* ── MOBILE SIDEBAR ── */
+function openSidebar(){
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebar-overlay');
+  if(sb) sb.classList.add('open');
+  if(ov) ov.style.display='block';
+}
+function closeSidebar(){
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebar-overlay');
+  if(sb) sb.classList.remove('open');
+  if(ov) ov.style.display='none';
+}
+// Auto-close sidebar on nav click (mobile)
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('.nav-item').forEach(item=>{
+    item.addEventListener('click',()=>{ if(window.innerWidth<=768) closeSidebar(); });
+  });
+});
+
 renderNotifPanel();
 updateNotifDot();
 
@@ -5891,6 +6690,129 @@ function clearAllData(){
 
 
 
+/* ═══════════════════════════════════════
+   PASTE-FROM-PDF PARSER
+═══════════════════════════════════════ */
+let docPasteRows = [];
+
+function parseDocPaste(){
+  const text = document.getElementById('doc-paste-input')?.value.trim();
+  const status = document.getElementById('doc-paste-status');
+  if(!text){ toast('Paste some text first'); return; }
+  status.textContent='Parsing…'; status.style.color='var(--text2)';
+  const rows = parseDocPasteText(text);
+  if(!rows.length){
+    status.textContent='No transactions found. Make sure you copied all the text from your PDF.';
+    status.style.color='var(--amber)';
+    document.getElementById('doc-paste-results').style.display='none';
+    return;
+  }
+  status.textContent=rows.length+' transaction'+(rows.length!==1?'s':'')+' found.';
+  status.style.color='var(--green)';
+  renderDocPasteResults(rows);
+}
+
+function parseDocPasteText(text){
+  const results=[];
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l.length>3);
+  const monthMap={'jan':'01','feb':'02','mar':'03','apr':'04','may':'05','jun':'06','jul':'07','aug':'08','sep':'09','oct':'10','nov':'11','dec':'12'};
+
+  function parseDate(ds){
+    try{
+      if(/Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/i.test(ds)){
+        const pm=ds.match(/(\d{1,2})[\/\-\s]*([A-Za-z]+)[\/\-\s]*(\d{2,4})/);
+        if(pm){ const yr=pm[3].length===2?'20'+pm[3]:pm[3]; return `${yr}-${monthMap[pm[2].toLowerCase().slice(0,3)]}-${pm[1].padStart(2,'0')}`; }
+      }
+      const pm=ds.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+      if(pm){ const yr=pm[3].length===2?'20'+pm[3]:pm[3]; return `${yr}-${pm[2].padStart(2,'0')}-${pm[1].padStart(2,'0')}`; }
+      const pm2=ds.match(/(\d{4})[\/\-](\d{2})[\/\-](\d{2})/);
+      if(pm2) return `${pm2[1]}-${pm2[2]}-${pm2[3]}`;
+    }catch(e){}
+    return todayStr;
+  }
+
+  lines.forEach(line=>{
+    // Need at least one amount (digits.digits pattern)
+    const amounts=(line.match(/([\d,]{1,12}\.\d{2})/g)||[]).map(a=>parseFloat(a.replace(/,/g,'')));
+    if(!amounts.length) return;
+
+    // Need a date
+    const dateMatch=line.match(/(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})|(\d{4}[\/\-]\d{2}[\/\-]\d{2})|(\d{1,2}\s*(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s*\d{2,4})/i);
+    if(!dateMatch) return;
+
+    const date=parseDate(dateMatch[0]);
+    if(new Date(date).toString()==='Invalid Date'||!date.match(/^\d{4}-\d{2}-\d{2}$/)) return;
+
+    // Get description — remove date, amounts, Dr/Cr tags
+    let desc=line
+      .replace(dateMatch[0],'')
+      .replace(/([\d,]{1,12}\.\d{2})/g,' ')
+      .replace(/\b(Dr|Cr|DR|CR|DEBIT|CREDIT)\b/gi,' ')
+      .replace(/\s{2,}/g,' ').trim()
+      .replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g,'').trim();
+    if(desc.length<2) desc='Transaction';
+
+    // Determine type and amount
+    let type='dr', amount=amounts[0];
+    if(/\bCr\b|\bCR\b|\bCREDIT\b/i.test(line)) type='cr';
+    else if(/\bDr\b|\bDR\b|\bDEBIT\b/i.test(line)) type='dr';
+    else if(amounts.length>=3){
+      // Likely [debit, credit, balance] columns
+      if(amounts[0]>0 && (amounts[1]===0||amounts[1]<0.01)){ type='dr'; amount=amounts[0]; }
+      else if((amounts[0]===0||amounts[0]<0.01) && amounts[1]>0){ type='cr'; amount=amounts[1]; }
+    } else if(/salary|received|credit|refund|cashback|interest earned/i.test(desc)) type='cr';
+
+    amount=Math.abs(amount);
+    if(amount<0.01) return;
+
+    results.push({name:desc.slice(0,60),amount,type,cat:guessCategory(desc),src:'Statement',date});
+  });
+
+  // Fallback to SMS parser if table parsing found nothing
+  return results.length>0 ? results : parseSMSText(text);
+}
+
+function renderDocPasteResults(rows){
+  docPasteRows=rows;
+  const wrap=document.getElementById('doc-paste-results');
+  const tbody=document.getElementById('doc-paste-tbody');
+  const countEl=document.getElementById('doc-paste-count');
+  if(!wrap||!tbody) return;
+  wrap.style.display='block';
+  if(countEl) countEl.textContent=rows.length+' transactions found — review & edit before importing';
+  const cats=['Food','Transfer','Salary','EMI','Shopping','Fuel','Bills','Other'];
+  let dups=0;
+  tbody.innerHTML=rows.map((tx,i)=>{
+    const dup=isDuplicate(tx); if(dup) dups++;
+    return `<tr>
+      <td><input type="checkbox" class="doc-paste-chk" data-idx="${i}" ${dup?'':'checked'} style="width:14px;height:14px;accent-color:var(--accent);cursor:pointer;"/></td>
+      <td><input style="width:100px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 6px;color:var(--text);font-size:11px;font-family:'DM Mono',monospace;" value="${tx.date}" onchange="docPasteRows[${i}].date=this.value"/></td>
+      <td><input style="width:190px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 6px;color:var(--text);font-size:12px;" value="${(tx.name||'').replace(/"/g,'&quot;')}" onchange="docPasteRows[${i}].name=this.value"/></td>
+      <td><select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 6px;color:var(--text);font-size:11px;" onchange="docPasteRows[${i}].cat=this.value">${cats.map(c=>`<option ${c===tx.cat?'selected':''}>${c}</option>`).join('')}</select></td>
+      <td style="text-align:right;font-weight:500;color:${tx.type==='cr'?'var(--green)':'var(--red)'};">${tx.type==='cr'?'+':'-'}₹${Math.round(tx.amount).toLocaleString('en-IN')}</td>
+      <td><select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 6px;color:var(--text);font-size:11px;" onchange="docPasteRows[${i}].type=this.value"><option value="dr" ${tx.type==='dr'?'selected':''}>Dr</option><option value="cr" ${tx.type==='cr'?'selected':''}>Cr</option></select></td>
+    </tr>`;
+  }).join('');
+  const dw=document.getElementById('doc-paste-dup-warn');
+  if(dups>0&&dw){dw.style.display='block';dw.textContent=dups+' possible duplicate'+(dups>1?'s':'')+' auto-unchecked.';}
+  else if(dw) dw.style.display='none';
+}
+
+function commitDocPasteImport(){
+  const checked=[...document.querySelectorAll('.doc-paste-chk:checked')].map(c=>+c.dataset.idx);
+  if(!checked.length){toast('Select at least one transaction');return;}
+  checked.forEach(i=>{
+    const tx=docPasteRows[i]; if(!tx) return;
+    state.transactions.push({id:state.nextId++,name:tx.name||'Import',amount:Math.abs(tx.amount||0),type:tx.type||'dr',cat:tx.cat||'Other',src:tx.src||'Statement',date:tx.date||todayStr});
+  });
+  save();
+  saveImportHistory('Statement Paste',checked.length,'Copy-Paste Import');
+  toast(checked.length+' transactions imported ✓');
+  document.getElementById('doc-paste-results').style.display='none';
+  document.getElementById('doc-paste-input').value='';
+  document.getElementById('doc-paste-status').textContent='';
+  renderImportHistory();
+}
 
 </script>
 </body>
