@@ -6361,8 +6361,17 @@ updateNotifDot();
    DATA SYNC — SUPABASE + FIREBASE + JSON BACKUP/RESTORE
 ═══════════════════════════════════════════════════════ */
 
-/* ── Sync config persisted in localStorage ── */
+/* ── SYNC CONFIG — persisted in localStorage, with hardcoded defaults ── */
+const DEFAULT_FB_CONFIG = {
+  fbKey:  'AIzaSyBsYAZq_gESdCBSVGmGJw9q2LIhfPM6V5I',
+  fbProj: 'financeos-vamsi',
+  fbDoc:  'vamsi'
+};
 let syncCfg = JSON.parse(localStorage.getItem('fos_sync_cfg') || '{}');
+// Fill in defaults if not already set
+if(!syncCfg.fbKey)  syncCfg.fbKey  = DEFAULT_FB_CONFIG.fbKey;
+if(!syncCfg.fbProj) syncCfg.fbProj = DEFAULT_FB_CONFIG.fbProj;
+if(!syncCfg.fbDoc)  syncCfg.fbDoc  = DEFAULT_FB_CONFIG.fbDoc;
 function saveSyncCfg(){ localStorage.setItem('fos_sync_cfg', JSON.stringify(syncCfg)); }
 
 /* ── Auto-sync toggle ── */
