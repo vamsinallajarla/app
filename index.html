@@ -2662,7 +2662,7 @@ function renderDashboard(){
     <div class="m-card" onclick="openTileModal('savings')" style="cursor:pointer;"><div class="m-icon" style="background:${sav>=0?'rgba(79,124,255,0.12)':'rgba(255,92,92,0.12)'};color:${sav>=0?'#4f7cff':'#ff5c5c'};"><i class="ti ti-piggy-bank" aria-hidden="true"></i></div><div class="m-label">${sav>=0?'Savings':'Deficit'}</div><div class="m-value" style="color:${sav>=0?'#4f7cff':'#ff5c5c'};">${sav>=0?'+':''}${fmt(sav)}</div><div class="m-change ${sav>=0?'up':'down'}">${Math.abs(savPct)}% ${sav>=0?'of income':'over income'}</div><div class="m-glow" style="background:${sav>=0?'#4f7cff':'#ff5c5c'};"></div></div>
     <div class="m-card" onclick="openTileModal('emis')" style="cursor:pointer;"><div class="m-icon" style="background:rgba(240,165,0,0.12);color:#f0a500;"><i class="ti ti-building-bank" aria-hidden="true"></i></div><div class="m-label">Monthly EMIs</div><div class="m-value" style="color:#f0a500;">${fmt(emi)}</div><div class="m-change">${state.loans.length} active loan${state.loans.length!==1?'s':''}</div><div class="m-glow" style="background:#f0a500;"></div></div>
     <div class="m-card" onclick="openTileModal('networth')" style="cursor:pointer;"><div class="m-icon" style="background:rgba(34,212,224,0.12);color:#22d4e0;"><i class="ti ti-scale" aria-hidden="true"></i></div><div class="m-label">Net Worth</div><div class="m-value" style="color:${nw>=0?'#22c98a':'#ff5c5c'};">${nw>=0?'+':''}${fmt(Math.abs(nw))}</div><div class="m-change">${state.accounts.length} account${state.accounts.length!==1?'s':''}</div><div class="m-glow" style="background:#22d4e0;"></div></div>
-    <div class="m-card" onclick="openTileModal('cc')" style="cursor:pointer;"><div class="m-icon" style="background:rgba(255,92,150,0.12);color:#ff5c96;"><i class="ti ti-credit-card" aria-hidden="true"></i></div><div class="m-label">CC Utilisation</div><div class="m-value" style="color:${ccUtil>75?'#ff5c5c':ccUtil>50?'#f0a500':'#22c98a'};">${ccUtil}%</div><div class="m-change">${state.cards.length} card${state.cards.length!==1?'s':''}</div><div class="m-glow" style="background:#ff5c96;"></div></div>`;
+    <div class="m-card" onclick="openTileModal('bankbal')" style="cursor:pointer;"><div class="m-icon" style="background:rgba(34,201,138,0.12);color:#22c98a;"><i class="ti ti-building-community" aria-hidden="true"></i></div><div class="m-label">Bank Balance</div><div class="m-value" style="color:#22c98a;">${fmt(totalBal)}</div><div class="m-change">${state.accounts.length} account${state.accounts.length!==1?'s':''}</div><div class="m-glow" style="background:#22c98a;"></div></div>`;
 
   // ── 6-MONTH TREND ─────────────────────────────────────────────────────────
   const [_cy,_cm]=curMonth.split('-').map(Number);
@@ -6332,7 +6332,7 @@ function addSparklinesToKPICards(months6){
   });
 
   const cards = document.querySelectorAll('#dash-metrics .m-card');
-  const datasets = [mInc, mExp, mSav, mEmi, mNW, []];
+  const datasets = [mInc, mExp, mSav, mEmi, mNW, mNW.map(()=>totalBal)];
   const colors = ['#22c98a','#ff5c5c','#4f7cff','#f0a500','#22d4e0','#ff5c96'];
 
   cards.forEach((card, i) => {
@@ -6743,6 +6743,22 @@ function openTileModal(type){
         ...state.loans.map(l=>({_custom:true, name:l.name, amount:loanOutstanding(l), type:'dr', cat:'Loan', date:'EMI: '+fmt(l.emi)+'/mo', src:l.months+' mo left'})),
         ...state.cards.map(c=>({_custom:true, name:c.name+' ••'+c.last4, amount:c.used, type:'dr', cat:'Credit Card', date:'Limit: '+fmt(c.limit), src:'Due '+c.dueDate+'th'})),
       ];
+      break;
+    }
+
+    case 'bankbal': {
+      const totalBal2 = state.accounts.reduce((s,a)=>s+a.balance,0);
+      total = totalBal2;
+      title = 'Bank Balance';
+      sub = state.accounts.length+' account'+(state.accounts.length!==1?'s'+'':'');
+      color = '#22c98a';
+      summaryItems = state.accounts.map(a=>({
+        label: a.name, value: fmt(a.balance), color: a.balance>0?'#22c98a':'#ff5c5c'
+      }));
+      rows = state.accounts.map(a=>({
+        _custom:true, name:a.name, amount:a.balance, type:'cr',
+        cat:a.type, date:a.bank, src:'A/c XXXX'+a.acNo
+      }));
       break;
     }
 
