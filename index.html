@@ -1477,10 +1477,11 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
                       <option value="FD">Fixed Deposit (FD)</option>
                       <option value="RD">Recurring Deposit (RD)</option>
                       <option value="PPF">PPF</option>
-                      <option value="NPS">NPS</option>
-                      <option value="Mutual Fund">Mutual Fund (Lump sum)</option>
+                      <option value="Mutual Fund">Mutual Fund</option>
+                      <option value="Equity">Equity / Stocks</option>
                       <option value="Gold">Gold / Digital Gold</option>
-                      <option value="Debt">Debt Fund</option>
+                      <option value="Debt">Debt / Bonds</option>
+                      <option value="Crypto">Crypto</option>
                       <option value="Other">Other</option>
                     </select>
                   </div>
@@ -2656,12 +2657,12 @@ function renderDashboard(){
 
   // ── KPI METRICS ──────────────────────────────────────────────────────────
   document.getElementById('dash-metrics').innerHTML=`
-    <div class="m-card"><div class="m-icon" style="background:rgba(34,201,138,0.12);color:#22c98a;"><i class="ti ti-arrow-down-left" aria-hidden="true"></i></div><div class="m-label">Total Income</div><div class="m-value" style="color:#22c98a;">${fmt(inc)}</div><div class="m-change up"><i class="ti ti-trending-up" style="font-size:12px;" aria-hidden="true"></i> This month</div><div class="m-glow" style="background:#22c98a;"></div></div>
-    <div class="m-card"><div class="m-icon" style="background:rgba(255,92,92,0.12);color:#ff5c5c;"><i class="ti ti-arrow-up-right" aria-hidden="true"></i></div><div class="m-label">Total Expenses</div><div class="m-value" style="color:#ff5c5c;">${fmt(exp)}</div><div class="m-change down"><i class="ti ti-trending-down" style="font-size:12px;" aria-hidden="true"></i> This month</div><div class="m-glow" style="background:#ff5c5c;"></div></div>
-    <div class="m-card"><div class="m-icon" style="background:${sav>=0?'rgba(79,124,255,0.12)':'rgba(255,92,92,0.12)'};color:${sav>=0?'#4f7cff':'#ff5c5c'};"><i class="ti ti-piggy-bank" aria-hidden="true"></i></div><div class="m-label">${sav>=0?'Savings':'Deficit'}</div><div class="m-value" style="color:${sav>=0?'#4f7cff':'#ff5c5c'};">${sav>=0?'+':''}${fmt(sav)}</div><div class="m-change ${sav>=0?'up':'down'}">${Math.abs(savPct)}% ${sav>=0?'of income':'over income'}</div><div class="m-glow" style="background:${sav>=0?'#4f7cff':'#ff5c5c'};"></div></div>
-    <div class="m-card"><div class="m-icon" style="background:rgba(240,165,0,0.12);color:#f0a500;"><i class="ti ti-building-bank" aria-hidden="true"></i></div><div class="m-label">Monthly EMIs</div><div class="m-value" style="color:#f0a500;">${fmt(emi)}</div><div class="m-change">${state.loans.length} active loan${state.loans.length!==1?'s':''}</div><div class="m-glow" style="background:#f0a500;"></div></div>
-    <div class="m-card"><div class="m-icon" style="background:rgba(34,212,224,0.12);color:#22d4e0;"><i class="ti ti-scale" aria-hidden="true"></i></div><div class="m-label">Net Worth</div><div class="m-value" style="color:${nw>=0?'#22c98a':'#ff5c5c'};">${nw>=0?'+':''}${fmt(Math.abs(nw))}</div><div class="m-change">${state.accounts.length} account${state.accounts.length!==1?'s':''}</div><div class="m-glow" style="background:#22d4e0;"></div></div>
-    <div class="m-card"><div class="m-icon" style="background:rgba(255,92,150,0.12);color:#ff5c96;"><i class="ti ti-credit-card" aria-hidden="true"></i></div><div class="m-label">CC Utilisation</div><div class="m-value" style="color:${ccUtil>75?'#ff5c5c':ccUtil>50?'#f0a500':'#22c98a'};">${ccUtil}%</div><div class="m-change">${state.cards.length} card${state.cards.length!==1?'s':''}</div><div class="m-glow" style="background:#ff5c96;"></div></div>`;
+    <div class="m-card" onclick="openTileModal('income')" style="cursor:pointer;"><div class="m-icon" style="background:rgba(34,201,138,0.12);color:#22c98a;"><i class="ti ti-arrow-down-left" aria-hidden="true"></i></div><div class="m-label">Total Income</div><div class="m-value" style="color:#22c98a;">${fmt(inc)}</div><div class="m-change up"><i class="ti ti-trending-up" style="font-size:12px;" aria-hidden="true"></i> This month</div><div class="m-glow" style="background:#22c98a;"></div></div>
+    <div class="m-card" onclick="openTileModal('expenses')" style="cursor:pointer;"><div class="m-icon" style="background:rgba(255,92,92,0.12);color:#ff5c5c;"><i class="ti ti-arrow-up-right" aria-hidden="true"></i></div><div class="m-label">Total Expenses</div><div class="m-value" style="color:#ff5c5c;">${fmt(exp)}</div><div class="m-change down"><i class="ti ti-trending-down" style="font-size:12px;" aria-hidden="true"></i> This month</div><div class="m-glow" style="background:#ff5c5c;"></div></div>
+    <div class="m-card" onclick="openTileModal('savings')" style="cursor:pointer;"><div class="m-icon" style="background:${sav>=0?'rgba(79,124,255,0.12)':'rgba(255,92,92,0.12)'};color:${sav>=0?'#4f7cff':'#ff5c5c'};"><i class="ti ti-piggy-bank" aria-hidden="true"></i></div><div class="m-label">${sav>=0?'Savings':'Deficit'}</div><div class="m-value" style="color:${sav>=0?'#4f7cff':'#ff5c5c'};">${sav>=0?'+':''}${fmt(sav)}</div><div class="m-change ${sav>=0?'up':'down'}">${Math.abs(savPct)}% ${sav>=0?'of income':'over income'}</div><div class="m-glow" style="background:${sav>=0?'#4f7cff':'#ff5c5c'};"></div></div>
+    <div class="m-card" onclick="openTileModal('emis')" style="cursor:pointer;"><div class="m-icon" style="background:rgba(240,165,0,0.12);color:#f0a500;"><i class="ti ti-building-bank" aria-hidden="true"></i></div><div class="m-label">Monthly EMIs</div><div class="m-value" style="color:#f0a500;">${fmt(emi)}</div><div class="m-change">${state.loans.length} active loan${state.loans.length!==1?'s':''}</div><div class="m-glow" style="background:#f0a500;"></div></div>
+    <div class="m-card" onclick="openTileModal('networth')" style="cursor:pointer;"><div class="m-icon" style="background:rgba(34,212,224,0.12);color:#22d4e0;"><i class="ti ti-scale" aria-hidden="true"></i></div><div class="m-label">Net Worth</div><div class="m-value" style="color:${nw>=0?'#22c98a':'#ff5c5c'};">${nw>=0?'+':''}${fmt(Math.abs(nw))}</div><div class="m-change">${state.accounts.length} account${state.accounts.length!==1?'s':''}</div><div class="m-glow" style="background:#22d4e0;"></div></div>
+    <div class="m-card" onclick="openTileModal('cc')" style="cursor:pointer;"><div class="m-icon" style="background:rgba(255,92,150,0.12);color:#ff5c96;"><i class="ti ti-credit-card" aria-hidden="true"></i></div><div class="m-label">CC Utilisation</div><div class="m-value" style="color:${ccUtil>75?'#ff5c5c':ccUtil>50?'#f0a500':'#22c98a'};">${ccUtil}%</div><div class="m-change">${state.cards.length} card${state.cards.length!==1?'s':''}</div><div class="m-glow" style="background:#ff5c96;"></div></div>`;
 
   // ── 6-MONTH TREND ─────────────────────────────────────────────────────────
   const [_cy,_cm]=curMonth.split('-').map(Number);
@@ -4409,8 +4410,13 @@ function addManual(){
       ].filter(Boolean).join(' · ')
     };
     state.investments.push(inv);
-    toast(`✓ Transaction recorded + ${depType} of ${fmt(amount)} added to Investments`);
+    save(); // save immediately after pushing investment
+    toast(`✓ ${depType} ₹${Math.round(amount).toLocaleString('en-IN')} added to Investments — check Investments page`);
     addNotif(`New ${depType} added`, `${fmt(amount)} at ${depPlatform}${depRate?' @ '+depRate+'%':''}`, 'success');
+    // If on investments page, refresh it
+    if(document.getElementById('page-investments')?.classList.contains('active')){
+      renderInvestments();
+    }
   } else if(isOwnTransfer){
     toast('✓ Own transfer recorded — not counted as expense or income');
   }
@@ -6626,6 +6632,188 @@ if('serviceWorker' in navigator){
   });
 }
 
+/* ═══════════════════════════════════════════════════
+   TILE DRILL-DOWN MODAL
+   Click any KPI card on dashboard → slide-up sheet
+   showing all transactions that make up that number
+═══════════════════════════════════════════════════ */
+
+function openTileModal(type){
+  const overlay = document.getElementById('tile-modal-overlay');
+  const modal   = document.getElementById('tile-modal');
+  if(!overlay||!modal) return;
+
+  const txs = curTx();
+  const allTxs = [...state.transactions].sort((a,b)=>b.date.localeCompare(a.date));
+
+  let title='', sub='', color='', total=0, rows=[], summaryItems=[];
+
+  switch(type){
+
+    case 'income': {
+      const list = txs.filter(t=>isTx(t)&&isIncome(t));
+      total = list.reduce((s,t)=>s+t.amount,0);
+      title = 'Total Income';
+      sub = curMonth+' · '+list.length+' transaction'+(list.length!==1?'s':'');
+      color = '#22c98a';
+      rows = list.sort((a,b)=>b.amount-a.amount);
+      // Summary by source
+      const bySrc={};
+      list.forEach(t=>bySrc[t.src]=(bySrc[t.src]||0)+t.amount);
+      summaryItems = Object.entries(bySrc).sort((a,b)=>b[1]-a[1]).map(([k,v])=>
+        ({label:k, value:fmt(v), color:'#22c98a'}));
+      break;
+    }
+
+    case 'expenses': {
+      const list = txs.filter(t=>isTx(t)&&isExpense(t));
+      total = list.reduce((s,t)=>s+t.amount,0);
+      title = 'Total Expenses';
+      sub = curMonth+' · '+list.length+' transaction'+(list.length!==1?'s':'');
+      color = '#ff5c5c';
+      rows = list.sort((a,b)=>b.amount-a.amount);
+      // Summary by category
+      const byCat={};
+      list.forEach(t=>byCat[t.cat]=(byCat[t.cat]||0)+t.amount);
+      summaryItems = Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>
+        ({label:k, value:fmt(v), color:catClr[k]||'#555568'}));
+      break;
+    }
+
+    case 'savings': {
+      const inc = txs.filter(t=>isTx(t)&&isIncome(t)).reduce((s,t)=>s+t.amount,0);
+      const exp = txs.filter(t=>isTx(t)&&isExpense(t)).reduce((s,t)=>s+t.amount,0);
+      total = inc - exp;
+      const pct = inc>0?Math.round((total/inc)*100):0;
+      title = total>=0?'Savings':'Deficit';
+      sub = curMonth+' · '+Math.abs(pct)+'% of income';
+      color = total>=0?'#4f7cff':'#ff5c5c';
+      rows = txs.filter(t=>isTx(t)).sort((a,b)=>b.date.localeCompare(a.date));
+      summaryItems = [
+        {label:'Income', value:fmt(inc), color:'#22c98a'},
+        {label:'Expenses', value:fmt(exp), color:'#ff5c5c'},
+        {label:total>=0?'Saved':'Deficit', value:fmt(Math.abs(total)), color},
+      ];
+      break;
+    }
+
+    case 'emis': {
+      const list = txs.filter(t=>t.cat==='EMI'||state.loans.some(l=>t.name.toLowerCase().includes(l.name.toLowerCase().split(' ')[0])));
+      total = state.loans.reduce((s,l)=>s+l.emi,0);
+      title = 'Monthly EMIs';
+      sub = state.loans.length+' active loan'+(state.loans.length!==1?'s':'');
+      color = '#f0a500';
+      // Show loans breakdown + EMI transactions
+      summaryItems = state.loans.map(l=>({label:l.name, value:fmt(l.emi)+'/mo', color:'#f0a500'}));
+      rows = [...txs.filter(t=>t.cat==='EMI'), ...state.loans.map(l=>({
+        _isLoan:true, name:l.name, amount:l.emi, type:'dr', cat:'EMI',
+        date:'Due '+l.due+'th', src:l.months+' mo left',
+        outstanding: loanOutstanding(l)
+      }))].filter((r,i,a)=>r._isLoan||a.findIndex(x=>!x._isLoan&&x.name===r.name)<0||true);
+      // Just show loan details + recent EMI payments
+      rows = [
+        ...state.loans.map(l=>({_isLoan:true, name:l.name, amount:l.emi, type:'dr', cat:'EMI', date:'Due '+l.due+'th each month', src:'Outstanding: '+fmt(loanOutstanding(l))})),
+        ...txs.filter(t=>t.cat==='EMI').sort((a,b)=>b.date.localeCompare(a.date))
+      ];
+      break;
+    }
+
+    case 'networth': {
+      const totalBal = state.accounts.reduce((s,a)=>s+a.balance,0);
+      const totalInv = state.investments.reduce((s,i)=>s+i.current,0);
+      const manualA  = state.networth.assets.reduce((s,a)=>s+a.val,0);
+      const totalA   = totalBal+totalInv+manualA;
+      const totalL   = state.loans.reduce((s,l)=>s+loanOutstanding(l),0)
+                     + state.cards.reduce((s,c)=>s+c.used,0)
+                     + state.networth.liabilities.reduce((s,l)=>s+l.val,0);
+      total = totalA - totalL;
+      title = 'Net Worth Breakdown';
+      sub = fmt(totalA)+' assets − '+fmt(totalL)+' liabilities';
+      color = total>=0?'#22d4e0':'#ff5c5c';
+      summaryItems = [
+        {label:'Bank Accounts', value:fmt(totalBal), color:'#22c98a'},
+        {label:'Investments', value:fmt(totalInv), color:'#4f7cff'},
+        {label:'Loans (outstanding)', value:'-'+fmt(state.loans.reduce((s,l)=>s+loanOutstanding(l),0)), color:'#ff5c5c'},
+        {label:'CC Outstanding', value:'-'+fmt(state.cards.reduce((s,c)=>s+c.used,0)), color:'#ff5c96'},
+      ];
+      // Show assets and liabilities as rows
+      rows = [
+        ...state.accounts.map(a=>({_custom:true, name:a.name, amount:a.balance, type:'cr', cat:'Account', date:a.type, src:a.bank})),
+        ...state.investments.map(i=>({_custom:true, name:i.name, amount:i.current, type:'cr', cat:i.type, date:i.platform, src:'Invested: '+fmt(i.invested)})),
+        ...state.loans.map(l=>({_custom:true, name:l.name, amount:loanOutstanding(l), type:'dr', cat:'Loan', date:'EMI: '+fmt(l.emi)+'/mo', src:l.months+' mo left'})),
+        ...state.cards.map(c=>({_custom:true, name:c.name+' ••'+c.last4, amount:c.used, type:'dr', cat:'Credit Card', date:'Limit: '+fmt(c.limit), src:'Due '+c.dueDate+'th'})),
+      ];
+      break;
+    }
+
+    case 'cc': {
+      const totalUsed = state.cards.reduce((s,c)=>s+c.used,0);
+      const totalLim  = state.cards.reduce((s,c)=>s+c.limit,0);
+      total = Math.round(totalUsed/totalLim*100)||0;
+      title = 'CC Utilisation';
+      sub = fmt(totalUsed)+' used of '+fmt(totalLim)+' total limit';
+      color = total>75?'#ff5c5c':total>50?'#f0a500':'#22c98a';
+      summaryItems = state.cards.map(c=>{
+        const u=Math.round(c.used/c.limit*100);
+        return {label:c.name+' ••'+c.last4, value:u+'% ('+fmt(c.used)+')', color:u>75?'#ff5c5c':u>50?'#f0a500':'#22c98a'};
+      });
+      rows = state.cards.map(c=>({
+        _custom:true, name:c.name+' ••'+c.last4, amount:c.used, type:'dr',
+        cat:'Credit Card', date:'Min due: '+fmt(c.minDue), src:'Due '+c.dueDate+'th · Limit '+fmt(c.limit)
+      }));
+      break;
+    }
+  }
+
+  // Render modal content
+  document.getElementById('tile-modal-title').textContent = title;
+  document.getElementById('tile-modal-sub').textContent   = sub;
+  document.getElementById('tile-modal-total').innerHTML   =
+    `<span style="color:${color};">${type==='cc'?total+'%':(total<0?'-':type==='savings'&&total>=0?'+':'')+fmt(Math.abs(total))}</span>`;
+
+  // Summary chips
+  document.getElementById('tile-modal-summary').innerHTML = summaryItems.map(s=>
+    `<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:4px 12px;font-size:11px;display:flex;gap:6px;align-items:center;">
+      <span style="color:var(--text3);">${s.label}</span>
+      <span style="font-weight:600;color:${s.color};">${s.value}</span>
+    </div>`
+  ).join('');
+
+  // Transaction rows
+  document.getElementById('tile-modal-body').innerHTML = rows.length
+    ? rows.map(t=>`
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+        <div style="width:36px;height:36px;border-radius:10px;background:${t.type==='cr'?'rgba(34,201,138,0.12)':t.type==='own-transfer'?'rgba(79,124,255,0.12)':'rgba(255,92,92,0.12)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;color:${t.type==='cr'?'#22c98a':t.type==='own-transfer'?'#4f7cff':'#ff5c5c'};">
+          <i class="ti ti-${t.type==='cr'?'arrow-down-left':t.type==='own-transfer'?'arrows-exchange':'arrow-up-right'}" aria-hidden="true"></i>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:1px;">${t.date}${t.src?' · '+t.src:''}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:14px;font-weight:600;color:${t.type==='cr'?'#22c98a':t.type==='own-transfer'?'#4f7cff':'#ff5c5c'};">${t.type==='cr'?'+':t.type==='own-transfer'?'⇄':'-'}${fmt(t.amount)}</div>
+          <div style="font-size:10px;color:var(--text3);">${t.cat||''}</div>
+        </div>
+      </div>`).join('')
+    : '<div style="text-align:center;padding:40px 20px;color:var(--text2);font-size:13px;">No transactions this month</div>';
+
+  // Show modal
+  overlay.style.display='block';
+  modal.style.display='flex';
+  requestAnimationFrame(()=>{ modal.style.transform='translateY(0)'; });
+}
+
+function closeTileModal(){
+  const modal   = document.getElementById('tile-modal');
+  const overlay = document.getElementById('tile-modal-overlay');
+  if(!modal||!overlay) return;
+  modal.style.transform = 'translateY(100%)';
+  setTimeout(()=>{ modal.style.display='none'; overlay.style.display='none'; }, 350);
+}
+
+// Close on Escape key
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeTileModal(); });
+
 renderNotifPanel();
 updateNotifDot();
 
@@ -7096,5 +7284,25 @@ function commitDocPasteImport(){
 }
 
 </script>
+  <!-- TILE DRILL-DOWN MODAL -->
+  <div id="tile-modal-overlay" onclick="closeTileModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:2000;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);"></div>
+  <div id="tile-modal" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:2001;max-height:82vh;border-radius:20px 20px 0 0;background:linear-gradient(180deg,rgba(18,18,32,0.99),rgba(13,13,20,1));border-top:1px solid rgba(255,255,255,0.1);box-shadow:0 -20px 60px rgba(0,0,0,0.6);transform:translateY(100%);transition:transform .35s cubic-bezier(.22,1,.36,1);overflow:hidden;flex-direction:column;">
+    <div style="display:flex;justify-content:center;padding:12px 0 4px;cursor:pointer;" onclick="closeTileModal()">
+      <div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,0.15);"></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 20px 12px;">
+      <div>
+        <div id="tile-modal-title" style="font-size:16px;font-weight:700;font-family:'Syne',sans-serif;"></div>
+        <div id="tile-modal-sub" style="font-size:12px;color:var(--text2);margin-top:2px;"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div id="tile-modal-total" style="font-size:22px;font-weight:700;font-family:'Syne',sans-serif;"></div>
+        <button onclick="closeTileModal()" style="background:rgba(255,255,255,0.08);border:none;color:var(--text2);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;">×</button>
+      </div>
+    </div>
+    <div id="tile-modal-summary" style="margin:0 20px 10px;display:flex;gap:8px;flex-wrap:wrap;"></div>
+    <div id="tile-modal-body" style="overflow-y:auto;padding:0 20px 32px;flex:1;-webkit-overflow-scrolling:touch;"></div>
+  </div>
+
 </body>
 </html>
