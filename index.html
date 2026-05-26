@@ -183,28 +183,56 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
 /* ── MOBILE RESPONSIVE ── */
 @media(max-width:768px){
   :root{--sidebar:0px;}
+
+  /* Sidebar slides in as overlay — hidden by default */
   .sidebar{
-    position:fixed;left:-240px;top:0;bottom:0;z-index:1100;
-    width:240px;transition:left .3s cubic-bezier(.22,1,.36,1);
+    position:fixed !important;
+    left:-260px !important;
+    top:0;bottom:0;
+    width:240px !important;
+    z-index:1100 !important;
+    transition:left .3s cubic-bezier(.22,1,.36,1);
     box-shadow:none;
+    overflow-y:auto;
   }
-  .sidebar.open{left:0;box-shadow:8px 0 32px rgba(0,0,0,0.6);}
-  .sidebar-overlay{display:none;position:fixed;inset:0;z-index:1099;background:rgba(0,0,0,0.5);}
-  .sidebar.open~.sidebar-overlay,.sidebar-overlay.visible{display:block;}
-  .content{margin-left:0!important;width:100%;}
-  .topbar{padding-left:12px!important;}
-  .topbar-left{gap:8px;}
-  .chart-row.cols-3{grid-template-columns:1fr!important;}
-  .chart-row.cols-2{grid-template-columns:1fr!important;}
-  .metrics-row{grid-template-columns:1fr 1fr!important;}
+  .sidebar.open{
+    left:0 !important;
+    box-shadow:8px 0 40px rgba(0,0,0,0.7) !important;
+  }
+
+  /* Content takes full width */
+  .content{
+    margin-left:0 !important;
+    width:100% !important;
+  }
+
+  /* Topbar adjustments */
+  .topbar{padding-left:8px !important;}
+  .topbar-left{gap:6px;}
+
+  /* Stack all chart grids to single column */
+  .chart-row.cols-3{grid-template-columns:1fr !important;}
+  .chart-row.cols-2{grid-template-columns:1fr !important;}
+  .chart-row.cols-2r{grid-template-columns:1fr !important;}
+
+  /* KPI cards — 2 per row on mobile */
+  .metrics-row{grid-template-columns:1fr 1fr !important;}
+
+  /* Forms stack vertically */
   .form-row{flex-direction:column;}
-  .cc-grid{grid-template-columns:1fr!important;}
-  /* Mobile menu button */
-  .mobile-menu-btn{display:flex!important;}
+
+  /* CC cards full width */
+  .cc-grid{grid-template-columns:1fr !important;}
+
+  /* Show hamburger button */
+  .mobile-menu-btn{display:flex !important;}
+
+  /* Tile modal full width */
+  #tile-modal{border-radius:16px 16px 0 0 !important;}
 }
+
 @media(min-width:769px){
-  .mobile-menu-btn{display:none!important;}
-  .sidebar-overlay{display:none!important;}
+  .mobile-menu-btn{display:none !important;}
 }
 
 /* SIDEBAR */
@@ -857,7 +885,7 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
 
   <!-- SIDEBAR -->
   <div class="sidebar" id="sidebar">
-    <div id="sidebar-overlay" onclick="closeSidebar()" style="display:none;position:fixed;inset:0;z-index:-1;background:rgba(0,0,0,0.5);"></div>
+    <div id="sidebar-overlay" onclick="closeSidebar()" style="display:none;position:fixed;inset:0;z-index:1099;background:rgba(0,0,0,0.5);"></div>
     <div class="sidebar-top">
       <div class="brand">
         <div class="bicon"><i class="ti ti-chart-line" aria-hidden="true"></i></div>
@@ -920,7 +948,7 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
   <div class="main">
     <div class="topbar">
       <div class="topbar-left">
-        <button class="mobile-menu-btn" onclick="openSidebar()" style="display:none;background:none;border:none;color:var(--text);font-size:20px;padding:4px 8px;cursor:pointer;margin-right:4px;" aria-label="Menu"><i class="ti ti-menu-2" aria-hidden="true"></i></button>
+        <button class="mobile-menu-btn" onclick="openSidebar()" style="display:none;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text);font-size:18px;padding:6px 10px;cursor:pointer;margin-right:6px;border-radius:8px;min-width:40px;min-height:40px;align-items:center;justify-content:center;" aria-label="Open menu"><i class="ti ti-menu-2" aria-hidden="true"></i></button>
         <div class="topbar-title" id="topbar-title">Dashboard</div>
         <div class="month-picker-wrap">
           <div class="period-pill" id="period-pill" onclick="toggleMonthPicker(event)">
@@ -6599,21 +6627,34 @@ function clearProcessedSMS(){
 function openSidebar(){
   const sb = document.getElementById('sidebar');
   const ov = document.getElementById('sidebar-overlay');
-  if(sb) sb.classList.add('open');
-  if(ov) ov.style.display='block';
+  if(sb){ sb.classList.add('open'); sb.style.left='0'; }
+  if(ov){ ov.style.display='block'; ov.style.zIndex='1099'; }
+  document.body.style.overflow='hidden'; // prevent background scroll
 }
 function closeSidebar(){
   const sb = document.getElementById('sidebar');
   const ov = document.getElementById('sidebar-overlay');
-  if(sb) sb.classList.remove('open');
-  if(ov) ov.style.display='none';
+  if(sb){ sb.classList.remove('open'); sb.style.left=''; }
+  if(ov){ ov.style.display='none'; }
+  document.body.style.overflow='';
 }
 // Auto-close sidebar on nav click (mobile)
-document.addEventListener('DOMContentLoaded',()=>{
-  document.querySelectorAll('.nav-item').forEach(item=>{
-    item.addEventListener('click',()=>{ if(window.innerWidth<=768) closeSidebar(); });
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('.nav-item').forEach(function(item){
+    item.addEventListener('click',function(){ if(window.innerWidth<=768) closeSidebar(); });
   });
 });
+// Also close on swipe left on sidebar
+(function(){
+  var startX=0;
+  document.addEventListener('touchstart',function(e){ startX=e.touches[0].clientX; },{passive:true});
+  document.addEventListener('touchend',function(e){
+    var dx=e.changedTouches[0].clientX-startX;
+    var sb=document.getElementById('sidebar');
+    if(sb && sb.classList.contains('open') && dx<-60) closeSidebar();
+    if(sb && !sb.classList.contains('open') && startX<20 && dx>60) openSidebar();
+  },{passive:true});
+})();
 
 /* ── SERVICE WORKER — offline support ── */
 if('serviceWorker' in navigator){
