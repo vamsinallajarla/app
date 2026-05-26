@@ -444,6 +444,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
 .tx-amt{font-size:13px;font-weight:500;flex-shrink:0;}
 .tx-amt.cr{color:var(--green);}
 .tx-amt.dr{color:var(--red);}
+.tx-amt.own-transfer{color:#4f7cff;}
 
 /* BADGE */
 .chip{display:inline-flex;align-items:center;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;}
@@ -1414,7 +1415,7 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
           </div>
           <div class="form-row">
             <div class="form-group"><label class="form-label">Type</label><select class="form-input" id="m-type"><option value="dr">Expense (Dr)</option><option value="cr">Income (Cr)</option></select></div>
-            <div class="form-group"><label class="form-label">Category</label><select class="form-input" id="m-cat"><option>Food</option><option>Transfer</option><option>Salary</option><option>EMI</option><option>Shopping</option><option>Fuel</option><option>Bills</option><option>Other</option></select></div>
+            <div class="form-group"><label class="form-label">Category</label><select class="form-input" id="m-cat" onchange="onCatChange(this.value)"><option>Food</option><option>Transfer</option><option>Salary</option><option>EMI</option><option>Shopping</option><option>Fuel</option><option>Bills</option><option>Other</option></select></div>
             <div class="form-group"><label class="form-label">Source / Account</label>
               <select class="form-input" id="m-src" onchange="updateBalanceHint()">
                 <option value="PhonePe">PhonePe</option>
@@ -1427,6 +1428,34 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
               </select>
             </div>
             <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-date" type="date"/></div>
+          </div>
+
+          <!-- Transfer sub-type — shown only when category = Transfer -->
+          <div id="transfer-subtype-row" style="display:none;margin-bottom:14px;">
+            <div style="background:rgba(79,124,255,0.08);border:1px solid rgba(79,124,255,0.25);border-radius:10px;padding:14px;">
+              <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:#4f7cff;">
+                <i class="ti ti-arrows-exchange" style="font-size:14px;vertical-align:-2px;margin-right:5px;" aria-hidden="true"></i>
+                Transfer type — this determines how it affects your balance
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <label style="flex:1;min-width:200px;cursor:pointer;">
+                  <input type="radio" name="transfer-type" id="tr-own" value="own" checked style="accent-color:#4f7cff;margin-right:6px;"/>
+                  <span style="font-weight:500;">Own account transfer</span>
+                  <div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:2px;">
+                    e.g. Savings → FD, Kotak → SBI, self transfer<br>
+                    <span style="color:#22c98a;">✓ Not counted as expense or income</span> — just moving money
+                  </div>
+                </label>
+                <label style="flex:1;min-width:200px;cursor:pointer;">
+                  <input type="radio" name="transfer-type" id="tr-other" value="other" style="accent-color:#ff5c5c;margin-right:6px;"/>
+                  <span style="font-weight:500;">Payment / outgoing transfer</span>
+                  <div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:2px;">
+                    e.g. Rent, fees, sending to someone else<br>
+                    <span style="color:#ff5c5c;">✓ Counted as expense</span> — reduces your balance
+                  </div>
+                </label>
+              </div>
+            </div>
           </div>
 
           <!-- Available balance row -->
@@ -2520,6 +2549,11 @@ function save(){
 }
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show';setTimeout(()=>t.className='toast',2600);}
 
+// own-transfer: internal move between own accounts — excluded from income/expense
+function isTx(t){ return t.type!=='own-transfer'; }
+function isIncome(t){ return t.type==='cr'; }
+function isExpense(t){ return t.type==='dr'; }
+
 const catClr={Food:'#f0a500',Transfer:'#4f7cff',Salary:'#22c98a',EMI:'#a08aff',Shopping:'#ff5c96',Fuel:'#ff5c5c',Bills:'#8888a0',Other:'#555568'};
 const catBg={Food:'rgba(240,165,0,0.15)',Transfer:'rgba(79,124,255,0.15)',Salary:'rgba(34,201,138,0.15)',EMI:'rgba(160,138,255,0.15)',Shopping:'rgba(255,92,150,0.15)',Fuel:'rgba(255,92,92,0.15)',Bills:'rgba(136,136,160,0.1)',Other:'rgba(136,136,160,0.08)'};
 const catIco={Food:'ti-tools-kitchen-2',Transfer:'ti-arrows-exchange',Salary:'ti-briefcase',EMI:'ti-building-bank',Shopping:'ti-shopping-bag',Fuel:'ti-gas-station',Bills:'ti-file-invoice',Other:'ti-dots'};
@@ -2558,15 +2592,15 @@ function txRowHTML(tx){
   return `<div class="tx-row">
     <div class="tx-ico" style="background:${catBg[tx.cat]||'rgba(136,136,160,0.08)'};color:${catClr[tx.cat]||'#8888a0'};"><i class="ti ${catIco[tx.cat]||'ti-circle'}" aria-hidden="true"></i></div>
     <div class="tx-info"><div class="tx-name">${tx.name}</div><div class="tx-meta">${tx.date} · <span class="chip ${tx.cat.toLowerCase()}">${tx.cat}</span></div></div>
-    <div class="tx-amt ${tx.type}">${tx.type==='cr'?'+':'-'}${fmt(tx.amount)}</div>
+    <div class="tx-amt ${tx.type}">${tx.type==='cr'?'+':tx.type==='own-transfer'?'⇄':'-'}${fmt(tx.amount)}</div>
   </div>`;
 }
 
 let aiInsightCache=null;
 function renderDashboard(){
   const txs=curTx();
-  const inc=txs.filter(t=>t.type==='cr').reduce((s,t)=>s+t.amount,0);
-  const exp=txs.filter(t=>t.type==='dr').reduce((s,t)=>s+t.amount,0);
+  const inc=txs.filter(t=>isTx(t)&&isIncome(t)).reduce((s,t)=>s+t.amount,0);
+  const exp=txs.filter(t=>isTx(t)&&isExpense(t)).reduce((s,t)=>s+t.amount,0);
   const sav=inc-exp;
   const emi=state.loans.reduce((s,l)=>s+l.emi,0);
   const savPct=inc>0?Math.round((sav/inc)*100):0;
@@ -2590,8 +2624,8 @@ function renderDashboard(){
   const [_cy,_cm]=curMonth.split('-').map(Number);
   const months6=[-5,-4,-3,-2,-1,0].map(i=>{const d=new Date(_cy,_cm-1+i,1);return d.toISOString().slice(0,7);});
   const mL=months6.map(m=>new Date(m+'-01').toLocaleString('en-IN',{month:'short'}));
-  const mInc=months6.map(m=>monthTx(m).filter(t=>t.type==='cr').reduce((s,t)=>s+t.amount,0));
-  const mExp=months6.map(m=>monthTx(m).filter(t=>t.type==='dr').reduce((s,t)=>s+t.amount,0));
+  const mInc=months6.map(m=>monthTx(m).filter(t=>isTx(t)&&isIncome(t)).reduce((s,t)=>s+t.amount,0));
+  const mExp=months6.map(m=>monthTx(m).filter(t=>isTx(t)&&isExpense(t)).reduce((s,t)=>s+t.amount,0));
   dc('trend-dash');
   charts['trend-dash']=new Chart(document.getElementById('ch-trend-dash'),{
     type:'line',
@@ -2621,7 +2655,7 @@ function renderDashboard(){
 
   // ── SPENDING DONUT ────────────────────────────────────────────────────────
   const catSpend={};
-  txs.filter(t=>t.type==='dr').forEach(t=>catSpend[t.cat]=(catSpend[t.cat]||0)+t.amount);
+  txs.filter(t=>isTx(t)&&isExpense(t)).forEach(t=>catSpend[t.cat]=(catSpend[t.cat]||0)+t.amount);
   const cats=Object.keys(catSpend).sort((a,b)=>catSpend[b]-catSpend[a]).slice(0,6);
   dc('donut');
   if(cats.length){
@@ -2693,9 +2727,9 @@ function renderDashboard(){
 
   // ── BUDGET BARS ───────────────────────────────────────────────────────────
   const budgetEl=document.getElementById('dash-budget-bars');
-  const topBudget=Object.entries(state.budget).sort((a,b)=>(catSpend[b[0]]||0)-(catSpend[a[0]]||0)).slice(0,5);
+  const topBudget=Object.entries(state.budget).sort((a,b)=>(calcBudgetSpent(b[0],curTx()))-(calcBudgetSpent(a[0],curTx()))).slice(0,5);
   budgetEl.innerHTML=topBudget.map(([cat,lim])=>{
-    const spent=catSpend[cat]||0;
+    const spent=calcBudgetSpent(cat,curTx());
     const pct=Math.min(100,Math.round(spent/lim*100));
     const bc=pct>90?'#ff5c5c':pct>70?'#f0a500':'#22c98a';
     return `<div style="margin-bottom:10px;">
@@ -2741,7 +2775,7 @@ function renderDashboard(){
   }
 
   // ── TOP SPENDS ────────────────────────────────────────────────────────────
-  const topSpends=[...txs].filter(t=>t.type==='dr').sort((a,b)=>b.amount-a.amount).slice(0,5);
+  const topSpends=[...txs].filter(t=>isTx(t)&&isExpense(t)).sort((a,b)=>b.amount-a.amount).slice(0,5);
   document.getElementById('dash-top-spends').innerHTML=topSpends.length?topSpends.map((t,i)=>`
     <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);${i===topSpends.length-1?'border-bottom:none;':''}">
       <div style="width:22px;height:22px;border-radius:50%;background:rgba(255,92,92,0.12);color:#ff5c5c;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</div>
@@ -2933,8 +2967,8 @@ async function fetchAIInsights(){
   if(status) status.textContent='';
 
   const txs=curTx();
-  const inc=txs.filter(t=>t.type==='cr').reduce((s,t)=>s+t.amount,0);
-  const exp=txs.filter(t=>t.type==='dr').reduce((s,t)=>s+t.amount,0);
+  const inc=txs.filter(t=>isTx(t)&&isIncome(t)).reduce((s,t)=>s+t.amount,0);
+  const exp=txs.filter(t=>isTx(t)&&isExpense(t)).reduce((s,t)=>s+t.amount,0);
   const sav=inc-exp;
   const savPct=inc>0?Math.round((sav/inc)*100):0;
   const catSpend={};
@@ -3041,7 +3075,7 @@ function renderTxPage(){
     if(delBtn){  deleteTx(+delBtn.dataset.txDel); }
   };
 
-  const net = txs.reduce((s,t)=>s+(t.type==='cr'?t.amount:-t.amount),0);
+  const net = txs.filter(isTx).reduce((s,t)=>s+(isIncome(t)?t.amount:-t.amount),0);
   const sumEl = document.getElementById('tx-summary-text');
   if(sumEl) sumEl.textContent = `${txs.length} transaction${txs.length!==1?'s':''} · Net: ${net>=0?'+':''}${fmt(Math.abs(net))}`;
   updateBulkDeleteBtn();
@@ -3712,16 +3746,77 @@ function addLoan(){ saveLoan(); }
 
 let _budgetEditKey = null;
 
-function renderBudget(){
-  const spent={};
-  curTx().filter(t=>t.type==='dr').forEach(t=>spent[t.cat]=(spent[t.cat]||0)+t.amount);
-  const cats=Object.keys(state.budget);
-  const totalSpent=cats.reduce((s,c)=>s+(spent[c]||0),0);
-  const totalBudget=cats.reduce((s,c)=>s+state.budget[c],0);
-  const overCats=cats.filter(c=>(spent[c]||0)>state.budget[c]).length;
-  const saveable=totalBudget-totalSpent;
+/* ── Budget ↔ Transaction category matcher ──────────────────────────────
+   Matches budget names (custom) to transaction categories (standard)
+   "Online Food Delivery & spends" → Food
+   "ALL EMIs" → EMI
+   "Money transfer" → Transfer
+   "Petrol" → Fuel
+   Also matches by keyword in the transaction description itself
+──────────────────────────────────────────────────────────────────────── */
+function calcBudgetSpent(budgetCat, transactions){
+  const bc = budgetCat.toLowerCase();
+  let total = 0;
 
-  // metrics
+  // Standard category direct match
+  const stdCats = ['food','transfer','salary','emi','shopping','fuel','bills','other'];
+  const matched = stdCats.filter(s => bc.includes(s));
+
+  // Keyword → standard category map
+  const keywordMap = {
+    food: ['food','swiggy','zomato','restaurant','dining','eat','lunch','dinner','breakfast','grocery','groceries','online food'],
+    fuel: ['fuel','petrol','diesel','gas','bpcl','hpcl','iocl','hp petrol'],
+    emi: ['emi','loan','equated','installment','instalment'],
+    transfer: ['transfer','neft','rtgs','imps','upi transfer','money transfer','sent to'],
+    bills: ['bill','electricity','water','gas bill','internet','broadband','airtel','jio','bsnl','tata sky','recharge','mobile','broadband','airfiber'],
+    shopping: ['shopping','amazon','flipkart','myntra','cloth','apparel','purchase'],
+    salary: ['salary','payroll','ctc','stipend','wages'],
+    other: ['other','misc'],
+  };
+
+  // Build reverse lookup: which std cats does this budget name map to?
+  const targetCats = new Set();
+
+  // 1. Check if budget name contains a standard category word
+  for(const [stdCat, keywords] of Object.entries(keywordMap)){
+    for(const kw of keywords){
+      if(bc.includes(kw)){ targetCats.add(stdCat); break; }
+    }
+  }
+
+  // 2. If no match yet, try direct word match
+  if(targetCats.size === 0){
+    for(const s of stdCats){ if(bc.includes(s)) targetCats.add(s); }
+  }
+
+  // Sum transactions matching:
+  // a) transaction.cat matches any of targetCats
+  // b) OR transaction.name contains keywords from budget name
+  transactions.filter(t => t.type === 'dr').forEach(t => {
+    const tCat = (t.cat||'').toLowerCase();
+    const tName = (t.name||'').toLowerCase();
+
+    // Direct category match
+    if(targetCats.has(tCat)){ total += t.amount; return; }
+
+    // Also check: budget name keywords appear in transaction name
+    const bcWords = bc.split(/[\s&,\-\/]+/).filter(w => w.length > 3);
+    if(bcWords.some(w => tName.includes(w))){ total += t.amount; return; }
+  });
+
+  return total;
+}
+
+function renderBudget(){
+  const txs = curTx();
+  const cats = Object.keys(state.budget);
+  const spentMap = {};
+  cats.forEach(cat => { spentMap[cat] = calcBudgetSpent(cat, txs); });
+  const totalSpent = cats.reduce((s,c) => s + spentMap[c], 0);
+  const totalBudget = cats.reduce((s,c) => s + state.budget[c], 0);
+  const overCats = cats.filter(c => spentMap[c] > state.budget[c]).length;
+  const saveable = totalBudget - totalSpent;
+
   document.getElementById('budget-metrics').innerHTML=`
     <div class="m-card"><div class="m-icon" style="background:rgba(79,124,255,0.12);color:#4f7cff;"><i class="ti ti-chart-pie" aria-hidden="true"></i></div><div class="m-label">Total Budgeted</div><div class="m-value">${fmt(totalBudget)}</div><div class="m-change">${cats.length} categories</div></div>
     <div class="m-card"><div class="m-icon" style="background:rgba(255,92,92,0.12);color:#ff5c5c;"><i class="ti ti-receipt" aria-hidden="true"></i></div><div class="m-label">Spent</div><div class="m-value" style="color:#ff5c5c;">${fmt(totalSpent)}</div><div class="m-change">${Math.round(totalSpent/totalBudget*100)||0}% of budget</div></div>
@@ -3730,10 +3825,9 @@ function renderBudget(){
 
   document.getElementById('budget-sub').textContent=fmt(totalSpent)+' spent of '+fmt(totalBudget)+' budgeted';
 
-  // budget list with edit/delete
   const listEl=document.getElementById('budget-list');
   listEl.innerHTML=cats.map(cat=>{
-    const s=spent[cat]||0;const lim=state.budget[cat];
+    const s=spentMap[cat]||0; const lim=state.budget[cat];
     const pct=Math.min(100,Math.round((s/lim)*100));
     const bc=pct>90?'#ff5c5c':pct>70?'#f0a500':'#22c98a';
     const isEditing=_budgetEditKey===cat;
@@ -3744,8 +3838,8 @@ function renderBudget(){
         <span style="color:var(--text3);font-size:12px;">of</span>
         <span style="font-weight:500;">${fmt(lim)}</span>
         <span style="font-size:11px;min-width:34px;text-align:right;color:${bc};font-weight:600;">${pct}%</span>
-        <button data-budget-edit="${cat}" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:15px;padding:2px 4px;opacity:.7;" title="Edit"><i class="ti ti-edit" aria-hidden="true"></i></button>
-        <button data-budget-del="${cat}" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;padding:2px 4px;opacity:.7;" title="Remove category"><i class="ti ti-trash" aria-hidden="true"></i></button>
+        <button data-budget-edit="${cat}" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:15px;padding:2px 4px;opacity:.7;"><i class="ti ti-edit" aria-hidden="true"></i></button>
+        <button data-budget-del="${cat}" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;padding:2px 4px;opacity:.7;"><i class="ti ti-trash" aria-hidden="true"></i></button>
       </div>
       <div class="pbar"><div class="pbar-fill" style="width:${pct}%;background:${bc};transition:width .5s ease;"></div></div>
       <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:3px;">
@@ -3753,7 +3847,7 @@ function renderBudget(){
         <span>${lim-s>=0?fmt(lim-s)+' remaining':fmt(Math.abs(lim-s))+' over budget'}</span>
       </div>
     </div>`;
-  }).join('')+(cats.length===0?`<div class="empty">No budget categories yet. Add one below.</div>`:'');
+  }).join('')+(cats.length===0?'<div class="empty">No budget categories yet. Add one below.</div>':'');
 
   listEl.onclick=function(e){
     const editBtn=e.target.closest('[data-budget-edit]');
@@ -3762,30 +3856,25 @@ function renderBudget(){
     if(delBtn){ deleteBudgetCat(delBtn.dataset.budgetDel); }
   };
 
-  // spending donut chart — spent per category
-  const spentCats=cats.filter(c=>(spent[c]||0)>0);
-  const catColors2={Food:'#f0a500',Transfer:'#4f7cff',Salary:'#22c98a',EMI:'#a08aff',Shopping:'#ff5c96',Fuel:'#ff5c5c',Bills:'#8888a0',Other:'#555568'};
-  const spentColors=spentCats.map(c=>catColors2[c]||'#4f7cff');
-
+  const spentCats=cats.filter(c=>spentMap[c]>0);
+  const catColors2={food:'#f0a500',fuel:'#ff5c5c',emi:'#a08aff',transfer:'#4f7cff',bills:'#8888a0',shopping:'#ff5c96',salary:'#22c98a',other:'#555568'};
+  const getColor=cat=>{const bc2=cat.toLowerCase();for(const [k,v] of Object.entries(catColors2)){if(bc2.includes(k))return v;}return '#4f7cff';};
   dc('budget-donut');
   if(spentCats.length){
     charts['budget-donut']=new Chart(document.getElementById('ch-budget-donut'),{
       type:'doughnut',
-      data:{
-        labels:spentCats,
-        datasets:[
-          {label:'Spent',data:spentCats.map(c=>spent[c]||0),backgroundColor:spentColors,borderWidth:0,hoverOffset:6},
-          {label:'Limit',data:spentCats.map(c=>state.budget[c]),backgroundColor:spentColors.map(c=>c+'22'),borderWidth:0,weight:0.3}
-        ]
-      },
+      data:{labels:spentCats,datasets:[
+        {label:'Spent',data:spentCats.map(c=>spentMap[c]||0),backgroundColor:spentCats.map(c=>getColor(c)),borderWidth:0,hoverOffset:6},
+        {label:'Limit',data:spentCats.map(c=>state.budget[c]),backgroundColor:spentCats.map(c=>getColor(c)+'22'),borderWidth:0,weight:0.3}
+      ]},
       options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
         plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
-          const cat=ctx.label;const s=spent[cat]||0;const lim=state.budget[cat]||1;
+          const cat=ctx.label;const s=spentMap[cat]||0;const lim=state.budget[cat]||1;
           return ctx.datasetIndex===0?' Spent: '+fmt(s)+' ('+Math.round(s/lim*100)+'% of limit)':' Limit: '+fmt(lim);
         }}}}}
     });
-    document.getElementById('budget-donut-legend').innerHTML=spentCats.map((c,i)=>
-      `<span class="legend-item"><span class="legend-dot" style="background:${spentColors[i]};"></span>${c} ${fmt(spent[c]||0)}</span>`
+    document.getElementById('budget-donut-legend').innerHTML=spentCats.map(c=>
+      `<span class="legend-item"><span class="legend-dot" style="background:${getColor(c)};"></span>${c} ${fmt(spentMap[c]||0)}</span>`
     ).join('');
   } else {
     document.getElementById('ch-budget-donut').getContext('2d').clearRect(0,0,999,999);
@@ -3801,19 +3890,10 @@ function startBudgetEdit(cat){
   const ft=document.getElementById('budget-form-title');if(ft) ft.textContent='Edit: '+cat;
   const sl=document.getElementById('budget-save-label');if(sl) sl.textContent='Save changes';
   const cb=document.getElementById('budget-cancel-btn');if(cb) cb.style.display='';
-  document.getElementById('b-cat-name').focus();
-  renderBudget(); // re-render to highlight
-  document.getElementById('b-cat-name').scrollIntoView({behavior:'auto',block:'nearest'});
-}
-
-function cancelBudgetEdit(){
-  _budgetEditKey=null;
-  document.getElementById('b-cat-name').value='';
-  document.getElementById('b-limit').value='';
-  const ft=document.getElementById('budget-form-title');if(ft) ft.textContent='Add / Edit Category';
-  const sl=document.getElementById('budget-save-label');if(sl) sl.textContent='Set limit';
-  const cb=document.getElementById('budget-cancel-btn');if(cb) cb.style.display='none';
+  if(document.getElementById('b-cat-name')) document.getElementById('b-cat-name').focus();
   renderBudget();
+  const el=document.getElementById('b-cat-name');
+  if(el) el.scrollIntoView({behavior:'auto',block:'nearest'});
 }
 
 function deleteBudgetCat(cat){
@@ -4170,6 +4250,23 @@ function addNetWorth(){
   toast(ex?'Updated':'Added');
 }
 
+function onCatChange(val){
+  const row = document.getElementById('transfer-subtype-row');
+  const typeEl = document.getElementById('m-type');
+  if(!row) return;
+  if(val === 'Transfer'){
+    row.style.display = 'block';
+    // Default to own account (neutral)
+    const own = document.getElementById('tr-own');
+    if(own) own.checked = true;
+    // Hide type selector — we'll set it based on transfer type
+    if(typeEl) typeEl.closest('.form-group').style.opacity = '0.4';
+  } else {
+    row.style.display = 'none';
+    if(typeEl) typeEl.closest('.form-group').style.opacity = '1';
+  }
+}
+
 function updateBalanceHint(){
   const src = document.getElementById('m-src')?.value||'';
   const hint = document.getElementById('m-bal-hint');
@@ -4195,7 +4292,7 @@ function addManual(){
   if(isReadOnly()){ toast('⚠️ Read-only access — you cannot modify this data'); return; }
   const name    = document.getElementById('m-name').value.trim();
   const amount  = +document.getElementById('m-amount').value;
-  const type    = document.getElementById('m-type').value;
+  let   type    = document.getElementById('m-type').value;
   const cat     = document.getElementById('m-cat').value;
   const src     = document.getElementById('m-src').value;
   const date    = document.getElementById('m-date').value||todayStr;
@@ -4204,7 +4301,25 @@ function addManual(){
 
   if(!name||!amount){ toast('Fill description and amount'); return; }
 
+  // Handle Transfer category — check sub-type
+  let isOwnTransfer = false;
+  if(cat === 'Transfer'){
+    const trOwn = document.getElementById('tr-own');
+    isOwnTransfer = trOwn && trOwn.checked;
+    if(isOwnTransfer){
+      // Own account transfer — mark with special type 'own-transfer'
+      // so it doesn't show in income or expense totals
+      type = 'own-transfer';
+    } else {
+      type = 'dr'; // payment to someone = expense
+    }
+  }
+
   state.transactions.push({id:state.nextId++, name, amount, type, cat, src, date});
+
+  if(isOwnTransfer){
+    toast('✓ Own transfer recorded — not counted as expense or income');
+  }
 
   // Auto-update linked account balance if available balance entered
   if(availBal){
@@ -4661,8 +4776,8 @@ function exportData(){
 
   /* ── per-section data ── */
   const txs=state.transactions.sort((a,b)=>b.date.localeCompare(a.date));
-  const inc=txs.filter(t=>t.type==='cr').reduce((s,t)=>s+t.amount,0);
-  const exp=txs.filter(t=>t.type==='dr').reduce((s,t)=>s+t.amount,0);
+  const inc=txs.filter(t=>isTx(t)&&isIncome(t)).reduce((s,t)=>s+t.amount,0);
+  const exp=txs.filter(t=>isTx(t)&&isExpense(t)).reduce((s,t)=>s+t.amount,0);
   const sav=inc-exp;
   const catColors={Food:'#f0a500',Transfer:'#4f7cff',Salary:'#22c98a',EMI:'#a08aff',Shopping:'#ff5c96',Fuel:'#ff5c5c',Bills:'#8888a0',Other:'#555568'};
   const catSpend={};txs.filter(t=>t.type==='dr').forEach(t=>catSpend[t.cat]=(catSpend[t.cat]||0)+t.amount);
@@ -6391,35 +6506,12 @@ document.addEventListener('DOMContentLoaded',()=>{
 /* ── SERVICE WORKER — offline support ── */
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    const swCode = `
-const CACHE='financeos-v1';
-const ASSETS=[
-  './',
-  'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js',
-  'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.x/dist/tabler-icons.min.css',
-  'https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap'
-];
-self.addEventListener('install', e=>{
-  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS).catch(()=>{})));
-  self.skipWaiting();
-});
-self.addEventListener('activate', e=>{
-  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
-  self.clients.claim();
-});
-self.addEventListener('fetch', e=>{
-  if(e.request.method!=='GET') return;
-  if(e.request.url.includes('firestore.googleapis.com')||e.request.url.includes('generativelanguage')) return;
-  e.respondWith(
-    caches.match(e.request).then(cached=>{
-      const net=fetch(e.request).then(res=>{
-        if(res.ok) caches.open(CACHE).then(c=>c.put(e.request,res.clone()));
-        return res;
-      }).catch(()=>cached);
-      return cached||net;
-    })
-  );
-});`;
+    const swCode = [
+      "const CACHE='financeos-v1';",
+      "self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./']).catch(()=>{})));self.skipWaiting();});",
+      "self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});",
+      "self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;if(e.request.url.includes('firestore.googleapis.com')||e.request.url.includes('generativelanguage'))return;e.respondWith(caches.match(e.request).then(cached=>{const net=fetch(e.request).then(res=>{if(res.ok)caches.open(CACHE).then(c=>c.put(e.request,res.clone()));return res;}).catch(()=>cached);return cached||net;}));});"
+    ].join('\n');
     const blob = new Blob([swCode], {type:'application/javascript'});
     const url = URL.createObjectURL(blob);
     navigator.serviceWorker.register(url, {scope:'./'})
