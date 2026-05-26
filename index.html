@@ -1438,22 +1438,65 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
                 Transfer type — this determines how it affects your balance
               </div>
               <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                <label style="flex:1;min-width:200px;cursor:pointer;">
-                  <input type="radio" name="transfer-type" id="tr-own" value="own" checked style="accent-color:#4f7cff;margin-right:6px;"/>
-                  <span style="font-weight:500;">Own account transfer</span>
-                  <div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:2px;">
-                    e.g. Savings → FD, Kotak → SBI, self transfer<br>
-                    <span style="color:#22c98a;">✓ Not counted as expense or income</span> — just moving money
+                <label style="flex:1;min-width:180px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;" id="tr-own-label">
+                  <input type="radio" name="transfer-type" id="tr-own" value="own" checked onchange="onTransferTypeChange()" style="accent-color:#4f7cff;margin-right:6px;"/>
+                  <span style="font-weight:500;">Own account</span>
+                  <div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:3px;">
+                    Savings → SBI, self transfer<br>
+                    <span style="color:#4f7cff;">⇄ Not counted</span> — just moving money
                   </div>
                 </label>
-                <label style="flex:1;min-width:200px;cursor:pointer;">
-                  <input type="radio" name="transfer-type" id="tr-other" value="other" style="accent-color:#ff5c5c;margin-right:6px;"/>
-                  <span style="font-weight:500;">Payment / outgoing transfer</span>
-                  <div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:2px;">
-                    e.g. Rent, fees, sending to someone else<br>
-                    <span style="color:#ff5c5c;">✓ Counted as expense</span> — reduces your balance
+                <label style="flex:1;min-width:180px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;" id="tr-other-label">
+                  <input type="radio" name="transfer-type" id="tr-other" value="other" onchange="onTransferTypeChange()" style="accent-color:#ff5c5c;margin-right:6px;"/>
+                  <span style="font-weight:500;">Payment / outgoing</span>
+                  <div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:3px;">
+                    Rent, fees, send to someone<br>
+                    <span style="color:#ff5c5c;">↓ Counted as expense</span>
                   </div>
                 </label>
+                <label style="flex:1;min-width:180px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;" id="tr-deposit-label">
+                  <input type="radio" name="transfer-type" id="tr-deposit" value="deposit" onchange="onTransferTypeChange()" style="accent-color:#22c98a;margin-right:6px;"/>
+                  <span style="font-weight:500;">Deposit / Investment</span>
+                  <div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:3px;">
+                    FD, RD, PPF, NPS, Gold, MF<br>
+                    <span style="color:#22c98a;">↗ Added to Investments</span>
+                  </div>
+                </label>
+              </div>
+
+              <!-- Deposit details — shown only when Deposit selected -->
+              <div id="deposit-details" style="display:none;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);">
+                <div style="font-size:12px;font-weight:600;color:#22c98a;margin-bottom:10px;">
+                  <i class="ti ti-trending-up" style="font-size:13px;vertical-align:-2px;margin-right:4px;" aria-hidden="true"></i>
+                  Deposit details — will be added to your Investments
+                </div>
+                <div class="form-row" style="margin-bottom:0;">
+                  <div class="form-group">
+                    <label class="form-label">Deposit type</label>
+                    <select class="form-input" id="dep-type">
+                      <option value="FD">Fixed Deposit (FD)</option>
+                      <option value="RD">Recurring Deposit (RD)</option>
+                      <option value="PPF">PPF</option>
+                      <option value="NPS">NPS</option>
+                      <option value="Mutual Fund">Mutual Fund (Lump sum)</option>
+                      <option value="Gold">Gold / Digital Gold</option>
+                      <option value="Debt">Debt Fund</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Bank / Platform</label>
+                    <input class="form-input" id="dep-platform" placeholder="e.g. ICICI Bank, Groww, Zerodha"/>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Interest rate % <span style="color:var(--text3);font-size:10px;">(optional)</span></label>
+                    <input class="form-input" id="dep-rate" type="number" step="0.01" placeholder="e.g. 7.1"/>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Maturity date <span style="color:var(--text3);font-size:10px;">(optional)</span></label>
+                    <input class="form-input" id="dep-maturity" type="date"/>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -4256,14 +4299,37 @@ function onCatChange(val){
   if(!row) return;
   if(val === 'Transfer'){
     row.style.display = 'block';
-    // Default to own account (neutral)
+    // Reset to own account
     const own = document.getElementById('tr-own');
-    if(own) own.checked = true;
-    // Hide type selector — we'll set it based on transfer type
+    if(own){ own.checked = true; onTransferTypeChange(); }
     if(typeEl) typeEl.closest('.form-group').style.opacity = '0.4';
   } else {
     row.style.display = 'none';
+    document.getElementById('deposit-details').style.display = 'none';
     if(typeEl) typeEl.closest('.form-group').style.opacity = '1';
+  }
+}
+
+function onTransferTypeChange(){
+  const dep = document.getElementById('tr-deposit');
+  const depDetails = document.getElementById('deposit-details');
+  if(!dep || !depDetails) return;
+  depDetails.style.display = dep.checked ? 'block' : 'none';
+  // Highlight selected option
+  ['tr-own-label','tr-other-label','tr-deposit-label'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.style.borderColor = 'var(--border)';
+  });
+  const activeId = dep.checked ? 'tr-deposit-label' :
+    document.getElementById('tr-other')?.checked ? 'tr-other-label' : 'tr-own-label';
+  const active = document.getElementById(activeId);
+  if(active){
+    const colors = {
+      'tr-deposit-label': 'rgba(34,201,138,0.4)',
+      'tr-other-label': 'rgba(255,92,92,0.4)',
+      'tr-own-label': 'rgba(79,124,255,0.4)'
+    };
+    active.style.borderColor = colors[activeId] || 'var(--accent)';
   }
 }
 
@@ -4303,21 +4369,49 @@ function addManual(){
 
   // Handle Transfer category — check sub-type
   let isOwnTransfer = false;
+  let isDeposit = false;
   if(cat === 'Transfer'){
+    const trDep = document.getElementById('tr-deposit');
     const trOwn = document.getElementById('tr-own');
-    isOwnTransfer = trOwn && trOwn.checked;
+    isDeposit   = trDep && trDep.checked;
+    isOwnTransfer = !isDeposit && trOwn && trOwn.checked;
     if(isOwnTransfer){
-      // Own account transfer — mark with special type 'own-transfer'
-      // so it doesn't show in income or expense totals
       type = 'own-transfer';
+    } else if(isDeposit){
+      type = 'own-transfer'; // also exclude from expense/income
     } else {
-      type = 'dr'; // payment to someone = expense
+      type = 'dr'; // payment = expense
     }
   }
 
   state.transactions.push({id:state.nextId++, name, amount, type, cat, src, date});
 
-  if(isOwnTransfer){
+  // If deposit — also add to Investments
+  if(isDeposit){
+    const depType     = document.getElementById('dep-type')?.value || 'FD';
+    const depPlatform = document.getElementById('dep-platform')?.value.trim() || src;
+    const depRate     = parseFloat(document.getElementById('dep-rate')?.value||'0')||null;
+    const depMaturity = document.getElementById('dep-maturity')?.value||'';
+
+    const inv = {
+      id: state.nextId++,
+      name: name || depType+' — '+depPlatform,
+      type: depType,
+      invested: amount,
+      current: amount, // starts at invested value
+      units: null,
+      buyPrice: null,
+      buyDate: date,
+      platform: depPlatform,
+      notes: [
+        depRate ? `Rate: ${depRate}%` : '',
+        depMaturity ? `Matures: ${depMaturity}` : ''
+      ].filter(Boolean).join(' · ')
+    };
+    state.investments.push(inv);
+    toast(`✓ Transaction recorded + ${depType} of ${fmt(amount)} added to Investments`);
+    addNotif(`New ${depType} added`, `${fmt(amount)} at ${depPlatform}${depRate?' @ '+depRate+'%':''}`, 'success');
+  } else if(isOwnTransfer){
     toast('✓ Own transfer recorded — not counted as expense or income');
   }
 
@@ -4343,6 +4437,18 @@ function addManual(){
   document.getElementById('m-name').value='';
   document.getElementById('m-amount').value='';
   if(availEl) availEl.value='';
+  // Reset transfer subtype
+  const trOwn = document.getElementById('tr-own');
+  if(trOwn){ trOwn.checked=true; onTransferTypeChange(); }
+  document.getElementById('transfer-subtype-row').style.display='none';
+  document.getElementById('deposit-details').style.display='none';
+  if(document.getElementById('dep-platform')) document.getElementById('dep-platform').value='';
+  if(document.getElementById('dep-rate')) document.getElementById('dep-rate').value='';
+  if(document.getElementById('dep-maturity')) document.getElementById('dep-maturity').value='';
+  const mCat = document.getElementById('m-cat');
+  if(mCat) mCat.value='Food';
+  const mType = document.getElementById('m-type');
+  if(mType){ mType.value='dr'; mType.closest('.form-group').style.opacity='1'; }
   updateBalanceHint();
   renderDashboard();
   renderQuickBalanceSection();
