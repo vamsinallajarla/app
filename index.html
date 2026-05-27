@@ -123,7 +123,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
 }
 /* App-wide currency background layer */
 #app-currency-bg{
-  position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;
+  position:fixed;inset:0;pointer-events:none;z-index:-1;overflow:hidden;
 }
 .currency-symbol{
   position:absolute;
@@ -197,7 +197,6 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
     -webkit-overflow-scrolling:touch;
     touch-action:pan-y;
     will-change:left;
-    pointer-events:auto;
   }
   .sidebar.open{
     left:0 !important;
@@ -385,7 +384,6 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
   transition:background .15s,color .15s,box-shadow .15s;
   position:relative;
   -webkit-tap-highlight-color:rgba(79,124,255,0.2);
-  touch-action:manipulation;
 }
 .nav-item::before{
   content:'';position:absolute;left:0;top:20%;
@@ -890,7 +888,7 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
 
   <!-- SIDEBAR -->
   <div class="sidebar" id="sidebar">
-    <div id="sidebar-overlay" style="display:none;position:fixed;top:0;right:0;bottom:0;left:240px;z-index:1049;background:rgba(0,0,0,0.5);-webkit-tap-highlight-color:transparent;"></div>
+    <div id="sidebar-overlay" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;z-index:1049;background:rgba(0,0,0,0.5);-webkit-tap-highlight-color:transparent;pointer-events:none;"></div>
     <div class="sidebar-top">
       <div class="brand">
         <div class="bicon"><i class="ti ti-chart-line" aria-hidden="true"></i></div>
@@ -6632,63 +6630,83 @@ function clearProcessedSMS(){
 function openSidebar(){
   const sb = document.getElementById('sidebar');
   const ov = document.getElementById('sidebar-overlay');
-  if(sb){ sb.classList.add('open'); sb.style.left='0'; sb.style.transform='translateZ(0)'; }
+  if(!sb) return;
+  sb.classList.add('open');
+  sb.style.left = '0';
+  // Overlay covers only the area OUTSIDE the sidebar (right side)
   if(ov){
-    const sbW = sb ? (sb.offsetWidth || 240) : 240;
-    ov.style.left = sbW + 'px'; // overlay starts AFTER sidebar — never covers nav items
+    ov.style.left = (sb.offsetWidth || 240) + 'px';
+    ov.style.pointerEvents = 'auto';
     ov.style.display = 'block';
   }
-  // position:fixed avoids iOS overflow:hidden touch bug
-  document.body.style.position='fixed';
-  document.body.style.width='100%';
+  // position:fixed on body prevents iOS scroll-freeze bug
+  _bodyScrollY = window.scrollY;
+  document.body.style.position = 'fixed';
+  document.body.style.top = '-' + _bodyScrollY + 'px';
+  document.body.style.width = '100%';
 }
 function closeSidebar(){
   const sb = document.getElementById('sidebar');
   const ov = document.getElementById('sidebar-overlay');
-  if(sb){ sb.classList.remove('open'); sb.style.left=''; }
-  if(ov){ ov.style.display='none'; }
-  document.body.style.position='';
-  document.body.style.width='';
+  if(sb){ sb.classList.remove('open'); sb.style.left = ''; }
+  if(ov){ ov.style.display = 'none'; ov.style.pointerEvents = 'none'; }
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.width = '';
+  window.scrollTo(0, _bodyScrollY || 0);
 }
-// Overlay tap closes sidebar — touchstart for instant iOS response
-document.addEventListener('DOMContentLoaded',function(){
-  const ov = document.getElementById('sidebar-overlay');
+var _bodyScrollY = 0;
+
+document.addEventListener('DOMContentLoaded', function(){
+  // Overlay tap → close (only fires on the dimmed area, NOT over the sidebar)
+  var ov = document.getElementById('sidebar-overlay');
   if(ov){
-    ov.addEventListener('touchstart',function(e){
+    ov.addEventListener('touchstart', function(e){
       e.preventDefault();
-      e.stopPropagation();
       closeSidebar();
-    },{passive:false});
-    ov.addEventListener('click',function(e){
-      e.stopPropagation();
-      closeSidebar();
-    });
+    }, {passive: false});
+    ov.addEventListener('click', closeSidebar);
   }
-  // Nav items: navigate first, then close sidebar
+
+  // Nav items: close sidebar ONLY on intentional tap (not scroll/accidental touch)
   document.querySelectorAll('.nav-item').forEach(function(item){
-    item.addEventListener('touchend',function(e){
-      if(window.innerWidth<=768){
-        // Don't preventDefault — allow the click/navigation to fire
-        setTimeout(function(){ closeSidebar(); }, 50);
+    var _tStart = {x:0, y:0};
+    item.addEventListener('touchstart', function(e){
+      _tStart.x = e.touches[0].clientX;
+      _tStart.y = e.touches[0].clientY;
+    }, {passive:true});
+    item.addEventListener('touchend', function(e){
+      if(window.innerWidth > 768) return;
+      var dx = Math.abs(e.changedTouches[0].clientX - _tStart.x);
+      var dy = Math.abs(e.changedTouches[0].clientY - _tStart.y);
+      // Only close if it was a real tap (moved less than 8px) — ignore scrolls
+      if(dx < 8 && dy < 8){
+        setTimeout(closeSidebar, 150); // delay so navigation fires first
       }
-    },{passive:true});
+    }, {passive:true});
   });
 });
-// Swipe left to close, swipe right from edge to open
+
+// Swipe left from inside sidebar to close; swipe right from screen edge to open
 (function(){
-  var startX=0, startY=0;
-  document.addEventListener('touchstart',function(e){
-    startX=e.touches[0].clientX;
-    startY=e.touches[0].clientY;
-  },{passive:true});
-  document.addEventListener('touchend',function(e){
-    var dx=e.changedTouches[0].clientX-startX;
-    var dy=Math.abs(e.changedTouches[0].clientY-startY);
-    if(dy>30) return; // ignore vertical swipes
-    var sb=document.getElementById('sidebar');
-    if(sb && sb.classList.contains('open') && dx<-60) closeSidebar();
-    if(sb && !sb.classList.contains('open') && startX<20 && dx>60) openSidebar();
-  },{passive:true});
+  var sx=0, sy=0, targetInSidebar=false;
+  document.addEventListener('touchstart', function(e){
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+    // Track whether touch started inside the sidebar
+    var sb = document.getElementById('sidebar');
+    targetInSidebar = sb ? sb.contains(e.target) : false;
+  }, {passive:true});
+  document.addEventListener('touchend', function(e){
+    var dx = e.changedTouches[0].clientX - sx;
+    var dy = Math.abs(e.changedTouches[0].clientY - sy);
+    if(dy > 40) return; // ignore vertical swipes
+    var sb = document.getElementById('sidebar');
+    // Close: only if swipe started INSIDE the sidebar
+    if(sb && sb.classList.contains('open') && targetInSidebar && dx < -60) closeSidebar();
+    // Open: swipe right from left edge (first 20px)
+    if(sb && !sb.classList.contains('open') && sx < 20 && dx > 60) openSidebar();
+  }, {passive:true});
 })();
 
 /* ── SERVICE WORKER — offline support ── */
