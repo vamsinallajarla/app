@@ -123,7 +123,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
 }
 /* App-wide currency background layer */
 #app-currency-bg{
-  position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;
+  position:fixed;inset:0;pointer-events:none;z-index:-1;overflow:hidden;
 }
 .currency-symbol{
   position:absolute;
@@ -195,6 +195,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
     box-shadow:none;
     overflow-y:auto;
     -webkit-overflow-scrolling:touch;
+    touch-action:pan-y;
+    will-change:left;
   }
   .sidebar.open{
     left:0 !important;
@@ -265,6 +267,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
   padding:9px 10px;border-radius:9px;cursor:pointer;
   color:var(--text2);font-size:13px;transition:all .15s;
   border:1px solid transparent;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:rgba(79,124,255,0.15);
+  user-select:none;-webkit-user-select:none;
 }
 .nav-item i{font-size:17px;flex-shrink:0;}
 .nav-item:hover{background:var(--card);color:var(--text);}
@@ -382,6 +387,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
   transition:background .15s,color .15s,box-shadow .15s;
   position:relative;
   -webkit-tap-highlight-color:rgba(79,124,255,0.2);
+  touch-action:manipulation;
+  user-select:none;-webkit-user-select:none;
+  min-height:44px;
 }
 .nav-item::before{
   content:'';position:absolute;left:0;top:20%;
@@ -949,7 +957,7 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
   <div class="main">
     <div class="topbar">
       <div class="topbar-left">
-        <button class="mobile-menu-btn" onclick="openSidebar()" style="display:none;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text);font-size:18px;padding:6px 10px;cursor:pointer;margin-right:6px;border-radius:8px;min-width:40px;min-height:40px;align-items:center;justify-content:center;" aria-label="Open menu"><i class="ti ti-menu-2" aria-hidden="true"></i></button>
+        <button class="mobile-menu-btn" onclick="openSidebar()" style="display:none;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text);font-size:18px;padding:6px 10px;cursor:pointer;margin-right:6px;border-radius:8px;min-width:44px;min-height:44px;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:rgba(79,124,255,0.2);" aria-label="Open menu"><i class="ti ti-menu-2" aria-hidden="true"></i></button>
         <div class="topbar-title" id="topbar-title">Dashboard</div>
         <div class="month-picker-wrap">
           <div class="period-pill" id="period-pill" onclick="toggleMonthPicker(event)">
@@ -6624,24 +6632,40 @@ function clearProcessedSMS(){
   toast('Processed log cleared');
 }
 
-/* ── MOBILE SIDEBAR ── */
+/* ── MOBILE SIDEBAR (iOS fixed) ── */
 function openSidebar(){
   const sb = document.getElementById('sidebar');
   const ov = document.getElementById('sidebar-overlay');
-  if(sb){ sb.classList.add('open'); sb.style.left='0'; }
-  if(ov){ ov.style.display='block'; ov.style.zIndex='1099'; }
-  document.body.style.overflow='hidden'; // prevent background scroll
+  if(sb){
+    sb.classList.add('open');
+    sb.style.left='0';
+    sb.style.transform='none'; // force iOS repaint
+  }
+  if(ov){
+    ov.style.display='block';
+    ov.style.zIndex='1050';
+    // touchstart fires immediately on iOS; onclick has 300ms delay
+    ov.ontouchstart=function(e){ e.preventDefault(); closeSidebar(); };
+    ov.onclick=closeSidebar;
+  }
+  // Use position:fixed instead of overflow:hidden — overflow:hidden breaks iOS touch context
+  document.body.style.position='fixed';
+  document.body.style.width='100%';
 }
 function closeSidebar(){
   const sb = document.getElementById('sidebar');
   const ov = document.getElementById('sidebar-overlay');
   if(sb){ sb.classList.remove('open'); sb.style.left=''; }
-  if(ov){ ov.style.display='none'; }
-  document.body.style.overflow='';
+  if(ov){ ov.style.display='none'; ov.ontouchstart=null; }
+  document.body.style.position='';
+  document.body.style.width='';
 }
-// Auto-close sidebar on nav click (mobile)
+// Auto-close sidebar on nav click (mobile) — use touchend for instant iOS response
 document.addEventListener('DOMContentLoaded',function(){
   document.querySelectorAll('.nav-item').forEach(function(item){
+    item.addEventListener('touchend',function(e){
+      if(window.innerWidth<=768){ e.preventDefault(); closeSidebar(); }
+    },{passive:false});
     item.addEventListener('click',function(){ if(window.innerWidth<=768) closeSidebar(); });
   });
 });
