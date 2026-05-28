@@ -1179,7 +1179,7 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
           </div>
         </div>
         <div class="chart-card">
-          <div class="ch-header"><div class="ch-title" id="acc-form-title">Add Bank Account</div><button class="btn btn-ghost" id="acc-cancel-btn" style="display:none;font-size:12px;padding:5px 12px;" onclick="cancelAccEdit()"><i class="ti ti-x" style="font-size:12px;vertical-align:-1px;"></i> Cancel</button></div>
+          <div class="ch-header"><div class="ch-title">Add Bank Account</div></div>
           <div class="form-row">
             <div class="form-group" style="flex:2;"><label class="form-label">Bank name</label><input class="form-input" id="acc-bank" placeholder="e.g. Kotak Mahindra Bank"/></div>
             <div class="form-group"><label class="form-label">Account type</label>
@@ -1194,7 +1194,6 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
           </div>
           <div class="form-row">
             <div class="form-group"><label class="form-label">Account number (last 4)</label><input class="form-input" id="acc-num" maxlength="4" placeholder="1234"/></div>
-            <div class="form-group"><label class="form-label">Full account number <span style="color:var(--text3);font-size:10px;">(optional, stored securely)</span></label><input class="form-input" id="acc-fullnum" placeholder="e.g. 1234567890123456"/></div>
             <div class="form-group"><label class="form-label">IFSC code</label><input class="form-input" id="acc-ifsc" placeholder="KKBK0001234"/></div>
             <div class="form-group"><label class="form-label">Current balance ₹</label><input class="form-input" id="acc-balance" type="number" placeholder="0"/></div>
           </div>
@@ -1235,7 +1234,6 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
           <div class="form-row">
             <div class="form-group"><label class="form-label">Card name</label><input class="form-input" id="cc-name" placeholder="HDFC Regalia"/></div>
             <div class="form-group" style="max-width:120px;"><label class="form-label">Last 4 digits</label><input class="form-input" id="cc-last4" maxlength="4" placeholder="4821"/></div>
-            <div class="form-group"><label class="form-label">Full card number <span style="color:var(--text3);font-size:10px;">(optional)</span></label><input class="form-input" id="cc-fullnum" placeholder="16-digit card number" maxlength="19"/></div>
           </div>
           <div class="form-row">
             <div class="form-group"><label class="form-label">Credit limit ₹</label><input class="form-input" id="cc-limit" type="number"/></div>
@@ -1282,7 +1280,6 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
           </div>
           <div class="form-row">
             <div class="form-group"><label class="form-label">Loan name</label><input class="form-input" id="l-name" placeholder="Home Loan — SBI"/></div>
-            <div class="form-group"><label class="form-label">Loan account number <span style="color:var(--text3);font-size:10px;">(optional)</span></label><input class="form-input" id="l-accnum" placeholder="e.g. 3785200012345678"/></div>
             <div class="form-group"><label class="form-label">Principal ₹ (original loan amount)</label><input class="form-input" id="l-principal" type="number" placeholder="e.g. 3800000" oninput="autoCalcLoan()"/></div>
           </div>
           <div class="form-row">
@@ -2663,33 +2660,7 @@ function showPage(p){
   document.querySelectorAll('.nav-item').forEach(el=>{if(el.textContent.trim().toLowerCase().startsWith(pages[p].toLowerCase().slice(0,5))) el.classList.add('active');});
   document.getElementById('topbar-title').textContent=pages[p]||p;
   if(renders[p]) renders[p]();
-  // Reset Add Entry form every time user visits the page
-  if(p==='add') resetAddEntryForm();
   setTimeout(animateCounters,200);
-}
-
-function resetAddEntryForm(){
-  // Clear text/number fields
-  ['m-name','m-amount','m-avail-bal','dep-platform','dep-rate','dep-maturity'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.value='';
-  });
-  // Reset dropdowns
-  var mCat=document.getElementById('m-cat'); if(mCat) mCat.value='Food';
-  var mType=document.getElementById('m-type'); if(mType){ mType.value='dr'; mType.closest('.form-group').style.opacity='1'; }
-  // Set date to today
-  var mDate=document.getElementById('m-date'); if(mDate) mDate.value=todayStr;
-  // Hide transfer sub-sections
-  var tsRow=document.getElementById('transfer-subtype-row'); if(tsRow) tsRow.style.display='none';
-  var dd=document.getElementById('deposit-details'); if(dd) dd.style.display='none';
-  // Reset transfer radio
-  var trOwn=document.getElementById('tr-own'); if(trOwn){ trOwn.checked=true; }
-  // Reset transfer label highlights
-  ['tr-own-label','tr-other-label','tr-deposit-label'].forEach(function(id){
-    var el=document.getElementById(id);
-    if(el){ el.style.borderColor=''; el.style.background=''; }
-  });
-  // Update balance hint
-  if(typeof updateBalanceHint==='function') updateBalanceHint();
 }
 
 function txRowHTML(tx){
@@ -3348,7 +3319,7 @@ function renderAccounts(){
       <div style="background:linear-gradient(135deg,${clr}22,${clr}08);border-bottom:1px solid var(--border);padding:16px 18px;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
           <div style="width:38px;height:38px;border-radius:10px;background:${clr}22;display:flex;align-items:center;justify-content:center;color:${clr};font-size:18px;"><i class="ti ${typeIco[a.type]||'ti-building-bank'}" aria-hidden="true"></i></div>
-          <div><div style="font-size:14px;font-weight:600;">${a.name}</div><div style="font-size:11px;color:var(--text2);">${a.bank||a.type} &middot; <span id="acno-${a.id}" style="font-family:'DM Mono',monospace;letter-spacing:1px;">XXXX${a.acNo}</span>${a.fullNum?`<button onclick="event.stopPropagation();toggleReveal('acno-${a.id}','${a.fullNum}')" style="background:none;border:none;cursor:pointer;color:var(--accent);font-size:10px;padding:2px 5px;margin-left:2px;border-radius:4px;touch-action:manipulation;" title="Show/hide number"><i class=\"ti ti-eye\" style=\"font-size:12px;vertical-align:-1px;\"></i></button>`:''}</div></div>
+          <div><div style="font-size:14px;font-weight:600;">${a.name}</div><div style="font-size:11px;color:var(--text2);">${a.bank||a.type} &middot; XXXX${a.acNo}</div></div>
           <span style="margin-left:auto;font-size:10px;padding:3px 9px;border-radius:20px;background:${clr}20;color:${clr};font-weight:500;">${a.type}</span>
         </div>
         <div style="font-size:26px;font-weight:700;font-family:'Syne',sans-serif;letter-spacing:-1px;color:${clr};">${fmt(a.balance)}</div>
@@ -3397,7 +3368,6 @@ function addAccount(){
   const bank=document.getElementById('acc-bank').value.trim();
   const type=document.getElementById('acc-type').value;
   const acNo=document.getElementById('acc-num').value.trim();
-  const fullNum=(document.getElementById('acc-fullnum')||{}).value||'';
   const ifsc=document.getElementById('acc-ifsc').value.trim().toUpperCase();
   const balance=+document.getElementById('acc-balance').value||0;
   const rate=+document.getElementById('acc-rate').value||0;
@@ -3406,66 +3376,28 @@ function addAccount(){
   const sfx={Savings:' Savings',Current:' Current',Salary:' Salary',FD:' FD',RD:' RD'}[type]||'';
   const shortBank=bank.split(' ').slice(0,2).join(' ');
   const name=shortBank+sfx;
-  const editIdEl=document.getElementById('acc-edit-id');
-  const editId=editIdEl?+editIdEl.value:0;
-  if(editId){
-    const ex=state.accounts.find(a=>a.id===editId);
-    if(ex){Object.assign(ex,{bank,name,type,acNo:acNo||ex.acNo,fullNum:fullNum||ex.fullNum||'',ifsc,balance,rate,color});toast('Account updated');}
-    if(editIdEl) editIdEl.value='';
-    const cancelBtn=document.getElementById('acc-cancel-btn');
-    if(cancelBtn) cancelBtn.style.display='none';
-    const saveBtn=document.querySelector('[onclick="addAccount()"]');
-    if(saveBtn) saveBtn.innerHTML='<i class="ti ti-plus" style="font-size:14px;vertical-align:-2px;"></i> Add account';
-  } else {
-    const existing=state.accounts.find(a=>a.bank===bank&&a.type===type&&a.acNo===(acNo||'0000'));
-    if(existing){Object.assign(existing,{bank,type,acNo:acNo||existing.acNo,fullNum:fullNum||existing.fullNum||'',ifsc,balance,rate,color});toast('Account updated');}
-    else{state.accounts.push({id:Date.now(),name,bank,type,acNo:acNo||'0000',fullNum:fullNum||'',ifsc,balance,rate,color,history:[{bal:balance,date:todayStr}]});toast('Account added');}
-  }
+  const existing=state.accounts.find(a=>a.bank===bank&&a.type===type&&a.acNo===(acNo||'0000'));
+  if(existing){Object.assign(existing,{bank,type,acNo:acNo||existing.acNo,ifsc,balance,rate,color});toast('Account updated');}
+  else{state.accounts.push({id:Date.now(),name,bank,type,acNo:acNo||'0000',ifsc,balance,rate,color,history:[{bal:balance,date:todayStr}]});toast('Account added');}
   save();renderAccounts();
-  ['acc-bank','acc-num','acc-fullnum','acc-ifsc','acc-balance','acc-rate'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['acc-bank','acc-num','acc-ifsc','acc-balance','acc-rate'].forEach(id=>document.getElementById(id).value='');
 }
 
 function editAccount(id){
   const a=state.accounts.find(x=>x.id===id);if(!a) return;
   document.getElementById('acc-bank').value=a.bank||a.name;
   document.getElementById('acc-type').value=a.type;
-  document.getElementById('acc-num').value=a.acNo||'';
-  const fnEl=document.getElementById('acc-fullnum'); if(fnEl) fnEl.value=a.fullNum||'';
+  document.getElementById('acc-num').value=a.acNo;
   document.getElementById('acc-ifsc').value=a.ifsc||'';
   document.getElementById('acc-balance').value=a.balance;
   document.getElementById('acc-rate').value=a.rate||'';
   document.getElementById('acc-color').value=a.color||'#4f7cff';
-  // Store edit id — don't delete the account
-  let editIdEl=document.getElementById('acc-edit-id');
-  if(!editIdEl){
-    editIdEl=document.createElement('input');
-    editIdEl.type='hidden';editIdEl.id='acc-edit-id';
-    document.getElementById('acc-bank').parentNode.appendChild(editIdEl);
-  }
-  editIdEl.value=id;
-  // Show cancel button
-  let cancelBtn=document.getElementById('acc-cancel-btn');
-  if(cancelBtn) cancelBtn.style.display='';
-  const saveBtn=document.querySelector('[onclick="addAccount()"]');
-  if(saveBtn) saveBtn.innerHTML='<i class="ti ti-check" style="font-size:14px;vertical-align:-2px;"></i> Update account';
-  document.getElementById('acc-bank').scrollIntoView({behavior:'smooth',block:'start'});
+  state.accounts=state.accounts.filter(x=>x.id!==id);
+  save();renderAccounts();
+  document.getElementById('acc-bank').scrollIntoView({behavior:'smooth'});
+  toast('Edit details and click Add account');
 }
 
-function cancelAccEdit(){
-  const editIdEl=document.getElementById('acc-edit-id');
-  if(editIdEl) editIdEl.value='';
-  const cancelBtn=document.getElementById('acc-cancel-btn');if(cancelBtn) cancelBtn.style.display='none';
-  const saveBtn=document.querySelector('[onclick="addAccount()"]');
-  if(saveBtn) saveBtn.innerHTML='<i class="ti ti-plus" style="font-size:14px;vertical-align:-2px;"></i> Add account';
-  ['acc-bank','acc-num','acc-fullnum','acc-ifsc','acc-balance','acc-rate'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-}
-function cancelCardEdit(){
-  const editIdEl=document.getElementById('cc-edit-id');if(editIdEl) editIdEl.value='';
-  const cancelBtn=document.getElementById('cc-cancel-btn');if(cancelBtn) cancelBtn.style.display='none';
-  const titleEl=document.getElementById('cc-form-title');if(titleEl) titleEl.textContent='Add / Update Card';
-  const saveBtn=document.getElementById('cc-save-btn');if(saveBtn) saveBtn.textContent='Add card';
-  ['cc-name','cc-last4','cc-fullnum','cc-limit','cc-used','cc-due-date','cc-min-due'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-}
 function deleteAccount(id){
   if(!confirm('Remove this account?')) return;
   state.accounts=state.accounts.filter(a=>a.id!==id);
@@ -3533,10 +3465,7 @@ function renderCards(){
               <div class="cc-network-tag">${netLogo}</div>
             </div>
             <!-- Card number -->
-            <div class="cc-num" style="letter-spacing:2px;font-size:14px;display:flex;align-items:center;gap:8px;">
-              <span id="ccnum-${c.id}" style="font-family:'DM Mono',monospace;">•••• •••• •••• ${c.last4}</span>
-              ${c.fullNum?`<button onclick="event.stopPropagation();toggleReveal('ccnum-${c.id}','${c.fullNum.replace(/(\d{4})/g,'$1 ').trim()}')" style="background:rgba(255,255,255,0.15);border:none;cursor:pointer;color:rgba(255,255,255,0.8);font-size:10px;padding:3px 7px;border-radius:5px;flex-shrink:0;touch-action:manipulation;" title="Show/hide card number"><i class=\"ti ti-eye\" style=\"font-size:11px;\"></i></button>`:''}
-            </div>
+            <div class="cc-num" style="letter-spacing:3px;font-size:15px;">•••• •••• •••• ${c.last4}</div>
             <!-- Footer -->
             <div class="cc-footer">
               <div>
@@ -3610,7 +3539,6 @@ function flipCard(id){
 function addCard(){
   const name=document.getElementById('cc-name').value.trim();
   const last4=document.getElementById('cc-last4').value.trim();
-  const fullNum=(document.getElementById('cc-fullnum')||{}).value||'';
   const limit=+document.getElementById('cc-limit').value;
   const used=+document.getElementById('cc-used').value||0;
   const dueDate=+document.getElementById('cc-due-date').value||1;
@@ -3618,41 +3546,16 @@ function addCard(){
   const network=document.getElementById('cc-network').value;
   const color=document.getElementById('cc-color').value;
   if(!name||!limit){toast('Fill card name and credit limit');return;}
-  const editIdEl=document.getElementById('cc-edit-id');
-  const editId=editIdEl?+editIdEl.value:0;
-  if(editId){
-    const ex=state.cards.find(c=>c.id===editId);
-    if(ex){Object.assign(ex,{name,last4:last4||ex.last4||'0000',fullNum:fullNum||ex.fullNum||'',limit,used,dueDate,minDue,network,color});toast('Card updated');}
-    if(editIdEl) editIdEl.value='';
-    const cancelBtn=document.getElementById('cc-cancel-btn');if(cancelBtn) cancelBtn.style.display='none';
-    const titleEl=document.getElementById('cc-form-title');if(titleEl) titleEl.textContent='Add / Update Card';
-    const saveBtn=document.getElementById('cc-save-btn');if(saveBtn) saveBtn.textContent='Add card';
-  } else {
-    const ex=state.cards.find(c=>c.name.toLowerCase()===name.toLowerCase());
-    if(ex){Object.assign(ex,{last4:last4||ex.last4,fullNum:fullNum||ex.fullNum||'',limit,used,dueDate,minDue,network,color});toast('Card updated');}
-    else{state.cards.push({id:Date.now(),name,last4:last4||'0000',fullNum:fullNum||'',limit,used,dueDate,minDue,network,color,payments:[]});toast('Card added');}
-  }
+  const ex=state.cards.find(c=>c.name.toLowerCase()===name.toLowerCase());
+  if(ex){Object.assign(ex,{limit,used,dueDate,minDue,network,color});toast('Card updated');}
+  else{state.cards.push({id:Date.now(),name,last4:last4||'0000',limit,used,dueDate,minDue,network,color,payments:[]});toast('Card added');}
   save();renderCards();
-  ['cc-name','cc-last4','cc-fullnum','cc-limit','cc-used','cc-due-date','cc-min-due'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['cc-name','cc-last4','cc-limit','cc-used','cc-due-date','cc-min-due'].forEach(id=>document.getElementById(id).value='');
 }
 function editCard(id){
   const c=state.cards.find(x=>x.id===id);if(!c) return;
-  document.getElementById('cc-name').value=c.name;
-  document.getElementById('cc-last4').value=c.last4||'';
-  const fnEl=document.getElementById('cc-fullnum');if(fnEl) fnEl.value=c.fullNum||'';
-  document.getElementById('cc-limit').value=c.limit||'';
-  document.getElementById('cc-used').value=c.used||'';
-  document.getElementById('cc-due-date').value=c.dueDate||'';
-  document.getElementById('cc-min-due').value=c.minDue||'';
-  document.getElementById('cc-network').value=c.network||'Visa';
-  document.getElementById('cc-color').value=c.color||'linear-gradient(135deg,#1a1917,#3a3835)';
-  let editIdEl=document.getElementById('cc-edit-id');
-  if(!editIdEl){editIdEl=document.createElement('input');editIdEl.type='hidden';editIdEl.id='cc-edit-id';document.getElementById('cc-name').parentNode.appendChild(editIdEl);}
-  editIdEl.value=id;
-  const titleEl=document.getElementById('cc-form-title');if(titleEl) titleEl.textContent='Edit Card';
-  const cancelBtn=document.getElementById('cc-cancel-btn');if(cancelBtn) cancelBtn.style.display='';
-  const saveBtn=document.getElementById('cc-save-btn');if(saveBtn) saveBtn.textContent='Update card';
-  document.getElementById('cc-name').closest('.chart-card').scrollIntoView({behavior:'smooth',block:'start'});
+  ['cc-name','cc-last4','cc-limit','cc-used','cc-due-date','cc-min-due'].forEach(id=>{const map={};map['cc-name']=c.name;map['cc-last4']=c.last4;map['cc-limit']=c.limit;map['cc-used']=c.used;map['cc-due-date']=c.dueDate;map['cc-min-due']=c.minDue;document.getElementById(id).value=map[id];});
+  state.cards=state.cards.filter(x=>x.id!==id);save();renderCards();toast('Edit and re-add');
 }
 function deleteCard(id){
   if(!confirm('Remove this card?')) return;
@@ -3745,7 +3648,6 @@ function renderLoans(){
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
           <div>
             <div style="font-size:14px;font-weight:600;">${l.name}</div>
-            ${l.accNum?`<div style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px;margin-top:1px;"><span id=\"laccno-${l.id}\" style=\"font-family:'DM Mono',monospace;\">Acc: XXXX${l.accNum.slice(-4)}</span><button onclick=\"event.stopPropagation();toggleReveal('laccno-${l.id}','${l.accNum}')\" style=\"background:none;border:none;cursor:pointer;color:var(--accent);font-size:10px;padding:1px 4px;touch-action:manipulation;\" title=\"Show account number\"><i class=\"ti ti-eye\" style=\"font-size:11px;vertical-align:-1px;\"></i></button></div>`:''}
             ${l.rate?`<div style="font-size:11px;color:var(--text2);">${l.rate}% p.a.</div>`:''}
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
@@ -3834,7 +3736,6 @@ function autoCalcLoan(){
 
 function saveLoan(){
   const name        = document.getElementById('l-name').value.trim();
-  const lAccNum     = (document.getElementById('l-accnum')||{}).value||'';
   const principal   = +document.getElementById('l-principal').value;
   const emi         = +document.getElementById('l-emi').value;
   const months      = +document.getElementById('l-months').value;
@@ -3855,7 +3756,7 @@ function saveLoan(){
   if(_loanEditId!==null){
     const idx=state.loans.findIndex(l=>l.id===_loanEditId);
     if(idx>=0) state.loans[idx]={
-      id:_loanEditId, name, accNum:lAccNum||state.loans[idx].accNum||'',
+      id:_loanEditId, name,
       principal: principal || emi*months,
       emi, months,
       totalMonths: derivedTotal || state.loans[idx].totalMonths || months,
@@ -3864,7 +3765,7 @@ function saveLoan(){
     toast('Loan updated');
   } else {
     state.loans.push({
-      id:Date.now(), name, accNum:lAccNum||'',
+      id:Date.now(), name,
       principal: principal || emi*months,
       emi, months,
       totalMonths: derivedTotal || months,
@@ -3879,7 +3780,6 @@ function startEditLoan(id){
   const l=state.loans.find(x=>x.id===id);if(!l) return;
   _loanEditId=id;
   document.getElementById('l-name').value      = l.name;
-  const laEl=document.getElementById('l-accnum'); if(laEl) laEl.value=l.accNum||'';
   document.getElementById('l-principal').value  = l.principal;
   document.getElementById('l-emi').value         = l.emi;
   document.getElementById('l-months').value      = l.months;
@@ -3899,7 +3799,7 @@ function cancelLoanEdit(){ clearLoanForm(); renderLoans(); }
 
 function clearLoanForm(){
   _loanEditId=null;
-  ['l-name','l-accnum','l-principal','l-emi','l-months','l-due','l-rate','l-total-months'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});;
+  ['l-name','l-principal','l-emi','l-months','l-due','l-rate','l-total-months'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});
   document.getElementById('l-edit-id').value='';
   const ft=document.getElementById('loan-form-title');if(ft) ft.textContent='Add Loan';
   const sl=document.getElementById('loan-save-label');if(sl) sl.textContent='Add loan';
@@ -6726,28 +6626,8 @@ function clearProcessedSMS(){
   toast('Processed log cleared');
 }
 
-
-
-/* ── REVEAL / MASK NUMBER TOGGLES ── */
-function toggleReveal(elId, fullVal){
-  var el=document.getElementById(elId);
-  if(!el) return;
-  var btn=el.nextElementSibling;
-  var icon=btn?btn.querySelector('i'):null;
-  if(el._revealed){
-    el.textContent=el._masked;
-    el._revealed=false;
-    if(icon) icon.className='ti ti-eye';
-  } else {
-    if(!el._masked) el._masked=el.textContent;
-    el.textContent=fullVal;
-    el._revealed=true;
-    if(icon) icon.className='ti ti-eye-off';
-  }
-}
-
-/* ── MOBILE SIDEBAR (iOS fixed) ── */
-var _sbScrollY=0;
+/* ── MOBILE SIDEBAR — iOS fixed ── */
+var _sbY=0;
 function openSidebar(){
   var sb=document.getElementById('sidebar');
   var ov=document.getElementById('sidebar-overlay');
@@ -6757,14 +6637,12 @@ function openSidebar(){
   sb.style.transform='translateZ(0)';
   if(ov){
     ov.style.left=(sb.offsetWidth||240)+'px';
-    ov.style.right='0';ov.style.top='0';ov.style.bottom='0';
     ov.style.pointerEvents='auto';
     ov.style.display='block';
-    ov.style.zIndex='1049';
   }
-  _sbScrollY=window.scrollY||window.pageYOffset;
+  _sbY=window.scrollY||window.pageYOffset;
   document.body.style.position='fixed';
-  document.body.style.top='-'+_sbScrollY+'px';
+  document.body.style.top='-'+_sbY+'px';
   document.body.style.width='100%';
 }
 function closeSidebar(){
@@ -6775,30 +6653,33 @@ function closeSidebar(){
   document.body.style.position='';
   document.body.style.top='';
   document.body.style.width='';
-  window.scrollTo(0,_sbScrollY||0);
+  window.scrollTo(0,_sbY||0);
 }
 document.addEventListener('DOMContentLoaded',function(){
+  // Overlay tap closes — only covers area OUTSIDE sidebar so nav items never trigger this
   var ov=document.getElementById('sidebar-overlay');
   if(ov){
     ov.addEventListener('touchstart',function(e){e.preventDefault();e.stopPropagation();closeSidebar();},{passive:false});
     ov.addEventListener('click',function(e){e.stopPropagation();closeSidebar();});
   }
+  // Nav items: close only on genuine tap (< 8px movement), never on scroll
   document.querySelectorAll('.nav-item').forEach(function(item){
-    var _ts={x:0,y:0};
-    item.addEventListener('touchstart',function(e){_ts.x=e.touches[0].clientX;_ts.y=e.touches[0].clientY;},{passive:true});
+    var ts={x:0,y:0};
+    item.addEventListener('touchstart',function(e){ts.x=e.touches[0].clientX;ts.y=e.touches[0].clientY;},{passive:true});
     item.addEventListener('touchend',function(e){
       if(window.innerWidth>768) return;
-      var dx=Math.abs(e.changedTouches[0].clientX-_ts.x);
-      var dy=Math.abs(e.changedTouches[0].clientY-_ts.y);
+      var dx=Math.abs(e.changedTouches[0].clientX-ts.x);
+      var dy=Math.abs(e.changedTouches[0].clientY-ts.y);
       if(dx<8&&dy<8) setTimeout(closeSidebar,120);
     },{passive:true});
     item.addEventListener('click',function(){if(window.innerWidth<=768) closeSidebar();});
   });
 });
+// Swipe right from edge to open; swipe left inside sidebar to close
 (function(){
   var sx=0,sy=0,inSb=false;
   document.addEventListener('touchstart',function(e){
-    sx=e.touches[0].clientX;sy=e.touches[0].clientY;
+    sx=e.touches[0].clientX; sy=e.touches[0].clientY;
     var sb=document.getElementById('sidebar');
     inSb=sb?sb.contains(e.target):false;
   },{passive:true});
