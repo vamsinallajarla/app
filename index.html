@@ -195,8 +195,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
     box-shadow:none;
     overflow-y:auto;
     -webkit-overflow-scrolling:touch;
-    touch-action:pan-y;
-    will-change:left;
+    touch-action:pan-y;will-change:left;
   }
   .sidebar.open{
     left:0 !important;
@@ -246,17 +245,17 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
   display:flex;flex-direction:column;
   padding:0;overflow:hidden;
 }
-.sidebar-top{padding:20px 16px 16px;border-bottom:1px solid var(--border);}
+.sidebar-top{padding:20px 16px 16px;border-bottom:1px solid var(--border);position:relative;z-index:2;isolation:isolate;}
 .brand{display:flex;align-items:center;gap:9px;margin-bottom:20px;}
 .brand .bicon{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;flex-shrink:0;}
 .brand span{font-size:16px;font-weight:700;letter-spacing:-0.3px;}
-.user-card{display:flex;align-items:center;gap:10px;padding:10px;background:var(--card);border-radius:10px;border:1px solid var(--border);}
+.user-card{display:flex;align-items:center;gap:10px;padding:10px;background:var(--card);border-radius:10px;border:1px solid var(--border);position:relative;z-index:2;}
 .user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#4f7cff,#7c5cff);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;flex-shrink:0;}
 .user-info{flex:1;min-width:0;}
 .user-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .user-role{font-size:11px;color:var(--text2);}
-.user-actions{display:flex;gap:4px;}
-.user-actions button{background:none;border:none;color:var(--text2);cursor:pointer;padding:4px;border-radius:5px;font-size:14px;transition:color .15s;}
+.user-actions{display:flex;gap:4px;position:relative;z-index:10;isolation:isolate;}
+.user-actions button{background:none;border:none;color:var(--text2);cursor:pointer;padding:4px;border-radius:5px;font-size:14px;transition:color .15s;touch-action:manipulation;-webkit-tap-highlight-color:rgba(79,124,255,0.2);min-width:32px;min-height:32px;display:flex;align-items:center;justify-content:center;position:relative;z-index:10;}
 .user-actions button:hover{color:var(--text);}
 
 .sidebar-nav{flex:1;overflow-y:auto;padding:12px 10px;-webkit-overflow-scrolling:touch;}
@@ -901,7 +900,7 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
           <div class="user-role">Personal Account</div>
         </div>
         <div class="user-actions">
-          <button title="Settings"><i class="ti ti-settings" aria-hidden="true"></i></button>
+          <button title="Settings" id="gear-btn" onclick="openSettingsModal()" style="touch-action:manipulation;-webkit-tap-highlight-color:rgba(79,124,255,0.3);position:relative;z-index:20;"><i class="ti ti-settings" aria-hidden="true"></i></button>
           <button title="Logout" onclick="doLogout()"><i class="ti ti-logout" aria-hidden="true"></i></button>
         </div>
       </div>
@@ -925,10 +924,10 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
       <div class="nav-section">
         <div class="nav-section-label">Tools</div>
         <div class="nav-item" onclick="showPage('networth')"><i class="ti ti-scale" aria-hidden="true"></i> Net Worth</div>
+        <div class="nav-item" onclick="showPage('add')"><i class="ti ti-plus" aria-hidden="true"></i> Add Entry</div>
         <div class="nav-item" onclick="showPage('import')"><i class="ti ti-file-import" aria-hidden="true"></i> Import Data</div>
         <div class="nav-item" onclick="showPage('datasync')"><i class="ti ti-cloud" aria-hidden="true"></i> Data Sync</div>
         <div class="nav-item" onclick="showPage('autoimport')"><i class="ti ti-bolt" aria-hidden="true"></i> Auto Import <span class="nav-badge" style="background:var(--green);font-size:9px;">NEW</span></div>
-        <div class="nav-item" id="admin-nav-item" style="display:none;" onclick="showPage('admin')"><i class="ti ti-shield-lock" aria-hidden="true"></i> Admin Panel <span class="nav-badge" style="background:var(--red);">A</span></div>
       </div>
     </div>
 
@@ -1069,105 +1068,6 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
 
       <!-- TRANSACTIONS -->
       <div class="page" id="page-transactions">
-        <!-- Add Transaction toggle button -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <div style="font-size:13px;color:var(--text2);">All transactions</div>
-          <button class="btn btn-primary" id="tx-add-toggle-btn" onclick="toggleAddEntryPanel()" style="font-size:12px;padding:7px 16px;display:flex;align-items:center;gap:6px;">
-            <i class="ti ti-plus" style="font-size:14px;" aria-hidden="true"></i> Add Transaction
-          </button>
-        </div>
-
-        <!-- Add Entry panel (collapsed by default) -->
-        <div id="tx-add-panel" style="display:none;margin-bottom:16px;">
-          <div class="chart-card" style="border:1px solid rgba(79,124,255,0.25);background:rgba(79,124,255,0.03);">
-            <div class="ch-header" style="margin-bottom:14px;">
-              <div>
-                <div class="ch-title"><i class="ti ti-pencil" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>Add Transaction</div>
-                <div class="ch-sub" style="margin-top:2px;">Optionally enter the available balance from your UPI/bank SMS to auto-update account balance</div>
-              </div>
-              <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px;" onclick="toggleAddEntryPanel()">
-                <i class="ti ti-x" style="font-size:13px;vertical-align:-1px;" aria-hidden="true"></i> Close
-              </button>
-            </div>
-          <div class="form-row">
-            <div class="form-group" style="flex:3;"><label class="form-label">Description</label><input class="form-input" id="m-name" placeholder="e.g. Swiggy dinner"/></div>
-            <div class="form-group"><label class="form-label">Amount ₹</label><input class="form-input" id="m-amount" type="number" placeholder="0"/></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label class="form-label">Type</label><select class="form-input" id="m-type"><option value="dr">Expense (Dr)</option><option value="cr">Income (Cr)</option></select></div>
-            <div class="form-group"><label class="form-label">Category</label><select class="form-input" id="m-cat" onchange="onCatChange(this.value)"><option>Food</option><option>Transfer</option><option>Salary</option><option>EMI</option><option>Shopping</option><option>Fuel</option><option>Bills</option><option>Other</option></select></div>
-            <div class="form-group"><label class="form-label">Source / Account</label>
-              <select class="form-input" id="m-src" onchange="updateBalanceHint()">
-                <option value="PhonePe">PhonePe</option>
-                <option value="Kotak 811">Kotak 811</option>
-                <option value="SBI">SBI</option>
-                <option value="HDFC">HDFC</option>
-                <option value="ICICI">ICICI</option>
-                <option value="Axis">Axis</option>
-                <option value="Cash">Cash</option>
-              </select>
-            </div>
-            <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-date" type="date"/></div>
-          </div>
-          <div id="transfer-subtype-row" style="display:none;margin-bottom:14px;">
-            <div style="background:rgba(79,124,255,0.08);border:1px solid rgba(79,124,255,0.25);border-radius:10px;padding:14px;">
-              <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:#4f7cff;">
-                <i class="ti ti-arrows-exchange" style="font-size:14px;vertical-align:-2px;margin-right:5px;" aria-hidden="true"></i>
-                Transfer type — this determines how it affects your balance
-              </div>
-              <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                <label style="flex:1;min-width:180px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;" id="tr-own-label">
-                  <input type="radio" name="transfer-type" id="tr-own" value="own" checked onchange="onTransferTypeChange()" style="accent-color:#4f7cff;margin-right:6px;"/>
-                  <span style="font-weight:500;">Own account</span>
-                  <div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:3px;">Savings → SBI, self transfer<br><span style="color:#4f7cff;">⇄ Not counted</span> — just moving money</div>
-                </label>
-                <label style="flex:1;min-width:180px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;" id="tr-other-label">
-                  <input type="radio" name="transfer-type" id="tr-other" value="other" onchange="onTransferTypeChange()" style="accent-color:#ff5c5c;margin-right:6px;"/>
-                  <span style="font-weight:500;">Payment / outgoing</span>
-                  <div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:3px;">Rent, fees, send to someone<br><span style="color:#ff5c5c;">↓ Counted as expense</span></div>
-                </label>
-                <label style="flex:1;min-width:180px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;" id="tr-deposit-label">
-                  <input type="radio" name="transfer-type" id="tr-deposit" value="deposit" onchange="onTransferTypeChange()" style="accent-color:#22c98a;margin-right:6px;"/>
-                  <span style="font-weight:500;">Deposit / Investment</span>
-                  <div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:3px;">FD, RD, PPF, NPS, Gold, MF<br><span style="color:#22c98a;">↗ Added to Investments</span></div>
-                </label>
-              </div>
-              <div id="deposit-details" style="display:none;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);">
-                <div style="font-size:12px;font-weight:600;color:#22c98a;margin-bottom:10px;">
-                  <i class="ti ti-trending-up" style="font-size:13px;vertical-align:-2px;margin-right:4px;" aria-hidden="true"></i>
-                  Deposit details — will be added to your Investments
-                </div>
-                <div class="form-row" style="margin-bottom:0;">
-                  <div class="form-group"><label class="form-label">Deposit type</label><select class="form-input" id="dep-type"><option value="FD">Fixed Deposit (FD)</option><option value="RD">Recurring Deposit (RD)</option><option value="PPF">PPF</option><option value="Mutual Fund">Mutual Fund</option><option value="Equity">Equity / Stocks</option><option value="Gold">Gold / Digital Gold</option><option value="Debt">Debt / Bonds</option><option value="Crypto">Crypto</option><option value="Other">Other</option></select></div>
-                  <div class="form-group"><label class="form-label">Bank / Platform</label><input class="form-input" id="dep-platform" placeholder="e.g. ICICI Bank, Groww, Zerodha"/></div>
-                  <div class="form-group"><label class="form-label">Interest rate % <span style="color:var(--text3);font-size:10px;">(optional)</span></label><input class="form-input" id="dep-rate" type="number" step="0.01" placeholder="e.g. 7.1"/></div>
-                  <div class="form-group"><label class="form-label">Maturity date <span style="color:var(--text3);font-size:10px;">(optional)</span></label><input class="form-input" id="dep-maturity" type="date"/></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div style="background:rgba(79,124,255,0.06);border:1px solid rgba(79,124,255,0.15);border-radius:10px;padding:14px;margin-bottom:14px;">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-              <div style="flex:1;min-width:200px;">
-                <label class="form-label" style="display:flex;align-items:center;gap:6px;">
-                  <i class="ti ti-refresh" style="color:#4f7cff;font-size:13px;" aria-hidden="true"></i>
-                  Available balance after transaction ₹
-                  <span style="font-size:10px;color:var(--text3);">(optional — from UPI/bank SMS)</span>
-                </label>
-                <input class="form-input" id="m-avail-bal" type="number" placeholder="e.g. 47,660 — as shown in SMS or UPI app"/>
-              </div>
-              <div id="m-bal-hint" style="font-size:12px;color:var(--text2);min-width:160px;"></div>
-            </div>
-          </div>
-          <div style="display:flex;gap:10px;align-items:center;">
-            <button class="btn btn-primary" onclick="addManual()">
-              <i class="ti ti-plus" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Save transaction
-            </button>
-            <button class="btn btn-ghost" onclick="toggleAddEntryPanel()">Cancel</button>
-          </div>
-          </div>
-        </div>
-
         <!-- filters + search + bulk actions -->
         <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
           <input class="form-input" id="tf-search" placeholder="🔍  Search transactions…" oninput="renderTxPage()" style="flex:2;min-width:160px;max-width:280px;"/>
@@ -1529,7 +1429,158 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
         </div>
       </div>
 
+      <!-- ADD ENTRY -->
+      <div class="page" id="page-add">
+        <div class="chart-card" style="margin-bottom:14px;">
+          <div class="ch-header">
+            <div>
+              <div class="ch-title"><i class="ti ti-pencil" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>Manual Entry</div>
+              <div class="ch-sub" style="margin-top:2px;">Add a transaction — optionally enter the available balance shown in your UPI/bank alert to auto-update account balance</div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex:3;"><label class="form-label">Description</label><input class="form-input" id="m-name" placeholder="e.g. Swiggy dinner"/></div>
+            <div class="form-group"><label class="form-label">Amount ₹</label><input class="form-input" id="m-amount" type="number" placeholder="0"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Type</label><select class="form-input" id="m-type"><option value="dr">Expense (Dr)</option><option value="cr">Income (Cr)</option></select></div>
+            <div class="form-group"><label class="form-label">Category</label><select class="form-input" id="m-cat" onchange="onCatChange(this.value)"><option>Food</option><option>Transfer</option><option>Salary</option><option>EMI</option><option>Shopping</option><option>Fuel</option><option>Bills</option><option>Other</option></select></div>
+            <div class="form-group"><label class="form-label">Source / Account</label>
+              <select class="form-input" id="m-src" onchange="updateBalanceHint()">
+                <option value="PhonePe">PhonePe</option>
+                <option value="Kotak 811">Kotak 811</option>
+                <option value="SBI">SBI</option>
+                <option value="HDFC">HDFC</option>
+                <option value="ICICI">ICICI</option>
+                <option value="Axis">Axis</option>
+                <option value="Cash">Cash</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-date" type="date"/></div>
+          </div>
 
+          <!-- Transfer sub-type — shown only when category = Transfer -->
+          <div id="transfer-subtype-row" style="display:none;margin-bottom:14px;">
+            <div style="background:rgba(79,124,255,0.08);border:1px solid rgba(79,124,255,0.25);border-radius:10px;padding:14px;">
+              <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:#4f7cff;">
+                <i class="ti ti-arrows-exchange" style="font-size:14px;vertical-align:-2px;margin-right:5px;" aria-hidden="true"></i>
+                Transfer type — this determines how it affects your balance
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <label style="flex:1;min-width:180px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;" id="tr-own-label">
+                  <input type="radio" name="transfer-type" id="tr-own" value="own" checked onchange="onTransferTypeChange()" style="accent-color:#4f7cff;margin-right:6px;"/>
+                  <span style="font-weight:500;">Own account</span>
+                  <div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:3px;">
+                    Savings → SBI, self transfer<br>
+                    <span style="color:#4f7cff;">⇄ Not counted</span> — just moving money
+                  </div>
+                </label>
+                <label style="flex:1;min-width:180px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;" id="tr-other-label">
+                  <input type="radio" name="transfer-type" id="tr-other" value="other" onchange="onTransferTypeChange()" style="accent-color:#ff5c5c;margin-right:6px;"/>
+                  <span style="font-weight:500;">Payment / outgoing</span>
+                  <div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:3px;">
+                    Rent, fees, send to someone<br>
+                    <span style="color:#ff5c5c;">↓ Counted as expense</span>
+                  </div>
+                </label>
+                <label style="flex:1;min-width:180px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;" id="tr-deposit-label">
+                  <input type="radio" name="transfer-type" id="tr-deposit" value="deposit" onchange="onTransferTypeChange()" style="accent-color:#22c98a;margin-right:6px;"/>
+                  <span style="font-weight:500;">Deposit / Investment</span>
+                  <div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:3px;">
+                    FD, RD, PPF, NPS, Gold, MF<br>
+                    <span style="color:#22c98a;">↗ Added to Investments</span>
+                  </div>
+                </label>
+              </div>
+
+              <!-- Deposit details — shown only when Deposit selected -->
+              <div id="deposit-details" style="display:none;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);">
+                <div style="font-size:12px;font-weight:600;color:#22c98a;margin-bottom:10px;">
+                  <i class="ti ti-trending-up" style="font-size:13px;vertical-align:-2px;margin-right:4px;" aria-hidden="true"></i>
+                  Deposit details — will be added to your Investments
+                </div>
+                <div class="form-row" style="margin-bottom:0;">
+                  <div class="form-group">
+                    <label class="form-label">Deposit type</label>
+                    <select class="form-input" id="dep-type">
+                      <option value="FD">Fixed Deposit (FD)</option>
+                      <option value="RD">Recurring Deposit (RD)</option>
+                      <option value="PPF">PPF</option>
+                      <option value="Mutual Fund">Mutual Fund</option>
+                      <option value="Equity">Equity / Stocks</option>
+                      <option value="Gold">Gold / Digital Gold</option>
+                      <option value="Debt">Debt / Bonds</option>
+                      <option value="Crypto">Crypto</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Bank / Platform</label>
+                    <input class="form-input" id="dep-platform" placeholder="e.g. ICICI Bank, Groww, Zerodha"/>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Interest rate % <span style="color:var(--text3);font-size:10px;">(optional)</span></label>
+                    <input class="form-input" id="dep-rate" type="number" step="0.01" placeholder="e.g. 7.1"/>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Maturity date <span style="color:var(--text3);font-size:10px;">(optional)</span></label>
+                    <input class="form-input" id="dep-maturity" type="date"/>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Available balance row -->
+          <div style="background:rgba(79,124,255,0.06);border:1px solid rgba(79,124,255,0.15);border-radius:10px;padding:14px;margin-bottom:14px;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <div style="flex:1;min-width:200px;">
+                <label class="form-label" style="display:flex;align-items:center;gap:6px;">
+                  <i class="ti ti-refresh" style="color:#4f7cff;font-size:13px;" aria-hidden="true"></i>
+                  Available balance after transaction ₹
+                  <span style="font-size:10px;color:var(--text3);">(optional — from UPI/bank SMS)</span>
+                </label>
+                <input class="form-input" id="m-avail-bal" type="number" placeholder="e.g. 47,660 — as shown in SMS or UPI app"/>
+              </div>
+              <div id="m-bal-hint" style="font-size:12px;color:var(--text2);min-width:160px;"></div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="addManual()">
+            <i class="ti ti-plus" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Add transaction
+          </button>
+        </div>
+
+        <!-- Quick balance update (standalone) -->
+        <div class="chart-card">
+          <div class="ch-header">
+            <div>
+              <div class="ch-title"><i class="ti ti-refresh" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>Quick Balance Update</div>
+              <div class="ch-sub" style="margin-top:2px;">Just got an SMS with your balance? Update it here directly without adding a transaction</div>
+            </div>
+          </div>
+          <div class="form-row" style="align-items:flex-end;">
+            <div class="form-group" style="flex:2;">
+              <label class="form-label">Account</label>
+              <select class="form-input" id="qb-account">
+                <option value="">Select account…</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">New balance ₹</label>
+              <input class="form-input" id="qb-balance" type="number" placeholder="Enter current balance"/>
+            </div>
+            <div class="form-group" style="max-width:160px;">
+              <button class="btn btn-primary" style="width:100%;" onclick="quickUpdateBalance()">
+                <i class="ti ti-check" style="font-size:13px;vertical-align:-2px;" aria-hidden="true"></i> Update balance
+              </button>
+            </div>
+          </div>
+          <div id="qb-status" style="font-size:12px;margin-top:6px;min-height:16px;"></div>
+          <!-- Current balances snapshot -->
+          <div id="qb-accounts-list" style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;"></div>
+        </div>
+      </div>
 
       <!-- IMPORT DATA PAGE -->
       <div class="page" id="page-import">
@@ -1977,46 +2028,6 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
       </div>
 
       <!-- ADMIN PANEL PAGE -->
-      <div class="page" id="page-admin">
-        <div class="metrics-row" id="admin-metrics" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));"></div>
-
-        <div class="chart-card" style="margin-bottom:14px;">
-          <div class="ch-header">
-            <div>
-              <div class="ch-title"><i class="ti ti-users" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>User Management</div>
-              <div class="ch-sub" style="margin-top:2px;">All registered users — manage access, reset passwords, view activity</div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <input class="form-input" id="admin-search" placeholder="Search users…" oninput="filterAdminUsers()" style="max-width:200px;font-size:12px;"/>
-              <button class="btn btn-primary" style="font-size:12px;padding:7px 12px;" onclick="loadAllUsers()"><i class="ti ti-refresh" style="font-size:13px;vertical-align:-1px;" aria-hidden="true"></i> Refresh</button>
-            </div>
-          </div>
-          <div id="admin-users-list"><div class="empty">Loading users…</div></div>
-        </div>
-
-        <div class="chart-card" style="margin-bottom:14px;">
-          <div class="ch-header"><div class="ch-title"><i class="ti ti-user-plus" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>Create User Account</div></div>
-          <div class="form-row">
-            <div class="form-group"><label class="form-label">Full name</label><input class="form-input" id="admin-new-name" placeholder="e.g. Ravi Kumar"/></div>
-            <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="admin-new-email" type="email" placeholder="ravi@example.com"/></div>
-            <div class="form-group"><label class="form-label">Password</label><input class="form-input" id="admin-new-pass" type="password" placeholder="Min 8 chars"/></div>
-            <div class="form-group"><label class="form-label">Role</label>
-              <select class="form-input" id="admin-new-role">
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-          </div>
-          <div id="admin-create-status" style="font-size:12px;margin-bottom:10px;min-height:16px;"></div>
-          <button class="btn btn-primary" onclick="adminCreateUser()"><i class="ti ti-plus" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Create user</button>
-        </div>
-
-        <div class="chart-card">
-          <div class="ch-header"><div class="ch-title"><i class="ti ti-activity" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>Activity Log</div></div>
-          <div id="admin-activity-log"><div class="empty">No activity recorded yet.</div></div>
-        </div>
-      </div>
-
       <!-- DATA SYNC PAGE -->
       <div class="page" id="page-datasync">
 
@@ -2586,7 +2597,7 @@ function dc(k){if(charts[k]){try{charts[k].destroy();}catch(e){}delete charts[k]
 function monthTx(m){return state.transactions.filter(t=>t.date.startsWith(m));}
 const curTx=()=>monthTx(curMonth);
 
-const pages={dashboard:'Dashboard',transactions:'Transactions',analytics:'Analytics',accounts:'Accounts',cards:'Credit Cards',loans:'Loans',budget:'Budget',investments:'Investments',networth:'Net Worth',import:'Import Data',datasync:'Data Sync',admin:'Admin Panel',autoimport:'Auto Import'};
+const pages={dashboard:'Dashboard',transactions:'Transactions',analytics:'Analytics',accounts:'Accounts',cards:'Credit Cards',loans:'Loans',budget:'Budget',investments:'Investments',networth:'Net Worth',add:'Add Entry',import:'Import Data',datasync:'Data Sync',admin:'Admin Panel',autoimport:'Auto Import'};
 const renders={dashboard:renderDashboard,transactions:renderTxPage,analytics:renderAnalytics,accounts:renderAccounts,cards:renderCards,loans:renderLoans,budget:renderBudget,investments:renderInvestments,networth:renderNetWorth,import:renderImportPage,datasync:renderDataSync,admin:renderAdminPanel,add:function(){
   // Set today's date — needed for Safari which doesn't pre-fill date inputs
   const dateEl = document.getElementById('m-date');
@@ -2597,12 +2608,11 @@ const renders={dashboard:renderDashboard,transactions:renderTxPage,analytics:ren
 
 function showPage(p){
   // Block admin page for non-admin users
-  if(p==='admin' && !isAdmin()){
-    toast('Access denied — admin only');
+  if(p==='admin'){
+    if(!isAdmin()){ toast('Access denied — admin only'); return; }
+    openSettingsModal(); setTimeout(function(){ switchSettingsTab('admin'); }, 80);
     return;
   }
-  // 'add' page is now merged into transactions
-  if(p==='add'){ showPage('transactions'); setTimeout(function(){ toggleAddEntryPanel(true); },100); return; }
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
@@ -4437,13 +4447,7 @@ function addManual(){
   if(mType){ mType.value='dr'; mType.closest('.form-group').style.opacity='1'; }
   updateBalanceHint();
   renderDashboard();
-  renderTxPage();
   renderQuickBalanceSection();
-  // Close the add panel after saving
-  var panel=document.getElementById('tx-add-panel');
-  if(panel) panel.style.display='none';
-  var btn=document.getElementById('tx-add-toggle-btn');
-  if(btn) btn.innerHTML='<i class="ti ti-plus" style="font-size:14px;"></i> Add Transaction';
 }
 
 function renderQuickBalanceSection(){
@@ -6584,15 +6588,14 @@ function clearProcessedSMS(){
 /* ── MOBILE SIDEBAR — iOS fixed ── */
 var _sbY=0;
 function openSidebar(){
-  var sb=document.getElementById('sidebar');var ov=document.getElementById('sidebar-overlay');
-  if(!sb) return;
-  sb.classList.add('open');sb.style.left='0';sb.style.transform='translateZ(0)';
+  var sb=document.getElementById('sidebar'),ov=document.getElementById('sidebar-overlay');
+  if(!sb)return;sb.classList.add('open');sb.style.left='0';sb.style.transform='translateZ(0)';
   if(ov){ov.style.left=(sb.offsetWidth||240)+'px';ov.style.pointerEvents='auto';ov.style.display='block';}
   _sbY=window.scrollY||window.pageYOffset;
   document.body.style.position='fixed';document.body.style.top='-'+_sbY+'px';document.body.style.width='100%';
 }
 function closeSidebar(){
-  var sb=document.getElementById('sidebar');var ov=document.getElementById('sidebar-overlay');
+  var sb=document.getElementById('sidebar'),ov=document.getElementById('sidebar-overlay');
   if(sb){sb.classList.remove('open');sb.style.left='';sb.style.transform='';}
   if(ov){ov.style.display='none';ov.style.pointerEvents='none';}
   document.body.style.position='';document.body.style.top='';document.body.style.width='';
@@ -6608,10 +6611,10 @@ document.addEventListener('DOMContentLoaded',function(){
     var ts={x:0,y:0};
     item.addEventListener('touchstart',function(e){ts.x=e.touches[0].clientX;ts.y=e.touches[0].clientY;},{passive:true});
     item.addEventListener('touchend',function(e){
-      if(window.innerWidth>768) return;
-      if(Math.abs(e.changedTouches[0].clientX-ts.x)<8&&Math.abs(e.changedTouches[0].clientY-ts.y)<8) setTimeout(closeSidebar,120);
+      if(window.innerWidth>768)return;
+      if(Math.abs(e.changedTouches[0].clientX-ts.x)<8&&Math.abs(e.changedTouches[0].clientY-ts.y)<8)setTimeout(closeSidebar,120);
     },{passive:true});
-    item.addEventListener('click',function(){if(window.innerWidth<=768) closeSidebar();});
+    item.addEventListener('click',function(){if(window.innerWidth<=768)closeSidebar();});
   });
 });
 (function(){
@@ -6619,43 +6622,12 @@ document.addEventListener('DOMContentLoaded',function(){
   document.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY;var sb=document.getElementById('sidebar');inSb=sb?sb.contains(e.target):false;},{passive:true});
   document.addEventListener('touchend',function(e){
     var dx=e.changedTouches[0].clientX-sx,dy=Math.abs(e.changedTouches[0].clientY-sy);
-    if(dy>40) return;
+    if(dy>40)return;
     var sb=document.getElementById('sidebar');
-    if(sb&&sb.classList.contains('open')&&inSb&&dx<-60) closeSidebar();
-    if(sb&&!sb.classList.contains('open')&&sx<20&&dx>60) openSidebar();
+    if(sb&&sb.classList.contains('open')&&inSb&&dx<-60)closeSidebar();
+    if(sb&&!sb.classList.contains('open')&&sx<20&&dx>60)openSidebar();
   },{passive:true});
 })();
-
-/* ── ADD ENTRY PANEL TOGGLE (in Transactions page) ── */
-function toggleAddEntryPanel(forceOpen){
-  var panel = document.getElementById('tx-add-panel');
-  var btn   = document.getElementById('tx-add-toggle-btn');
-  if(!panel) return;
-  var opening = forceOpen || panel.style.display === 'none';
-  panel.style.display = opening ? 'block' : 'none';
-  if(btn){
-    btn.innerHTML = opening
-      ? '<i class="ti ti-x" style="font-size:14px;" aria-hidden="true"></i> Close'
-      : '<i class="ti ti-plus" style="font-size:14px;" aria-hidden="true"></i> Add Transaction';
-  }
-  if(opening){
-    // Reset form and scroll into view
-    resetAddEntryForm();
-    panel.scrollIntoView({behavior:'smooth', block:'start'});
-  }
-}
-function resetAddEntryForm(){
-  ['m-name','m-amount','m-avail-bal','dep-platform','dep-rate','dep-maturity'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.value='';
-  });
-  var mCat=document.getElementById('m-cat'); if(mCat) mCat.value='Food';
-  var mType=document.getElementById('m-type'); if(mType) mType.value='dr';
-  var mDate=document.getElementById('m-date'); if(mDate) mDate.value=todayStr;
-  var tsRow=document.getElementById('transfer-subtype-row'); if(tsRow) tsRow.style.display='none';
-  var dd=document.getElementById('deposit-details'); if(dd) dd.style.display='none';
-  var trOwn=document.getElementById('tr-own'); if(trOwn) trOwn.checked=true;
-  if(typeof updateBalanceHint==='function') updateBalanceHint();
-}
 
 /* ── SERVICE WORKER — offline support ── */
 if('serviceWorker' in navigator){
@@ -7362,5 +7334,187 @@ function commitDocPasteImport(){
     <div id="tile-modal-body" style="overflow-y:auto;padding:0 20px 32px;flex:1;-webkit-overflow-scrolling:touch;"></div>
   </div>
 
+
+<div id="settings-modal" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 12px 60px;" onclick="if(event.target===this)closeSettingsModal()">
+  <div style="max-width:660px;margin:0 auto;">
+    <div style="background:#13131e;border:1px solid rgba(255,255,255,0.1);border-radius:18px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.7);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#4f7cff,#7c5cff);display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;"><i class="ti ti-settings"></i></div>
+          <div><div style="font-size:15px;font-weight:700;font-family:'Syne',sans-serif;">Settings</div><div style="font-size:11px;color:#8888a0;" id="settings-user-sub">Personal Account</div></div>
+        </div>
+        <button onclick="closeSettingsModal()" style="background:#1e1e2e;border:1px solid rgba(255,255,255,0.1);color:#8888a0;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;touch-action:manipulation;"><i class="ti ti-x"></i> Close</button>
+      </div>
+      <div style="display:flex;border-bottom:1px solid rgba(255,255,255,0.06);padding:0 22px;">
+        <button id="stab-general"  onclick="switchSettingsTab('general')"  style="background:none;border:none;border-bottom:2px solid #4f7cff;color:#e8e8f0;font-weight:600;font-size:13px;padding:11px 16px 9px;cursor:pointer;font-family:'DM Sans',sans-serif;touch-action:manipulation;">General</button>
+        <button id="stab-firebase" onclick="switchSettingsTab('firebase')" style="background:none;border:none;border-bottom:2px solid transparent;color:#8888a0;font-size:13px;padding:11px 16px 9px;cursor:pointer;font-family:'DM Sans',sans-serif;touch-action:manipulation;">Firebase</button>
+        <button id="stab-admin"    onclick="switchSettingsTab('admin')"    style="display:none;background:none;border:none;border-bottom:2px solid transparent;color:#8888a0;font-size:13px;padding:11px 16px 9px;cursor:pointer;font-family:'DM Sans',sans-serif;touch-action:manipulation;"><i class="ti ti-shield-lock" style="color:#ff5c5c;font-size:11px;margin-right:3px;"></i>Admin</button>
+      </div>
+      <div style="padding:20px 22px;">
+        <div id="stab-general-content">
+          <div style="background:#1a1a2a;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+            <div id="settings-avatar" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#4f7cff,#7c5cff);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;">A</div>
+            <div><div style="font-size:14px;font-weight:600;" id="settings-disp-name">Admin</div><div style="font-size:12px;color:#8888a0;" id="settings-disp-email"></div></div>
+          </div>
+          <div style="font-size:11px;color:#555568;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Change Password</div>
+          <div style="background:#1a1a2a;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+              <div style="flex:1;min-width:130px;"><label style="display:block;font-size:11px;color:#8888a0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;">Current</label><input class="form-input" id="s-cur-pass" type="password" placeholder="Current password"/></div>
+              <div style="flex:1;min-width:130px;"><label style="display:block;font-size:11px;color:#8888a0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;">New</label><input class="form-input" id="s-new-pass" type="password" placeholder="Min 8 chars"/></div>
+              <div style="flex:1;min-width:130px;"><label style="display:block;font-size:11px;color:#8888a0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;">Confirm</label><input class="form-input" id="s-conf-pass" type="password" placeholder="Repeat"/></div>
+            </div>
+            <div id="s-pass-status" style="font-size:12px;min-height:16px;margin-bottom:10px;"></div>
+            <button class="btn btn-primary" style="font-size:12px;" onclick="settingsChangePassword()">Update password</button>
+          </div>
+          <div style="font-size:11px;color:#555568;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Session</div>
+          <div style="background:#1a1a2a;border:1px solid rgba(255,92,92,0.2);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:13px;font-weight:500;margin-bottom:3px;">Sign out</div>
+            <div style="font-size:12px;color:#8888a0;margin-bottom:12px;">Returns you to the login screen.</div>
+            <button class="btn btn-danger" style="font-size:12px;" onclick="doLogout()"><i class="ti ti-logout" style="margin-right:4px;"></i>Sign out</button>
+          </div>
+        </div>
+        <div id="stab-firebase-content" style="display:none;">
+          <div style="font-size:11px;color:#555568;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Firebase Configuration</div>
+          <div style="background:#1a1a2a;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+              <div style="flex:2;min-width:160px;"><label style="display:block;font-size:11px;color:#8888a0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;">API Key</label><input class="form-input" id="s-fb-apikey" placeholder="AIzaSy…"/></div>
+              <div style="flex:2;min-width:160px;"><label style="display:block;font-size:11px;color:#8888a0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;">Project ID</label><input class="form-input" id="s-fb-projectid" placeholder="my-project-id"/></div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+              <div style="flex:2;min-width:160px;"><label style="display:block;font-size:11px;color:#8888a0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;">Auth Domain</label><input class="form-input" id="s-fb-authdomain" placeholder="project.firebaseapp.com"/></div>
+              <div style="flex:2;min-width:160px;"><label style="display:block;font-size:11px;color:#8888a0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;">Storage Bucket</label><input class="form-input" id="s-fb-bucket" placeholder="project.appspot.com"/></div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+              <div style="flex:1;min-width:130px;"><label style="display:block;font-size:11px;color:#8888a0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;">Sender ID</label><input class="form-input" id="s-fb-senderid" placeholder="123456789"/></div>
+              <div style="flex:2;min-width:160px;"><label style="display:block;font-size:11px;color:#8888a0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;">App ID</label><input class="form-input" id="s-fb-appid" placeholder="1:123:web:abc"/></div>
+            </div>
+            <div id="s-fb-status" style="font-size:12px;min-height:16px;margin-bottom:10px;"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-primary" style="font-size:12px;" onclick="settingsSaveFirebase()"><i class="ti ti-device-floppy" style="margin-right:4px;"></i>Save &amp; reconnect</button>
+              <button class="btn btn-ghost" style="font-size:12px;" onclick="settingsLoadFirebase()"><i class="ti ti-refresh" style="margin-right:4px;"></i>Load current</button>
+            </div>
+          </div>
+          <div style="background:rgba(240,165,0,0.08);border:1px solid rgba(240,165,0,0.25);border-radius:10px;padding:10px 14px;font-size:12px;color:#f0a500;"><i class="ti ti-alert-triangle" style="margin-right:4px;"></i>Changing Firebase config will reload the app.</div>
+        </div>
+        <div id="stab-admin-content" style="display:none;">
+        <div class="metrics-row" id="admin-metrics" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));"></div>
+
+        <div class="chart-card" style="margin-bottom:14px;">
+          <div class="ch-header">
+            <div>
+              <div class="ch-title"><i class="ti ti-users" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>User Management</div>
+              <div class="ch-sub" style="margin-top:2px;">All registered users — manage access, reset passwords, view activity</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input class="form-input" id="admin-search" placeholder="Search users…" oninput="filterAdminUsers()" style="max-width:200px;font-size:12px;"/>
+              <button class="btn btn-primary" style="font-size:12px;padding:7px 12px;" onclick="loadAllUsers()"><i class="ti ti-refresh" style="font-size:13px;vertical-align:-1px;" aria-hidden="true"></i> Refresh</button>
+            </div>
+          </div>
+          <div id="admin-users-list"><div class="empty">Loading users…</div></div>
+        </div>
+
+        <div class="chart-card" style="margin-bottom:14px;">
+          <div class="ch-header"><div class="ch-title"><i class="ti ti-user-plus" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>Create User Account</div></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Full name</label><input class="form-input" id="admin-new-name" placeholder="e.g. Ravi Kumar"/></div>
+            <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="admin-new-email" type="email" placeholder="ravi@example.com"/></div>
+            <div class="form-group"><label class="form-label">Password</label><input class="form-input" id="admin-new-pass" type="password" placeholder="Min 8 chars"/></div>
+            <div class="form-group"><label class="form-label">Role</label>
+              <select class="form-input" id="admin-new-role">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+          <div id="admin-create-status" style="font-size:12px;margin-bottom:10px;min-height:16px;"></div>
+          <button class="btn btn-primary" onclick="adminCreateUser()"><i class="ti ti-plus" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Create user</button>
+        </div>
+
+        <div class="chart-card">
+          <div class="ch-header"><div class="ch-title"><i class="ti ti-activity" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>Activity Log</div></div>
+          <div id="admin-activity-log"><div class="empty">No activity recorded yet.</div></div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function openSettingsModal(){
+  var modal=document.getElementById('settings-modal');
+  if(!modal){console.error('settings-modal missing');return;}
+  var sess={};try{sess=JSON.parse(localStorage.getItem('fos_session')||'{}');}catch(e){}
+  var nameEl=document.getElementById('sb-name');
+  var nm=nameEl?nameEl.textContent.trim():(sess.em||'');
+  var el;
+  el=document.getElementById('settings-disp-name'); if(el) el.textContent=nm;
+  el=document.getElementById('settings-disp-email'); if(el) el.textContent=sess.em||'';
+  el=document.getElementById('settings-avatar'); if(el) el.textContent=(nm||'A')[0].toUpperCase();
+  el=document.getElementById('settings-user-sub'); if(el) el.textContent=isAdmin()?'Admin Account':'Personal Account';
+  el=document.getElementById('stab-admin'); if(el) el.style.display=isAdmin()?'':'none';
+  settingsLoadFirebase();
+  switchSettingsTab('general');
+  modal.style.display='block';
+  document.body.style.overflow='hidden';
+  if(isAdmin()){
+    if(typeof loadAllUsers==='function') setTimeout(loadAllUsers,150);
+    if(typeof renderAdminMetrics==='function') setTimeout(renderAdminMetrics,150);
+  }
+}
+function closeSettingsModal(){
+  var modal=document.getElementById('settings-modal');
+  if(modal) modal.style.display='none';
+  document.body.style.overflow='';
+}
+function switchSettingsTab(tab){
+  ['general','firebase','admin'].forEach(function(t){
+    var btn=document.getElementById('stab-'+t);
+    var ct=document.getElementById('stab-'+t+'-content');
+    var on=(t===tab);
+    if(btn){btn.style.borderBottomColor=on?'#4f7cff':'transparent';btn.style.color=on?'#e8e8f0':'#8888a0';btn.style.fontWeight=on?'600':'400';}
+    if(ct) ct.style.display=on?'block':'none';
+  });
+}
+function settingsChangePassword(){
+  var cur=(document.getElementById('s-cur-pass')||{}).value||'';
+  var nw=(document.getElementById('s-new-pass')||{}).value||'';
+  var cf=(document.getElementById('s-conf-pass')||{}).value||'';
+  var st=document.getElementById('s-pass-status');
+  if(st){st.style.color='#ff5c5c';st.textContent='';}
+  if(!cur||!nw||!cf){if(st)st.textContent='Fill all three fields';return;}
+  if(nw!==cf){if(st)st.textContent='Passwords do not match';return;}
+  if(nw.length<8){if(st)st.textContent='Minimum 8 characters';return;}
+  sha256(cur).then(function(){
+    var sess={};try{sess=JSON.parse(localStorage.getItem('fos_session')||'{}');}catch(e){}
+    sha256(nw).then(function(newHash){
+      try{
+        firebase.firestore().collection('financeos_auth').where('email','==',sess.em).get().then(function(snap){
+          if(snap.empty){if(st)st.textContent='User not found';return;}
+          snap.docs[0].ref.update({password:newHash}).then(function(){
+            if(st){st.style.color='#22c98a';st.textContent='Password updated ✓';}
+            ['s-cur-pass','s-new-pass','s-conf-pass'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+          }).catch(function(e){if(st)st.textContent='Error: '+e.message;});
+        });
+      }catch(e){if(st)st.textContent='Firebase error: '+e.message;}
+    });
+  });
+}
+function settingsLoadFirebase(){
+  try{
+    var cfg=JSON.parse(localStorage.getItem('financeos_firebase_config')||'null');
+    if(!cfg)return;
+    var map={'s-fb-apikey':'apiKey','s-fb-projectid':'projectId','s-fb-authdomain':'authDomain','s-fb-bucket':'storageBucket','s-fb-senderid':'messagingSenderId','s-fb-appid':'appId'};
+    Object.keys(map).forEach(function(id){var el=document.getElementById(id);if(el&&cfg[map[id]])el.value=cfg[map[id]];});
+  }catch(e){}
+}
+function settingsSaveFirebase(){
+  var st=document.getElementById('s-fb-status');
+  var cfg={apiKey:(document.getElementById('s-fb-apikey')||{}).value||'',projectId:(document.getElementById('s-fb-projectid')||{}).value||'',authDomain:(document.getElementById('s-fb-authdomain')||{}).value||'',storageBucket:(document.getElementById('s-fb-bucket')||{}).value||'',messagingSenderId:(document.getElementById('s-fb-senderid')||{}).value||'',appId:(document.getElementById('s-fb-appid')||{}).value||''};
+  if(!cfg.apiKey||!cfg.projectId){if(st){st.style.color='#ff5c5c';st.textContent='API Key and Project ID required';}return;}
+  localStorage.setItem('financeos_firebase_config',JSON.stringify(cfg));
+  if(st){st.style.color='#22c98a';st.textContent='Saved — reloading…';}
+  setTimeout(function(){location.reload();},1200);
+}
+</script>
 </body>
 </html>
