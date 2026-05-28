@@ -925,7 +925,6 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
       <div class="nav-section">
         <div class="nav-section-label">Tools</div>
         <div class="nav-item" onclick="showPage('networth')"><i class="ti ti-scale" aria-hidden="true"></i> Net Worth</div>
-        <div class="nav-item" onclick="showPage('add')"><i class="ti ti-plus" aria-hidden="true"></i> Add Entry</div>
         <div class="nav-item" onclick="showPage('import')"><i class="ti ti-file-import" aria-hidden="true"></i> Import Data</div>
         <div class="nav-item" onclick="showPage('datasync')"><i class="ti ti-cloud" aria-hidden="true"></i> Data Sync</div>
         <div class="nav-item" onclick="showPage('autoimport')"><i class="ti ti-bolt" aria-hidden="true"></i> Auto Import <span class="nav-badge" style="background:var(--green);font-size:9px;">NEW</span></div>
@@ -1070,6 +1069,105 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
 
       <!-- TRANSACTIONS -->
       <div class="page" id="page-transactions">
+        <!-- Add Transaction toggle button -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="font-size:13px;color:var(--text2);">All transactions</div>
+          <button class="btn btn-primary" id="tx-add-toggle-btn" onclick="toggleAddEntryPanel()" style="font-size:12px;padding:7px 16px;display:flex;align-items:center;gap:6px;">
+            <i class="ti ti-plus" style="font-size:14px;" aria-hidden="true"></i> Add Transaction
+          </button>
+        </div>
+
+        <!-- Add Entry panel (collapsed by default) -->
+        <div id="tx-add-panel" style="display:none;margin-bottom:16px;">
+          <div class="chart-card" style="border:1px solid rgba(79,124,255,0.25);background:rgba(79,124,255,0.03);">
+            <div class="ch-header" style="margin-bottom:14px;">
+              <div>
+                <div class="ch-title"><i class="ti ti-pencil" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>Add Transaction</div>
+                <div class="ch-sub" style="margin-top:2px;">Optionally enter the available balance from your UPI/bank SMS to auto-update account balance</div>
+              </div>
+              <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px;" onclick="toggleAddEntryPanel()">
+                <i class="ti ti-x" style="font-size:13px;vertical-align:-1px;" aria-hidden="true"></i> Close
+              </button>
+            </div>
+          <div class="form-row">
+            <div class="form-group" style="flex:3;"><label class="form-label">Description</label><input class="form-input" id="m-name" placeholder="e.g. Swiggy dinner"/></div>
+            <div class="form-group"><label class="form-label">Amount ₹</label><input class="form-input" id="m-amount" type="number" placeholder="0"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Type</label><select class="form-input" id="m-type"><option value="dr">Expense (Dr)</option><option value="cr">Income (Cr)</option></select></div>
+            <div class="form-group"><label class="form-label">Category</label><select class="form-input" id="m-cat" onchange="onCatChange(this.value)"><option>Food</option><option>Transfer</option><option>Salary</option><option>EMI</option><option>Shopping</option><option>Fuel</option><option>Bills</option><option>Other</option></select></div>
+            <div class="form-group"><label class="form-label">Source / Account</label>
+              <select class="form-input" id="m-src" onchange="updateBalanceHint()">
+                <option value="PhonePe">PhonePe</option>
+                <option value="Kotak 811">Kotak 811</option>
+                <option value="SBI">SBI</option>
+                <option value="HDFC">HDFC</option>
+                <option value="ICICI">ICICI</option>
+                <option value="Axis">Axis</option>
+                <option value="Cash">Cash</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-date" type="date"/></div>
+          </div>
+          <div id="transfer-subtype-row" style="display:none;margin-bottom:14px;">
+            <div style="background:rgba(79,124,255,0.08);border:1px solid rgba(79,124,255,0.25);border-radius:10px;padding:14px;">
+              <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:#4f7cff;">
+                <i class="ti ti-arrows-exchange" style="font-size:14px;vertical-align:-2px;margin-right:5px;" aria-hidden="true"></i>
+                Transfer type — this determines how it affects your balance
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <label style="flex:1;min-width:180px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;" id="tr-own-label">
+                  <input type="radio" name="transfer-type" id="tr-own" value="own" checked onchange="onTransferTypeChange()" style="accent-color:#4f7cff;margin-right:6px;"/>
+                  <span style="font-weight:500;">Own account</span>
+                  <div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:3px;">Savings → SBI, self transfer<br><span style="color:#4f7cff;">⇄ Not counted</span> — just moving money</div>
+                </label>
+                <label style="flex:1;min-width:180px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;" id="tr-other-label">
+                  <input type="radio" name="transfer-type" id="tr-other" value="other" onchange="onTransferTypeChange()" style="accent-color:#ff5c5c;margin-right:6px;"/>
+                  <span style="font-weight:500;">Payment / outgoing</span>
+                  <div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:3px;">Rent, fees, send to someone<br><span style="color:#ff5c5c;">↓ Counted as expense</span></div>
+                </label>
+                <label style="flex:1;min-width:180px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;" id="tr-deposit-label">
+                  <input type="radio" name="transfer-type" id="tr-deposit" value="deposit" onchange="onTransferTypeChange()" style="accent-color:#22c98a;margin-right:6px;"/>
+                  <span style="font-weight:500;">Deposit / Investment</span>
+                  <div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:3px;">FD, RD, PPF, NPS, Gold, MF<br><span style="color:#22c98a;">↗ Added to Investments</span></div>
+                </label>
+              </div>
+              <div id="deposit-details" style="display:none;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);">
+                <div style="font-size:12px;font-weight:600;color:#22c98a;margin-bottom:10px;">
+                  <i class="ti ti-trending-up" style="font-size:13px;vertical-align:-2px;margin-right:4px;" aria-hidden="true"></i>
+                  Deposit details — will be added to your Investments
+                </div>
+                <div class="form-row" style="margin-bottom:0;">
+                  <div class="form-group"><label class="form-label">Deposit type</label><select class="form-input" id="dep-type"><option value="FD">Fixed Deposit (FD)</option><option value="RD">Recurring Deposit (RD)</option><option value="PPF">PPF</option><option value="Mutual Fund">Mutual Fund</option><option value="Equity">Equity / Stocks</option><option value="Gold">Gold / Digital Gold</option><option value="Debt">Debt / Bonds</option><option value="Crypto">Crypto</option><option value="Other">Other</option></select></div>
+                  <div class="form-group"><label class="form-label">Bank / Platform</label><input class="form-input" id="dep-platform" placeholder="e.g. ICICI Bank, Groww, Zerodha"/></div>
+                  <div class="form-group"><label class="form-label">Interest rate % <span style="color:var(--text3);font-size:10px;">(optional)</span></label><input class="form-input" id="dep-rate" type="number" step="0.01" placeholder="e.g. 7.1"/></div>
+                  <div class="form-group"><label class="form-label">Maturity date <span style="color:var(--text3);font-size:10px;">(optional)</span></label><input class="form-input" id="dep-maturity" type="date"/></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="background:rgba(79,124,255,0.06);border:1px solid rgba(79,124,255,0.15);border-radius:10px;padding:14px;margin-bottom:14px;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <div style="flex:1;min-width:200px;">
+                <label class="form-label" style="display:flex;align-items:center;gap:6px;">
+                  <i class="ti ti-refresh" style="color:#4f7cff;font-size:13px;" aria-hidden="true"></i>
+                  Available balance after transaction ₹
+                  <span style="font-size:10px;color:var(--text3);">(optional — from UPI/bank SMS)</span>
+                </label>
+                <input class="form-input" id="m-avail-bal" type="number" placeholder="e.g. 47,660 — as shown in SMS or UPI app"/>
+              </div>
+              <div id="m-bal-hint" style="font-size:12px;color:var(--text2);min-width:160px;"></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button class="btn btn-primary" onclick="addManual()">
+              <i class="ti ti-plus" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Save transaction
+            </button>
+            <button class="btn btn-ghost" onclick="toggleAddEntryPanel()">Cancel</button>
+          </div>
+          </div>
+        </div>
+
         <!-- filters + search + bulk actions -->
         <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
           <input class="form-input" id="tf-search" placeholder="🔍  Search transactions…" oninput="renderTxPage()" style="flex:2;min-width:160px;max-width:280px;"/>
@@ -1290,16 +1388,6 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
             <div class="form-group"><label class="form-label">Due date (1–31)</label><input class="form-input" id="l-due" type="number" min="1" max="31"/></div>
           </div>
           <div id="loan-calc-preview" style="display:none;background:rgba(34,201,138,0.06);border:1px solid rgba(34,201,138,0.2);border-radius:8px;padding:10px 14px;font-size:12px;margin-bottom:12px;display:flex;gap:20px;flex-wrap:wrap;"></div>
-          <div class="form-row" style="align-items:flex-end;">
-            <div class="form-group" style="flex:2;">
-              <label class="form-label">Bank outstanding ₹ <span style="color:var(--green);font-size:10px;">(actual from bank — overrides calculation)</span></label>
-              <input class="form-input" id="l-bank-outstanding" type="number" placeholder="Enter exact figure from bank statement" oninput="autoCalcLoan()"/>
-            </div>
-            <div class="form-group" style="flex:1;min-width:100px;">
-              <label class="form-label">Rounding ₹ <span style="color:var(--text3);font-size:9px;">(± buffer)</span></label>
-              <input class="form-input" id="l-rounding" type="number" placeholder="e.g. 500"/>
-            </div>
-          </div>
           <input type="hidden" id="l-edit-id" value=""/>
           <button class="btn btn-primary" onclick="saveLoan()"><span id="loan-save-label">Add loan</span></button>
         </div>
@@ -1441,158 +1529,7 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
         </div>
       </div>
 
-      <!-- ADD ENTRY -->
-      <div class="page" id="page-add">
-        <div class="chart-card" style="margin-bottom:14px;">
-          <div class="ch-header">
-            <div>
-              <div class="ch-title"><i class="ti ti-pencil" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>Manual Entry</div>
-              <div class="ch-sub" style="margin-top:2px;">Add a transaction — optionally enter the available balance shown in your UPI/bank alert to auto-update account balance</div>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group" style="flex:3;"><label class="form-label">Description</label><input class="form-input" id="m-name" placeholder="e.g. Swiggy dinner"/></div>
-            <div class="form-group"><label class="form-label">Amount ₹</label><input class="form-input" id="m-amount" type="number" placeholder="0"/></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label class="form-label">Type</label><select class="form-input" id="m-type"><option value="dr">Expense (Dr)</option><option value="cr">Income (Cr)</option></select></div>
-            <div class="form-group"><label class="form-label">Category</label><select class="form-input" id="m-cat" onchange="onCatChange(this.value)"><option>Food</option><option>Transfer</option><option>Salary</option><option>EMI</option><option>Shopping</option><option>Fuel</option><option>Bills</option><option>Other</option></select></div>
-            <div class="form-group"><label class="form-label">Source / Account</label>
-              <select class="form-input" id="m-src" onchange="updateBalanceHint()">
-                <option value="PhonePe">PhonePe</option>
-                <option value="Kotak 811">Kotak 811</option>
-                <option value="SBI">SBI</option>
-                <option value="HDFC">HDFC</option>
-                <option value="ICICI">ICICI</option>
-                <option value="Axis">Axis</option>
-                <option value="Cash">Cash</option>
-              </select>
-            </div>
-            <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-date" type="date"/></div>
-          </div>
 
-          <!-- Transfer sub-type — shown only when category = Transfer -->
-          <div id="transfer-subtype-row" style="display:none;margin-bottom:14px;">
-            <div style="background:rgba(79,124,255,0.08);border:1px solid rgba(79,124,255,0.25);border-radius:10px;padding:14px;">
-              <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:#4f7cff;">
-                <i class="ti ti-arrows-exchange" style="font-size:14px;vertical-align:-2px;margin-right:5px;" aria-hidden="true"></i>
-                Transfer type — this determines how it affects your balance
-              </div>
-              <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                <label style="flex:1;min-width:180px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;" id="tr-own-label">
-                  <input type="radio" name="transfer-type" id="tr-own" value="own" checked onchange="onTransferTypeChange()" style="accent-color:#4f7cff;margin-right:6px;"/>
-                  <span style="font-weight:500;">Own account</span>
-                  <div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:3px;">
-                    Savings → SBI, self transfer<br>
-                    <span style="color:#4f7cff;">⇄ Not counted</span> — just moving money
-                  </div>
-                </label>
-                <label style="flex:1;min-width:180px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;" id="tr-other-label">
-                  <input type="radio" name="transfer-type" id="tr-other" value="other" onchange="onTransferTypeChange()" style="accent-color:#ff5c5c;margin-right:6px;"/>
-                  <span style="font-weight:500;">Payment / outgoing</span>
-                  <div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:3px;">
-                    Rent, fees, send to someone<br>
-                    <span style="color:#ff5c5c;">↓ Counted as expense</span>
-                  </div>
-                </label>
-                <label style="flex:1;min-width:180px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;" id="tr-deposit-label">
-                  <input type="radio" name="transfer-type" id="tr-deposit" value="deposit" onchange="onTransferTypeChange()" style="accent-color:#22c98a;margin-right:6px;"/>
-                  <span style="font-weight:500;">Deposit / Investment</span>
-                  <div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:3px;">
-                    FD, RD, PPF, NPS, Gold, MF<br>
-                    <span style="color:#22c98a;">↗ Added to Investments</span>
-                  </div>
-                </label>
-              </div>
-
-              <!-- Deposit details — shown only when Deposit selected -->
-              <div id="deposit-details" style="display:none;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);">
-                <div style="font-size:12px;font-weight:600;color:#22c98a;margin-bottom:10px;">
-                  <i class="ti ti-trending-up" style="font-size:13px;vertical-align:-2px;margin-right:4px;" aria-hidden="true"></i>
-                  Deposit details — will be added to your Investments
-                </div>
-                <div class="form-row" style="margin-bottom:0;">
-                  <div class="form-group">
-                    <label class="form-label">Deposit type</label>
-                    <select class="form-input" id="dep-type">
-                      <option value="FD">Fixed Deposit (FD)</option>
-                      <option value="RD">Recurring Deposit (RD)</option>
-                      <option value="PPF">PPF</option>
-                      <option value="Mutual Fund">Mutual Fund</option>
-                      <option value="Equity">Equity / Stocks</option>
-                      <option value="Gold">Gold / Digital Gold</option>
-                      <option value="Debt">Debt / Bonds</option>
-                      <option value="Crypto">Crypto</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Bank / Platform</label>
-                    <input class="form-input" id="dep-platform" placeholder="e.g. ICICI Bank, Groww, Zerodha"/>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Interest rate % <span style="color:var(--text3);font-size:10px;">(optional)</span></label>
-                    <input class="form-input" id="dep-rate" type="number" step="0.01" placeholder="e.g. 7.1"/>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Maturity date <span style="color:var(--text3);font-size:10px;">(optional)</span></label>
-                    <input class="form-input" id="dep-maturity" type="date"/>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Available balance row -->
-          <div style="background:rgba(79,124,255,0.06);border:1px solid rgba(79,124,255,0.15);border-radius:10px;padding:14px;margin-bottom:14px;">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-              <div style="flex:1;min-width:200px;">
-                <label class="form-label" style="display:flex;align-items:center;gap:6px;">
-                  <i class="ti ti-refresh" style="color:#4f7cff;font-size:13px;" aria-hidden="true"></i>
-                  Available balance after transaction ₹
-                  <span style="font-size:10px;color:var(--text3);">(optional — from UPI/bank SMS)</span>
-                </label>
-                <input class="form-input" id="m-avail-bal" type="number" placeholder="e.g. 47,660 — as shown in SMS or UPI app"/>
-              </div>
-              <div id="m-bal-hint" style="font-size:12px;color:var(--text2);min-width:160px;"></div>
-            </div>
-          </div>
-
-          <button class="btn btn-primary" onclick="addManual()">
-            <i class="ti ti-plus" style="font-size:14px;vertical-align:-2px;" aria-hidden="true"></i> Add transaction
-          </button>
-        </div>
-
-        <!-- Quick balance update (standalone) -->
-        <div class="chart-card">
-          <div class="ch-header">
-            <div>
-              <div class="ch-title"><i class="ti ti-refresh" style="font-size:15px;vertical-align:-2px;margin-right:6px;" aria-hidden="true"></i>Quick Balance Update</div>
-              <div class="ch-sub" style="margin-top:2px;">Just got an SMS with your balance? Update it here directly without adding a transaction</div>
-            </div>
-          </div>
-          <div class="form-row" style="align-items:flex-end;">
-            <div class="form-group" style="flex:2;">
-              <label class="form-label">Account</label>
-              <select class="form-input" id="qb-account">
-                <option value="">Select account…</option>
-              </select>
-            </div>
-            <div class="form-group" style="flex:1;">
-              <label class="form-label">New balance ₹</label>
-              <input class="form-input" id="qb-balance" type="number" placeholder="Enter current balance"/>
-            </div>
-            <div class="form-group" style="max-width:160px;">
-              <button class="btn btn-primary" style="width:100%;" onclick="quickUpdateBalance()">
-                <i class="ti ti-check" style="font-size:13px;vertical-align:-2px;" aria-hidden="true"></i> Update balance
-              </button>
-            </div>
-          </div>
-          <div id="qb-status" style="font-size:12px;margin-top:6px;min-height:16px;"></div>
-          <!-- Current balances snapshot -->
-          <div id="qb-accounts-list" style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;"></div>
-        </div>
-      </div>
 
       <!-- IMPORT DATA PAGE -->
       <div class="page" id="page-import">
@@ -2649,7 +2586,7 @@ function dc(k){if(charts[k]){try{charts[k].destroy();}catch(e){}delete charts[k]
 function monthTx(m){return state.transactions.filter(t=>t.date.startsWith(m));}
 const curTx=()=>monthTx(curMonth);
 
-const pages={dashboard:'Dashboard',transactions:'Transactions',analytics:'Analytics',accounts:'Accounts',cards:'Credit Cards',loans:'Loans',budget:'Budget',investments:'Investments',networth:'Net Worth',add:'Add Entry',import:'Import Data',datasync:'Data Sync',admin:'Admin Panel',autoimport:'Auto Import'};
+const pages={dashboard:'Dashboard',transactions:'Transactions',analytics:'Analytics',accounts:'Accounts',cards:'Credit Cards',loans:'Loans',budget:'Budget',investments:'Investments',networth:'Net Worth',import:'Import Data',datasync:'Data Sync',admin:'Admin Panel',autoimport:'Auto Import'};
 const renders={dashboard:renderDashboard,transactions:renderTxPage,analytics:renderAnalytics,accounts:renderAccounts,cards:renderCards,loans:renderLoans,budget:renderBudget,investments:renderInvestments,networth:renderNetWorth,import:renderImportPage,datasync:renderDataSync,admin:renderAdminPanel,add:function(){
   // Set today's date — needed for Safari which doesn't pre-fill date inputs
   const dateEl = document.getElementById('m-date');
@@ -2664,6 +2601,8 @@ function showPage(p){
     toast('Access denied — admin only');
     return;
   }
+  // 'add' page is now merged into transactions
+  if(p==='add'){ showPage('transactions'); setTimeout(function(){ toggleAddEntryPanel(true); },100); return; }
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
@@ -3588,25 +3527,21 @@ let _loanEditId = null;
 
 /* ── LOAN OUTSTANDING CALCULATION ── */
 function loanOutstanding(l){
-  // Bank override — use exact bank figure + rounding buffer
-  if(l.bankOutstanding && l.bankOutstanding > 0)
-    return Math.max(0, Math.round(l.bankOutstanding + (l.rounding||0)));
-  // Amortisation schedule — simulates each payment made, matches bank closely
-  const r = l.rate && l.rate > 0 ? l.rate/100/12 : 0;
-  const totalMonths = l.totalMonths && l.totalMonths > l.months ? l.totalMonths : 0;
-  const paidMonths  = totalMonths > l.months ? totalMonths - l.months : 0;
-  if(r > 0 && l.principal > 0 && paidMonths > 0){
-    let bal = l.principal;
-    for(let i=0; i<paidMonths; i++){ bal=bal*(1+r)-l.emi; if(bal<=0) return 0; }
-    return Math.max(0, Math.round(bal));
+  // Always use reducing balance PV formula when rate is given — most accurate
+  if(l.rate && l.rate > 0){
+    const r = l.rate / 100 / 12;
+    // PV of remaining EMI payments = actual outstanding principal
+    return Math.max(0, Math.round(l.emi * (1 - Math.pow(1+r, -l.months)) / r));
   }
-  // Fallback: PV of remaining EMIs
-  if(r > 0 && l.emi > 0 && l.months > 0)
-    return Math.max(0, Math.round(l.emi*(1-Math.pow(1+r,-l.months))/r));
-  // No rate: proportional
-  if(totalMonths > 0 && l.principal > 0)
-    return Math.max(0, Math.min(l.principal, Math.round(l.principal*l.months/totalMonths)));
-  return l.principal||0;
+  // No rate — cap outstanding at principal, proportional to remaining/total
+  const totalMonths = l.totalMonths && l.totalMonths > l.months ? l.totalMonths : null;
+  if(totalMonths){
+    // We know total tenure — proportional remaining
+    return Math.max(0, Math.min(l.principal, Math.round(l.principal * (l.months / totalMonths))));
+  }
+  // Last resort: user only gave remaining months, treat as if starting today
+  // Outstanding = principal (we don't know how much has been repaid)
+  return l.principal;
 }
 function loanPaidMonths(l){
   if(l.totalMonths && l.totalMonths > l.months) return l.totalMonths - l.months;
@@ -3721,28 +3656,14 @@ function autoCalcLoan(){
     }
   }
 
-  // Outstanding: bank override > amortisation > PV > proportional
-  const bankOv=+((document.getElementById('l-bank-outstanding')||{}).value||0);
-  const rdOv  =+((document.getElementById('l-rounding')||{}).value||0);
-  let outSrc='';
-  if(bankOv>0){
-    outstanding=Math.round(bankOv+rdOv);
-    outSrc=' <span style="color:var(--green);font-size:10px;">✓ bank figure</span>';
-  } else {
-    const paid=totalMonths>months?totalMonths-months:0;
-    if(rate>0&&principal>0&&paid>0){
-      const r=rate/100/12; let bal=principal;
-      for(let i=0;i<paid;i++){bal=bal*(1+r)-emi;if(bal<=0){bal=0;break;}}
-      outstanding=Math.max(0,Math.round(bal));
-      outSrc=' <span style="color:var(--amber);font-size:10px;">≈ calculated</span>';
-    } else if(rate>0&&emi>0&&months>0){
-      const r=rate/100/12;
-      outstanding=Math.max(0,Math.round(emi*(1-Math.pow(1+r,-months))/r));
-      outSrc=' <span style="color:var(--amber);font-size:10px;">≈ estimated</span>';
-    } else if(principal>0&&totalMonths>months&&totalMonths>0){
-      outstanding=Math.max(0,Math.min(principal,Math.round(principal*months/totalMonths)));
-      outSrc=' <span style="color:var(--text3);font-size:10px;">≈ proportional</span>';
-    } else if(principal>0){ outstanding=principal; }
+  // Outstanding via reducing balance
+  if(rate > 0 && emi > 0 && months > 0){
+    const r = rate / 100 / 12;
+    outstanding = Math.max(0, Math.round(emi * (1 - Math.pow(1+r, -months)) / r));
+  } else if(principal > 0 && totalMonths > months && totalMonths > 0){
+    outstanding = Math.max(0, Math.min(principal, Math.round(principal * months / totalMonths)));
+  } else if(principal > 0){
+    outstanding = principal;
   }
 
   paidMonths = totalMonths > months ? totalMonths - months : 0;
@@ -3751,7 +3672,7 @@ function autoCalcLoan(){
     if(outstanding > 0 || paidMonths > 0){
       prev.style.display='flex';
       prev.innerHTML = [
-        outstanding > 0 ? `<span>Outstanding: <strong style="color:var(--red);">${fmt(outstanding)}</strong>${outSrc||''}</span>` : '',
+        outstanding > 0 ? `<span>Outstanding: <strong style="color:var(--red);">${fmt(outstanding)}</strong></span>` : '',
         totalMonths > 0 ? `<span>Total tenure: <strong>${totalMonths} months</strong> (${Math.round(totalMonths/12*10)/10} yrs)</span>` : '',
         paidMonths > 0  ? `<span>Payments done: <strong>${paidMonths} of ${totalMonths}</strong></span>` : '',
         (totalMonths > 0 && months > 0) ? `<span>Repaid: <strong style="color:var(--green);">${Math.round(paidMonths/totalMonths*100)}%</strong></span>` : '',
@@ -3763,18 +3684,17 @@ function autoCalcLoan(){
 }
 
 function saveLoan(){
-  const name           = document.getElementById('l-name').value.trim();
-  const principal      = +document.getElementById('l-principal').value;
-  const emi            = +document.getElementById('l-emi').value;
-  const months         = +document.getElementById('l-months').value;
-  const due            = +document.getElementById('l-due').value||1;
-  const rate           = parseFloat(document.getElementById('l-rate').value)||null;
-  const totalMonths    = +document.getElementById('l-total-months').value||null;
-  const bankOutstanding= +((document.getElementById('l-bank-outstanding')||{}).value||0);
-  const rounding       = +((document.getElementById('l-rounding')||{}).value||0);
+  const name        = document.getElementById('l-name').value.trim();
+  const principal   = +document.getElementById('l-principal').value;
+  const emi         = +document.getElementById('l-emi').value;
+  const months      = +document.getElementById('l-months').value;
+  const due         = +document.getElementById('l-due').value||1;
+  const rate        = parseFloat(document.getElementById('l-rate').value)||null;
+  const totalMonths = +document.getElementById('l-total-months').value||null;
 
   if(!name||!emi||!months){toast('Fill name, EMI and remaining months');return;}
 
+  // Auto-derive totalMonths if not provided
   let derivedTotal = totalMonths;
   if(!derivedTotal && rate && rate > 0 && principal > 0){
     const r = rate / 100 / 12;
@@ -3789,9 +3709,7 @@ function saveLoan(){
       principal: principal || emi*months,
       emi, months,
       totalMonths: derivedTotal || state.loans[idx].totalMonths || months,
-      due, rate,
-      bankOutstanding: bankOutstanding || state.loans[idx].bankOutstanding || 0,
-      rounding: rounding || state.loans[idx].rounding || 0
+      due, rate
     };
     toast('Loan updated');
   } else {
@@ -3800,9 +3718,7 @@ function saveLoan(){
       principal: principal || emi*months,
       emi, months,
       totalMonths: derivedTotal || months,
-      due, rate,
-      bankOutstanding: bankOutstanding||0,
-      rounding: rounding||0
+      due, rate
     });
     toast('Loan added');
   }
@@ -3820,8 +3736,6 @@ function startEditLoan(id){
   document.getElementById('l-rate').value        = l.rate||'';
   document.getElementById('l-total-months').value= l.totalMonths && l.totalMonths > l.months ? l.totalMonths : '';
   document.getElementById('l-edit-id').value     = id;
-  var boEl=document.getElementById('l-bank-outstanding'); if(boEl) boEl.value=l.bankOutstanding||'';
-  var rdEl=document.getElementById('l-rounding'); if(rdEl) rdEl.value=l.rounding||'';
   const ft=document.getElementById('loan-form-title');if(ft) ft.textContent='Edit: '+l.name;
   const sl=document.getElementById('loan-save-label');if(sl) sl.textContent='Save changes';
   const cb=document.getElementById('loan-cancel-btn');if(cb) cb.style.display='';
@@ -3834,7 +3748,7 @@ function cancelLoanEdit(){ clearLoanForm(); renderLoans(); }
 
 function clearLoanForm(){
   _loanEditId=null;
-  ['l-name','l-principal','l-emi','l-months','l-due','l-rate','l-total-months','l-bank-outstanding','l-rounding'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});
+  ['l-name','l-principal','l-emi','l-months','l-due','l-rate','l-total-months'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});
   document.getElementById('l-edit-id').value='';
   const ft=document.getElementById('loan-form-title');if(ft) ft.textContent='Add Loan';
   const sl=document.getElementById('loan-save-label');if(sl) sl.textContent='Add loan';
@@ -4523,7 +4437,13 @@ function addManual(){
   if(mType){ mType.value='dr'; mType.closest('.form-group').style.opacity='1'; }
   updateBalanceHint();
   renderDashboard();
+  renderTxPage();
   renderQuickBalanceSection();
+  // Close the add panel after saving
+  var panel=document.getElementById('tx-add-panel');
+  if(panel) panel.style.display='none';
+  var btn=document.getElementById('tx-add-toggle-btn');
+  if(btn) btn.innerHTML='<i class="ti ti-plus" style="font-size:14px;"></i> Add Transaction';
 }
 
 function renderQuickBalanceSection(){
@@ -6664,19 +6584,18 @@ function clearProcessedSMS(){
 /* ── MOBILE SIDEBAR — iOS fixed ── */
 var _sbY=0;
 function openSidebar(){
-  var sb=document.getElementById('sidebar');
-  var ov=document.getElementById('sidebar-overlay');
+  var sb=document.getElementById('sidebar');var ov=document.getElementById('sidebar-overlay');
   if(!sb) return;
-  sb.classList.add('open'); sb.style.left='0'; sb.style.transform='translateZ(0)';
-  if(ov){ ov.style.left=(sb.offsetWidth||240)+'px'; ov.style.pointerEvents='auto'; ov.style.display='block'; }
+  sb.classList.add('open');sb.style.left='0';sb.style.transform='translateZ(0)';
+  if(ov){ov.style.left=(sb.offsetWidth||240)+'px';ov.style.pointerEvents='auto';ov.style.display='block';}
   _sbY=window.scrollY||window.pageYOffset;
-  document.body.style.position='fixed'; document.body.style.top='-'+_sbY+'px'; document.body.style.width='100%';
+  document.body.style.position='fixed';document.body.style.top='-'+_sbY+'px';document.body.style.width='100%';
 }
 function closeSidebar(){
-  var sb=document.getElementById('sidebar'); var ov=document.getElementById('sidebar-overlay');
-  if(sb){ sb.classList.remove('open'); sb.style.left=''; sb.style.transform=''; }
-  if(ov){ ov.style.display='none'; ov.style.pointerEvents='none'; }
-  document.body.style.position=''; document.body.style.top=''; document.body.style.width='';
+  var sb=document.getElementById('sidebar');var ov=document.getElementById('sidebar-overlay');
+  if(sb){sb.classList.remove('open');sb.style.left='';sb.style.transform='';}
+  if(ov){ov.style.display='none';ov.style.pointerEvents='none';}
+  document.body.style.position='';document.body.style.top='';document.body.style.width='';
   window.scrollTo(0,_sbY||0);
 }
 document.addEventListener('DOMContentLoaded',function(){
@@ -6706,6 +6625,37 @@ document.addEventListener('DOMContentLoaded',function(){
     if(sb&&!sb.classList.contains('open')&&sx<20&&dx>60) openSidebar();
   },{passive:true});
 })();
+
+/* ── ADD ENTRY PANEL TOGGLE (in Transactions page) ── */
+function toggleAddEntryPanel(forceOpen){
+  var panel = document.getElementById('tx-add-panel');
+  var btn   = document.getElementById('tx-add-toggle-btn');
+  if(!panel) return;
+  var opening = forceOpen || panel.style.display === 'none';
+  panel.style.display = opening ? 'block' : 'none';
+  if(btn){
+    btn.innerHTML = opening
+      ? '<i class="ti ti-x" style="font-size:14px;" aria-hidden="true"></i> Close'
+      : '<i class="ti ti-plus" style="font-size:14px;" aria-hidden="true"></i> Add Transaction';
+  }
+  if(opening){
+    // Reset form and scroll into view
+    resetAddEntryForm();
+    panel.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+function resetAddEntryForm(){
+  ['m-name','m-amount','m-avail-bal','dep-platform','dep-rate','dep-maturity'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  var mCat=document.getElementById('m-cat'); if(mCat) mCat.value='Food';
+  var mType=document.getElementById('m-type'); if(mType) mType.value='dr';
+  var mDate=document.getElementById('m-date'); if(mDate) mDate.value=todayStr;
+  var tsRow=document.getElementById('transfer-subtype-row'); if(tsRow) tsRow.style.display='none';
+  var dd=document.getElementById('deposit-details'); if(dd) dd.style.display='none';
+  var trOwn=document.getElementById('tr-own'); if(trOwn) trOwn.checked=true;
+  if(typeof updateBalanceHint==='function') updateBalanceHint();
+}
 
 /* ── SERVICE WORKER — offline support ── */
 if('serviceWorker' in navigator){
