@@ -297,7 +297,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:13px;}
 .notif-btn{width:34px;height:34px;border-radius:8px;background:var(--card);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;font-size:16px;color:var(--text2);}
 .notif-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);position:absolute;top:6px;right:6px;border:2px solid var(--panel);}
 
-.content{flex:1;overflow-y:auto;padding:20px 24px;}
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px 24px;-webkit-overflow-scrolling:touch;}
 .page{display:none;}
 .page.active{display:block;animation:fadeUp .25s ease;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
@@ -924,7 +924,6 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
       <div class="nav-section">
         <div class="nav-section-label">Tools</div>
         <div class="nav-item" onclick="showPage('networth')"><i class="ti ti-scale" aria-hidden="true"></i> Net Worth</div>
-        <div class="nav-item" onclick="showPage('add')"><i class="ti ti-plus" aria-hidden="true"></i> Add Entry</div>
         <div class="nav-item" onclick="showPage('import')"><i class="ti ti-file-import" aria-hidden="true"></i> Import Data</div>
         <div class="nav-item" onclick="showPage('datasync')"><i class="ti ti-cloud" aria-hidden="true"></i> Data Sync</div>
         <div class="nav-item" onclick="showPage('autoimport')"><i class="ti ti-bolt" aria-hidden="true"></i> Auto Import <span class="nav-badge" style="background:var(--green);font-size:9px;">NEW</span></div>
@@ -1068,6 +1067,73 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
 
       <!-- TRANSACTIONS -->
       <div class="page" id="page-transactions">
+        <!-- Add Transaction toggle -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="font-size:13px;color:var(--text2);">All transactions</div>
+          <button id="tx-add-toggle-btn" onclick="toggleAddEntryPanel()" class="btn btn-primary" style="font-size:12px;padding:7px 16px;display:flex;align-items:center;gap:6px;touch-action:manipulation;">
+            <i class="ti ti-plus" style="font-size:14px;" aria-hidden="true"></i> Add Transaction
+          </button>
+        </div>
+
+        <!-- Collapsible add entry form -->
+        <div id="tx-add-panel" style="display:none;margin-bottom:16px;">
+          <div class="chart-card" style="border:1px solid rgba(79,124,255,0.25);background:rgba(79,124,255,0.03);">
+            <div class="ch-header" style="margin-bottom:14px;">
+              <div>
+                <div class="ch-title"><i class="ti ti-pencil" style="font-size:15px;vertical-align:-2px;margin-right:6px;"></i>Add Transaction</div>
+                <div class="ch-sub" style="margin-top:2px;">Optionally enter available balance from UPI/bank SMS to auto-update account</div>
+              </div>
+              <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px;touch-action:manipulation;" onclick="toggleAddEntryPanel()"><i class="ti ti-x" style="font-size:13px;vertical-align:-1px;"></i> Close</button>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="flex:3;"><label class="form-label">Description</label><input class="form-input" id="m-name" placeholder="e.g. Swiggy dinner"/></div>
+              <div class="form-group"><label class="form-label">Amount ₹</label><input class="form-input" id="m-amount" type="number" placeholder="0"/></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Type</label><select class="form-input" id="m-type"><option value="dr">Expense (Dr)</option><option value="cr">Income (Cr)</option></select></div>
+              <div class="form-group"><label class="form-label">Category</label><select class="form-input" id="m-cat" onchange="onCatChange(this.value)"><option>Food</option><option>Transfer</option><option>Salary</option><option>EMI</option><option>Shopping</option><option>Fuel</option><option>Bills</option><option>Other</option></select></div>
+              <div class="form-group"><label class="form-label">Source / Account</label>
+                <select class="form-input" id="m-src" onchange="updateBalanceHint()">
+                  <option value="PhonePe">PhonePe</option><option value="Kotak 811">Kotak 811</option><option value="SBI">SBI</option><option value="HDFC">HDFC</option><option value="ICICI">ICICI</option><option value="Axis">Axis</option><option value="Cash">Cash</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-date" type="date"/></div>
+            </div>
+            <div id="transfer-subtype-row" style="display:none;margin-bottom:14px;">
+              <div style="background:rgba(79,124,255,0.08);border:1px solid rgba(79,124,255,0.25);border-radius:10px;padding:14px;">
+                <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:#4f7cff;"><i class="ti ti-arrows-exchange" style="font-size:14px;vertical-align:-2px;margin-right:5px;"></i>Transfer type</div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                  <label style="flex:1;min-width:160px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;" id="tr-own-label"><input type="radio" name="transfer-type" id="tr-own" value="own" checked onchange="onTransferTypeChange()" style="accent-color:#4f7cff;margin-right:6px;"/><span style="font-weight:500;">Own account</span><div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:3px;"><span style="color:#4f7cff;">⇄ Not counted</span></div></label>
+                  <label style="flex:1;min-width:160px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;" id="tr-other-label"><input type="radio" name="transfer-type" id="tr-other" value="other" onchange="onTransferTypeChange()" style="accent-color:#ff5c5c;margin-right:6px;"/><span style="font-weight:500;">Payment / outgoing</span><div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:3px;"><span style="color:#ff5c5c;">↓ Counted as expense</span></div></label>
+                  <label style="flex:1;min-width:160px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;" id="tr-deposit-label"><input type="radio" name="transfer-type" id="tr-deposit" value="deposit" onchange="onTransferTypeChange()" style="accent-color:#22c98a;margin-right:6px;"/><span style="font-weight:500;">Deposit / Investment</span><div style="font-size:11px;color:var(--text2);margin-left:18px;margin-top:3px;"><span style="color:#22c98a;">↗ Added to Investments</span></div></label>
+                </div>
+                <div id="deposit-details" style="display:none;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);">
+                  <div style="font-size:12px;font-weight:600;color:#22c98a;margin-bottom:10px;"><i class="ti ti-trending-up" style="font-size:13px;vertical-align:-2px;margin-right:4px;"></i>Deposit details</div>
+                  <div class="form-row" style="margin-bottom:0;">
+                    <div class="form-group"><label class="form-label">Type</label><select class="form-input" id="dep-type"><option value="FD">Fixed Deposit (FD)</option><option value="RD">Recurring Deposit (RD)</option><option value="PPF">PPF</option><option value="Mutual Fund">Mutual Fund</option><option value="Equity">Equity / Stocks</option><option value="Gold">Gold</option><option value="Debt">Debt / Bonds</option><option value="Crypto">Crypto</option><option value="Other">Other</option></select></div>
+                    <div class="form-group"><label class="form-label">Bank / Platform</label><input class="form-input" id="dep-platform" placeholder="e.g. ICICI Bank, Groww"/></div>
+                    <div class="form-group"><label class="form-label">Rate % <span style="color:var(--text3);font-size:10px;">(optional)</span></label><input class="form-input" id="dep-rate" type="number" step="0.01" placeholder="e.g. 7.1"/></div>
+                    <div class="form-group"><label class="form-label">Maturity <span style="color:var(--text3);font-size:10px;">(optional)</span></label><input class="form-input" id="dep-maturity" type="date"/></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style="background:rgba(79,124,255,0.06);border:1px solid rgba(79,124,255,0.15);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <div style="flex:1;min-width:180px;">
+                  <label class="form-label" style="display:flex;align-items:center;gap:6px;"><i class="ti ti-refresh" style="color:#4f7cff;font-size:13px;"></i>Available balance after transaction ₹<span style="font-size:10px;color:var(--text3);">(optional)</span></label>
+                  <input class="form-input" id="m-avail-bal" type="number" placeholder="e.g. 47,660 from SMS"/>
+                </div>
+                <div id="m-bal-hint" style="font-size:12px;color:var(--text2);min-width:140px;"></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;">
+              <button class="btn btn-primary" onclick="addManual()" style="touch-action:manipulation;"><i class="ti ti-plus" style="font-size:14px;vertical-align:-2px;"></i> Save transaction</button>
+              <button class="btn btn-ghost" onclick="toggleAddEntryPanel()" style="touch-action:manipulation;">Cancel</button>
+            </div>
+          </div>
+        </div>
+
         <!-- filters + search + bulk actions -->
         <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
           <input class="form-input" id="tf-search" placeholder="🔍  Search transactions…" oninput="renderTxPage()" style="flex:2;min-width:160px;max-width:280px;"/>
@@ -1102,7 +1168,8 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
           </div>
         </div>
 
-        <div class="chart-card" style="padding:0 0 4px;">
+        <div class="chart-card" style="padding:0 0 4px;overflow:hidden;">
+          <div style="overflow-x:auto;overflow-y:auto;-webkit-overflow-scrolling:touch;max-height:calc(100vh - 280px);">
           <table class="data-table" id="tx-table">
             <thead>
               <tr>
@@ -1116,6 +1183,7 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
             </thead>
             <tbody id="tx-tbody"></tbody>
           </table>
+          </div><!-- end scroll wrapper -->
           <div id="tx-empty" style="display:none;padding:24px;text-align:center;font-size:13px;color:var(--text2);">No transactions found.</div>
         </div>
         <div id="tx-summary" style="font-size:12px;color:var(--text2);text-align:right;margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
@@ -2597,7 +2665,7 @@ function dc(k){if(charts[k]){try{charts[k].destroy();}catch(e){}delete charts[k]
 function monthTx(m){return state.transactions.filter(t=>t.date.startsWith(m));}
 const curTx=()=>monthTx(curMonth);
 
-const pages={dashboard:'Dashboard',transactions:'Transactions',analytics:'Analytics',accounts:'Accounts',cards:'Credit Cards',loans:'Loans',budget:'Budget',investments:'Investments',networth:'Net Worth',add:'Add Entry',import:'Import Data',datasync:'Data Sync',admin:'Admin Panel',autoimport:'Auto Import'};
+const pages={dashboard:'Dashboard',transactions:'Transactions',analytics:'Analytics',accounts:'Accounts',cards:'Credit Cards',loans:'Loans',budget:'Budget',investments:'Investments',networth:'Net Worth',import:'Import Data',datasync:'Data Sync',admin:'Admin Panel',autoimport:'Auto Import'};
 const renders={dashboard:renderDashboard,transactions:renderTxPage,analytics:renderAnalytics,accounts:renderAccounts,cards:renderCards,loans:renderLoans,budget:renderBudget,investments:renderInvestments,networth:renderNetWorth,import:renderImportPage,datasync:renderDataSync,admin:renderAdminPanel,add:function(){
   // Set today's date — needed for Safari which doesn't pre-fill date inputs
   const dateEl = document.getElementById('m-date');
@@ -2608,11 +2676,8 @@ const renders={dashboard:renderDashboard,transactions:renderTxPage,analytics:ren
 
 function showPage(p){
   // Block admin page for non-admin users
-  if(p==='admin'){
-    if(!isAdmin()){ toast('Access denied — admin only'); return; }
-    openSettingsModal(); setTimeout(function(){ switchSettingsTab('admin'); }, 80);
-    return;
-  }
+  if(p==='admin' && !isAdmin()){ toast('Access denied — admin only'); return; }
+  if(p==='add'){ showPage('transactions'); setTimeout(function(){ toggleAddEntryPanel(true); },150); return; }
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
@@ -4447,7 +4512,15 @@ function addManual(){
   if(mType){ mType.value='dr'; mType.closest('.form-group').style.opacity='1'; }
   updateBalanceHint();
   renderDashboard();
+  renderTxPage();
   renderQuickBalanceSection();
+  // Close add panel
+  var panel=document.getElementById('tx-add-panel');
+  if(panel && panel.style.display!=='none'){
+    panel.style.display='none';
+    var btn=document.getElementById('tx-add-toggle-btn');
+    if(btn) btn.innerHTML='<i class="ti ti-plus" style="font-size:14px;"></i> Add Transaction';
+  }
 }
 
 function renderQuickBalanceSection(){
@@ -6628,6 +6701,34 @@ document.addEventListener('DOMContentLoaded',function(){
     if(sb&&!sb.classList.contains('open')&&sx<20&&dx>60)openSidebar();
   },{passive:true});
 })();
+
+/* ── ADD ENTRY PANEL (in Transactions) ── */
+var _todayStr = (function(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
+function toggleAddEntryPanel(forceOpen){
+  var panel=document.getElementById('tx-add-panel');
+  var btn=document.getElementById('tx-add-toggle-btn');
+  if(!panel) return;
+  var opening=forceOpen===true || panel.style.display==='none';
+  panel.style.display=opening?'block':'none';
+  if(btn) btn.innerHTML=opening?'<i class="ti ti-x" style="font-size:14px;"></i> Close':'<i class="ti ti-plus" style="font-size:14px;"></i> Add Transaction';
+  if(opening){
+    resetAddEntryForm();
+    setTimeout(function(){ panel.scrollIntoView({behavior:'smooth',block:'start'}); },50);
+  }
+}
+function resetAddEntryForm(){
+  ['m-name','m-amount','m-avail-bal','dep-platform','dep-rate','dep-maturity'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  var el;
+  el=document.getElementById('m-cat'); if(el) el.value='Food';
+  el=document.getElementById('m-type'); if(el) el.value='dr';
+  el=document.getElementById('m-date'); if(el) el.value=_todayStr;
+  el=document.getElementById('transfer-subtype-row'); if(el) el.style.display='none';
+  el=document.getElementById('deposit-details'); if(el) el.style.display='none';
+  el=document.getElementById('tr-own'); if(el) el.checked=true;
+  if(typeof updateBalanceHint==='function') updateBalanceHint();
+}
 
 /* ── SERVICE WORKER — offline support ── */
 if('serviceWorker' in navigator){
