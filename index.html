@@ -2014,38 +2014,56 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
           <div style="font-size:11px;color:var(--text3);">Change this in index.js line 5 before deploying. Never share it.</div>
         </div>
 
-        <!-- Step 3b: iOS Shortcut -->
+        <!-- Step 3b: iOS Shortcut — direct Firestore POST, no Cloud Function needed -->
         <div class="chart-card" style="margin-bottom:14px;">
-          <div class="ch-header"><div><div class="ch-title">Step 3b — Create iOS Shortcut</div><div class="ch-sub">Captures bank notification text → sends to your Cloud Function</div></div></div>
+          <div class="ch-header"><div><div class="ch-title">Step 3b — Create iOS Shortcut</div><div class="ch-sub">New SMS received → POST directly to Firestore — no Cloud Function needed</div></div></div>
+
+          <!-- Firestore POST URL for shortcut -->
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:14px;">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">POST this URL in your Shortcut (auto-filled from your Firebase config):</div>
+            <code id="sms-shortcut-url" style="font-size:10px;color:var(--accent);word-break:break-all;">Configure Firebase above to see URL</code>
+            <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px;margin-left:8px;" onclick="navigator.clipboard.writeText(document.getElementById('sms-shortcut-url').textContent).then(()=>toast('URL copied ✓'))"><i class="ti ti-copy" style="font-size:12px;vertical-align:-1px;" aria-hidden="true"></i> Copy</button>
+          </div>
+
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
             <div style="background:var(--bg3);border:1px solid rgba(34,201,138,0.2);border-radius:10px;padding:14px;">
-              <div style="font-weight:600;font-size:13px;margin-bottom:8px;color:#22c98a;">Create the Shortcut</div>
-              <div style="font-size:12px;color:var(--text2);line-height:1.9;">
+              <div style="font-weight:600;font-size:13px;margin-bottom:8px;color:#22c98a;">A — Create the Shortcut</div>
+              <div style="font-size:12px;color:var(--text2);line-height:2;">
                 1. Shortcuts app → tap <strong style="color:var(--text);">+</strong><br>
-                2. Add: <strong style="color:var(--text);">Receive Input from Shortcut</strong><br>
-                3. Add: <strong style="color:var(--text);">Get Contents of URL</strong><br>
-                &nbsp;&nbsp;• URL: your Cloud Function URL<br>
+                2. Add action: <strong style="color:var(--text);">Receive Input</strong> (Text)<br>
+                3. Add action: <strong style="color:var(--text);">Get Contents of URL</strong><br>
+                &nbsp;&nbsp;• URL: paste the URL above<br>
                 &nbsp;&nbsp;• Method: <strong style="color:var(--text);">POST</strong><br>
-                &nbsp;&nbsp;• Headers: <code style="font-size:10px;">Authorization: Bearer FinanceOS-Vamsi-2026</code><br>
-                &nbsp;&nbsp;• Body: JSON → <code style="font-size:10px;">rawMessage</code>: Shortcut Input<br>
-                4. Name: <strong style="color:var(--text);">"Send to FinanceOS"</strong>
+                &nbsp;&nbsp;• Request Body: <strong style="color:var(--text);">JSON</strong><br>
+                &nbsp;&nbsp;• Add key <code style="font-size:10px;">fields</code> → value:<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<code style="font-size:10px;">{"body":{"stringValue":"[Shortcut Input]"},"processed":{"booleanValue":false},"ts":{"stringValue":"[Current Date ISO8601]"}}</code><br>
+                4. Name it <strong style="color:var(--text);">"FinanceOS SMS"</strong> → Done
               </div>
             </div>
             <div style="background:var(--bg3);border:1px solid rgba(79,124,255,0.2);border-radius:10px;padding:14px;">
-              <div style="font-weight:600;font-size:13px;margin-bottom:8px;color:#4f7cff;">Create Automation</div>
-              <div style="font-size:12px;color:var(--text2);line-height:1.9;">
-                1. Automation tab → <strong style="color:var(--text);">+</strong><br>
-                2. <strong style="color:var(--text);">App</strong> → select your bank app<br>
-                3. <strong style="color:var(--text);">"Is Opened"</strong> → Next<br>
-                4. Add: <strong style="color:var(--text);">Run Shortcut</strong> → "Send to FinanceOS"<br>
-                5. Input: <strong style="color:var(--text);">Last Notification</strong><br>
-                6. Disable <strong style="color:var(--text);">"Ask Before Running"</strong><br>
-                7. Done ✓
+              <div style="font-weight:600;font-size:13px;margin-bottom:8px;color:#4f7cff;">B — Create Automation</div>
+              <div style="font-size:12px;color:var(--text2);line-height:2;">
+                1. Shortcuts → <strong style="color:var(--text);">Automation</strong> tab → <strong style="color:var(--text);">+</strong><br>
+                2. Choose: <strong style="color:var(--text);">Message</strong><br>
+                3. Sender: <strong style="color:var(--text);">Any Contact</strong> (or your bank senders like VM-SBIINB, VD-HDFCBK)<br>
+                4. Tap <strong style="color:var(--text);">Next</strong><br>
+                5. Add action: <strong style="color:var(--text);">Run Shortcut</strong> → "FinanceOS SMS"<br>
+                6. Set Input: <strong style="color:var(--text);">Message Content</strong><br>
+                7. Disable <strong style="color:var(--text);">"Ask Before Running"</strong> ← critical<br>
+                8. Done ✓
               </div>
             </div>
           </div>
+
+          <!-- JSON body helper -->
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px;">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:6px;">Exact JSON body to paste in the Shortcut's "Get Contents of URL" → Request Body:</div>
+            <pre id="shortcut-json-body" style="margin:0;font-size:10px;color:var(--green);background:var(--bg);padding:10px;border-radius:6px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;">{"fields":{"body":{"stringValue":"PASTE_SHORTCUT_INPUT_VARIABLE_HERE"},"processed":{"booleanValue":false},"ts":{"stringValue":"PASTE_CURRENT_DATE_ISO8601_VARIABLE_HERE"}}}</pre>
+            <div style="font-size:10px;color:var(--text3);margin-top:6px;">Replace the two PASTE_… placeholders with the actual Shortcut variables using the variable picker (tap the placeholder text → insert variable)</div>
+          </div>
+
           <div style="background:rgba(34,201,138,0.06);border:1px solid rgba(34,201,138,0.15);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text2);">
-            ✅ Now when you open your bank app after a transaction, the notification is automatically sent to Firebase. Then pull below to import.
+            ✅ Every bank SMS now lands in Firestore <code style="font-size:10px;">financeos_sms</code> automatically. Pull below to preview and import.
           </div>
         </div>
 
@@ -4403,11 +4421,30 @@ function updateBalanceHint(){
 
 function findAccountBySrc(src){
   if(!src) return null;
-  const s = src.toLowerCase();
+  const s = src.toLowerCase().trim();
+  function abbrev(str){
+    return str.split(/\s+/).filter(w=>!/^(of|the|and|&|ltd|limited)$/i.test(w)).map(w=>w[0]).join('').toLowerCase();
+  }
   return state.accounts.find(a=>{
-    const n = (a.bank||a.name||'').toLowerCase();
-    return n.includes(s) || s.includes(n.split(' ')[0]);
+    const n = (a.bank||a.name||'').toLowerCase().trim();
+    const nAbbr = abbrev(n);
+    return n.includes(s) || s.includes(n.split(' ')[0]) || nAbbr===s || n===s;
   });
+}
+
+function autoUpdateAccountBalance(src, amount, type, date){
+  if(type === 'own-transfer') return null;
+  const acc = findAccountBySrc(src);
+  if(!acc) return null;
+  const oldBal = acc.balance;
+  if(type === 'cr'){
+    acc.balance = oldBal + amount;
+  } else if(type === 'dr'){
+    acc.balance = Math.max(0, oldBal - amount);
+  }
+  if(!acc.history) acc.history = [];
+  acc.history.push({ bal: acc.balance, date });
+  return { acc, oldBal, newBal: acc.balance };
 }
 
 function addManual(){
@@ -4476,23 +4513,36 @@ function addManual(){
     toast('✓ Own transfer recorded — not counted as expense or income');
   }
 
-  // Auto-update linked account balance if available balance entered
-  if(availBal){
-    const newBal = parseFloat(availBal.replace(/,/g,''));
-    if(!isNaN(newBal) && newBal>=0){
-      const acc = findAccountBySrc(src);
-      if(acc){
-        const oldBal = acc.balance;
-        acc.balance = newBal;
-        if(!acc.history) acc.history=[];
-        acc.history.push({bal:newBal, date});
-        toast(`✓ Added & ${acc.name} balance updated to ${fmt(newBal)}`);
-        addNotif('Balance auto-updated: '+acc.name, fmt(oldBal)+' → '+fmt(newBal)+' after "'+name+'"', 'money');
-      } else {
-        toast('Transaction added ✓ — no matching account found');
-      }
-    } else { toast('Transaction added ✓'); }
-  } else { toast('Transaction added ✓'); }
+  // ── AUTO-UPDATE ACCOUNT BALANCE ──────────────────────────────────────────
+  const smsOverride = availBal ? parseFloat(availBal.replace(/,/g,'')) : NaN;
+
+  if(!isNaN(smsOverride) && smsOverride >= 0){
+    // User pasted exact balance from SMS → use it directly (most accurate)
+    const acc = findAccountBySrc(src);
+    if(acc){
+      const oldBal = acc.balance;
+      acc.balance = smsOverride;
+      if(!acc.history) acc.history=[];
+      acc.history.push({bal:smsOverride, date});
+      toast(`✓ Saved · ${acc.name}: ${fmt(oldBal)} → ${fmt(smsOverride)}`);
+      addNotif('Balance updated: '+acc.name, fmt(oldBal)+' → '+fmt(smsOverride)+' after "'+name+'"', 'money');
+    } else {
+      toast('Transaction saved ✓ — no matching account for "'+src+'"');
+    }
+  } else if(type !== 'own-transfer'){
+    // No SMS override → auto-compute based on transaction direction
+    const result = autoUpdateAccountBalance(src, amount, type, date);
+    if(result){
+      const dir = type === 'cr' ? '+' : '-';
+      toast(`✓ Saved · ${result.acc.name}: ${fmt(result.oldBal)} ${dir}${fmt(amount)} → ${fmt(result.newBal)}`);
+      addNotif('Balance auto-updated: '+result.acc.name,
+        `${fmt(result.oldBal)} ${dir}${fmt(amount)} = ${fmt(result.newBal)} after "${name}"`, 'money');
+    } else {
+      toast('Transaction saved ✓');
+    }
+  } else {
+    toast('Own transfer recorded — balance unchanged');
+  }
 
   save();
   document.getElementById('m-name').value='';
@@ -6497,6 +6547,16 @@ function renderAutoImportPage(){
     urlEl.textContent = `https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/financeos_sms?key=${key}`;
   }
 
+  // Update direct Firestore POST URL for iOS Shortcut
+  const shortcutUrlEl = document.getElementById('sms-shortcut-url');
+  if(shortcutUrlEl){
+    if(key && proj){
+      shortcutUrlEl.textContent = `https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/financeos_sms?key=${key}`;
+    } else {
+      shortcutUrlEl.textContent = 'Configure Firebase above to see URL';
+    }
+  }
+
   // Restore auto-poll state
   const pollCb = document.getElementById('ai-auto-poll');
   if(pollCb) pollCb.checked = !!_smsAutoPollTimer;
@@ -6593,10 +6653,16 @@ function commitSMSImport(){
   if(!checked.length){ toast('Select at least one transaction'); return; }
   let imported=0;
   const docIds = new Set();
+  const today = new Date().toISOString().slice(0,10);
   checked.forEach(i=>{
     const tx = _pendingSMSRows[i];
     if(!tx) return;
-    state.transactions.push({id:state.nextId++, name:tx.name, amount:tx.amount, type:tx.type, cat:tx.cat, src:tx.src, date:tx.date});
+    const txDate = tx.date || today;
+    state.transactions.push({id:state.nextId++, name:tx.name, amount:tx.amount, type:tx.type, cat:tx.cat, src:tx.src, date:txDate});
+    // Auto-update linked account balance
+    if(tx.type !== 'own-transfer' && tx.src){
+      autoUpdateAccountBalance(tx.src, tx.amount, tx.type, txDate);
+    }
     docIds.add(tx._docId);
     imported++;
   });
