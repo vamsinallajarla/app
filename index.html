@@ -2081,7 +2081,7 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
               <div style="font-size:13px;font-weight:500;" id="ai-sms-count"></div>
               <div style="display:flex;gap:8px;">
                 <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px;" onclick="document.querySelectorAll('.ai-sms-chk').forEach(c=>c.checked=true)">All</button>
-                <button class="btn btn-primary" style="font-size:12px;" onclick="commitBulkSMSImport()"><i class="ti ti-check" style="font-size:13px;vertical-align:-1px;" aria-hidden="true"></i> Import checked</button>
+                <button class="btn btn-primary" style="font-size:12px;" onclick="commitSMSImport()"><i class="ti ti-check" style="font-size:13px;vertical-align:-1px;" aria-hidden="true"></i> Import checked</button>
               </div>
             </div>
             <div style="overflow-x:auto;">
@@ -2092,16 +2092,28 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
             </div>
           </div>
 
-          <!-- Auto-poll toggle -->
-          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-            <div>
-              <div style="font-size:13px;font-weight:500;">Auto-poll Firebase every 30 seconds</div>
-              <div style="font-size:11px;color:var(--text2);">Automatically check for new SMS when app is open</div>
+          <!-- Auto-import + Auto-poll toggles -->
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+              <div>
+                <div style="font-size:13px;font-weight:500;">Auto-import transactions</div>
+                <div style="font-size:11px;color:var(--text2);">Import directly without review — turn off to manually confirm each transaction</div>
+              </div>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox" id="ai-auto-import" style="accent-color:var(--accent);width:16px;height:16px;" onchange="toggleSMSAutoImport(this.checked)" checked/>
+                <span style="font-size:13px;">Auto-import</span>
+              </label>
             </div>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-              <input type="checkbox" id="ai-auto-poll" style="accent-color:var(--accent);width:16px;height:16px;" onchange="toggleSMSAutoPoll(this.checked)"/>
-              <span style="font-size:13px;">Enable auto-poll</span>
-            </label>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+              <div>
+                <div style="font-size:13px;font-weight:500;">Auto-poll Firebase every 30 seconds</div>
+                <div style="font-size:11px;color:var(--text2);">Automatically check for new SMS when app is open</div>
+              </div>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox" id="ai-auto-poll" style="accent-color:var(--accent);width:16px;height:16px;" onchange="toggleSMSAutoPoll(this.checked)"/>
+                <span style="font-size:13px;">Auto-poll</span>
+              </label>
+            </div>
           </div>
         </div>
 
@@ -6557,9 +6569,11 @@ function renderAutoImportPage(){
     }
   }
 
-  // Restore auto-poll state
+  // Restore auto-poll + auto-import state
   const pollCb = document.getElementById('ai-auto-poll');
   if(pollCb) pollCb.checked = !!_smsAutoPollTimer;
+  const importCb = document.getElementById('ai-auto-import');
+  if(importCb) importCb.checked = syncCfg.smsAutoImport !== false;
 
   // Render processed log
   renderProcessedLog();
@@ -6597,15 +6611,17 @@ async function pullSMSFromFirebase(){
       return;
     }
 
-    // Parse each SMS
+    // Parse each SMS — each Firestore doc is one SMS, parse as single message (not split)
     const parsed = [];
     newDocs.forEach(doc => {
       const f = doc.fields||{};
-      const msg = f.msg?.stringValue || f.body?.stringValue || f.text?.stringValue || f.message?.stringValue || '';
+      // Support both Firestore nested format {body:{stringValue:...}} and flat format {body:'...'}
+      const msg = f.msg?.stringValue || f.body?.stringValue || f.body || f.text?.stringValue || f.text || f.message?.stringValue || f.message || '';
       const docId = doc.name.split('/').pop();
       if(!msg) return;
-      const txs = parseSMSText(msg);
-      txs.forEach(tx => parsed.push({...tx, _docId: docId, _rawMsg: msg}));
+      // Parse as single SMS (each doc = one SMS, don't split)
+      const tx = parseSingleSMS(msg.replace(/\s+/g,' ').trim());
+      if(tx) parsed.push({...tx, _docId: docId, _rawMsg: msg});
     });
 
     if(!parsed.length){
@@ -6614,8 +6630,38 @@ async function pullSMSFromFirebase(){
       return;
     }
 
-    if(status) status.innerHTML=`<span style="color:#22c98a;">Found ${parsed.length} transaction${parsed.length!==1?'s':''} in ${newDocs.length} new SMS</span>`;
-    renderSMSPendingTable(parsed);
+    // ── AUTO-IMPORT MODE: import directly without showing table ──────────────
+    const autoMode = syncCfg.smsAutoImport !== false; // default ON
+    if(autoMode){
+      let imported = 0;
+      const docIds = new Set();
+      const today = new Date().toISOString().slice(0,10);
+      parsed.forEach(tx => {
+        if(isDuplicate(tx)) return;
+        const txDate = tx.date || today;
+        state.transactions.push({id:state.nextId++, name:tx.name, amount:tx.amount, type:tx.type, cat:tx.cat, src:tx.src, date:txDate});
+        if(tx.type !== 'own-transfer' && tx.src) autoUpdateAccountBalance(tx.src, tx.amount, tx.type, txDate);
+        if(tx._docId) docIds.add(tx._docId);
+        imported++;
+      });
+      // Mark all as processed
+      newDocs.forEach(d => _processedSMSIds.add(d.name.split('/').pop()));
+      saveProcessedSMS();
+      save();
+      deleteProcessedFirebaseSMS([...docIds]);
+      saveImportHistory('Auto SMS Import', imported, 'Firebase SMS');
+      if(status) status.innerHTML=`<span style="color:#22c98a;">✓ Auto-imported ${imported} transaction${imported!==1?'s':''} from ${newDocs.length} SMS</span>`;
+      if(imported>0){
+        toast(`✓ ${imported} transaction${imported!==1?'s':''} auto-imported from SMS`);
+        addNotif('Auto Import', imported+' transactions imported from SMS', 'success');
+        renderDashboard(); renderTxPage(); renderProcessedLog(); renderQuickBalanceSection();
+      }
+      if(pending) pending.style.display='none';
+    } else {
+      // MANUAL MODE: show table for review
+      if(status) status.innerHTML=`<span style="color:#22c98a;">Found ${parsed.length} transaction${parsed.length!==1?'s':''} in ${newDocs.length} new SMS</span>`;
+      renderSMSPendingTable(parsed);
+    }
 
   } catch(e){
     if(status) status.innerHTML=`<span style="color:var(--red);">Error: ${e.message}</span>`;
@@ -6715,6 +6761,12 @@ function toggleSMSAutoPoll(on){
     _smsAutoPollTimer = null;
     toast('Auto-poll disabled');
   }
+}
+
+function toggleSMSAutoImport(on){
+  syncCfg.smsAutoImport = on;
+  saveSyncCfg();
+  toast(on ? 'Auto-import ON — transactions will import instantly' : 'Manual mode — you will review before importing');
 }
 
 function clearProcessedSMS(){
