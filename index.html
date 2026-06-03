@@ -2074,9 +2074,12 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
         <div class="chart-card" style="margin-bottom:14px;">
           <div class="ch-header">
             <div><div class="ch-title">Step 4 — Pull & Import Pending SMS</div><div class="ch-sub">Check Firebase for new bank SMS and import them</div></div>
-            <button class="btn btn-primary" style="font-size:12px;padding:7px 14px;" onclick="pullSMSFromFirebase()">
-              <i class="ti ti-cloud-download" style="font-size:13px;vertical-align:-1px;" aria-hidden="true"></i> Pull from Firebase
-            </button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+              <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px;white-space:nowrap;" onclick="if(confirm('Clear processed history and re-import all SMS from Firebase?')){_processedSMSIds.clear();saveProcessedSMS();pullSMSFromFirebase();toast('Cleared — re-importing all SMS');}">↺ Re-import all</button>
+              <button class="btn btn-primary" style="font-size:12px;padding:7px 14px;" onclick="pullSMSFromFirebase()">
+                <i class="ti ti-cloud-download" style="font-size:13px;vertical-align:-1px;" aria-hidden="true"></i> Pull from Firebase
+              </button>
+            </div>
           </div>
           <div id="ai-sms-status" style="font-size:12px;color:var(--text2);margin-bottom:10px;"></div>
           <div id="ai-sms-pending" style="display:none;">
@@ -6589,6 +6592,7 @@ function addSparklinesToKPICards(months6){
   });
 
   const cards = document.querySelectorAll('#dash-metrics .m-card');
+  const totalBal = state.accounts.reduce((s,a)=>s+a.balance,0);
   const datasets = [mInc, mExp, mSav, mEmi, mNW, mNW.map(()=>totalBal)];
   const colors = ['#22c98a','#ff5c5c','#4f7cff','#f0a500','#22d4e0','#ff5c96'];
 
@@ -6733,6 +6737,14 @@ async function pullSMSFromFirebase(){
     }
     const data = await res.json();
     const docs = data.documents||[];
+
+    // Mark and skip empty docs immediately
+    docs.forEach(d => {
+      const f = d.fields||{};
+      const msg = f.msg?.stringValue || f.body?.stringValue || f.body || f.text?.stringValue || f.text || '';
+      if(!msg.trim()) _processedSMSIds.add(d.name.split('/').pop()); // auto-discard empties
+    });
+    saveProcessedSMS();
 
     // Filter unprocessed
     const newDocs = docs.filter(d => !_processedSMSIds.has(d.name.split('/').pop()));
