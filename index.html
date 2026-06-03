@@ -1140,6 +1140,9 @@ select.form-input option:hover,select option:hover,select.form-input option:chec
           <select class="form-input" id="tf-cat" onchange="renderTxPage()" style="max-width:150px;"><option value="">All categories</option><option>Food</option><option>Transfer</option><option>Salary</option><option>EMI</option><option>Shopping</option><option>Fuel</option><option>Bills</option><option>Other</option></select>
           <select class="form-input" id="tf-type" onchange="renderTxPage()" style="max-width:120px;"><option value="">All types</option><option value="cr">Income</option><option value="dr">Expense</option></select>
           <select class="form-input" id="tf-src" onchange="renderTxPage()" style="max-width:140px;"><option value="">All sources</option><option>PhonePe</option><option>Kotak 811</option><option>SBI</option><option>HDFC</option><option>ICICI</option><option>Cash</option></select>
+          <input type="date" class="form-input" id="tf-date-from" onchange="renderTxPage()" style="max-width:145px;" title="From date"/>
+          <input type="date" class="form-input" id="tf-date-to" onchange="renderTxPage()" style="max-width:145px;" title="To date"/>
+          <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px;white-space:nowrap;" onclick="document.getElementById('tf-date-from').value='';document.getElementById('tf-date-to').value='';renderTxPage();" title="Clear date filter">✕ Date</button>
           <button class="btn btn-ghost" id="tx-bulk-del-btn" style="display:none;font-size:12px;padding:7px 12px;color:var(--red);border-color:rgba(255,92,92,0.3);" onclick="bulkDeleteTx()" title="Delete selected"><i class="ti ti-trash" aria-hidden="true" style="font-size:13px;vertical-align:-1px;"></i> Delete selected</button>
         </div>
 
@@ -3151,11 +3154,26 @@ function renderTxPage(){
   const src    = document.getElementById('tf-src')?.value   || '';
   const search = (document.getElementById('tf-search')?.value || '').toLowerCase().trim();
 
+  const dateFrom = document.getElementById('tf-date-from')?.value || '';
+  const dateTo   = document.getElementById('tf-date-to')?.value   || '';
+
+  // Dynamically populate source dropdown with cards
+  const srcSel = document.getElementById('tf-src');
+  if(srcSel && state.cards.length){
+    const currentVal = srcSel.value;
+    const baseOpts = '<option value="">All sources</option><option>PhonePe</option><option>Kotak 811</option><option>SBI</option><option>HDFC</option><option>ICICI</option><option>Cash</option>';
+    const cardOpts = state.cards.map(c=>`<option value="${c.name} ••${c.last4}">${c.name} ••${c.last4} (Card)</option>`).join('');
+    srcSel.innerHTML = baseOpts + cardOpts;
+    srcSel.value = currentVal;
+  }
+
   let txs = [...state.transactions].sort((a,b)=>b.date.localeCompare(a.date));
-  if(cat)    txs = txs.filter(t=>t.cat===cat);
-  if(type)   txs = txs.filter(t=>t.type===type);
-  if(src)    txs = txs.filter(t=>t.src===src);
-  if(search) txs = txs.filter(t=>
+  if(cat)      txs = txs.filter(t=>t.cat===cat);
+  if(type)     txs = txs.filter(t=>t.type===type);
+  if(src)      txs = txs.filter(t=>t.src===src);
+  if(dateFrom) txs = txs.filter(t=>t.date >= dateFrom);
+  if(dateTo)   txs = txs.filter(t=>t.date <= dateTo);
+  if(search)   txs = txs.filter(t=>
     t.name.toLowerCase().includes(search)||
     t.cat.toLowerCase().includes(search)||
     t.src.toLowerCase().includes(search)||
@@ -4423,6 +4441,15 @@ function updateBalanceHint(){
   const src = document.getElementById('m-src')?.value||'';
   const hint = document.getElementById('m-bal-hint');
   if(!hint) return;
+  // Check if it's a card source (contains ••)
+  if(src.includes('••')){
+    const last4 = src.match(/••(\d{4})/)?.[1];
+    const card = last4 ? state.cards.find(c=>c.last4===last4) : state.cards.find(c=>src.includes(c.name));
+    if(card){
+      hint.innerHTML=`<span style="color:#f0a500;">💳 Credit Card — <strong>${card.name} ••${card.last4}</strong></span><br><span style="color:var(--text3);">Outstanding: ${fmt(card.used)} / Limit: ${fmt(card.limit)}</span>`;
+    }
+    return;
+  }
   const acc = findAccountBySrc(src);
   if(acc){
     hint.innerHTML=`<span style="color:#22c98a;">✓ Linked to <strong>${acc.name}</strong></span><br><span style="color:var(--text3);">Current balance: ${fmt(acc.balance)}</span>`;
@@ -4442,6 +4469,37 @@ function findAccountBySrc(src){
     const nAbbr = abbrev(n);
     return n.includes(s) || s.includes(n.split(' ')[0]) || nAbbr===s || n===s;
   });
+}
+
+function findCardBySMS(msg, last4hint){
+  // Match by last4 from SMS
+  const l4 = last4hint || (msg.match(/(?:ending|XX|x{2,}|card\s+(?:no\.?|ending|xx))[\s\-]*(\d{4})/i)||[])[1];
+  if(l4){
+    const byLast4 = state.cards.find(c=>c.last4===l4);
+    if(byLast4) return byLast4;
+  }
+  // Match by bank name
+  const bankHints = [
+    [/sbi|state bank/i,'SBI'],[/icici/i,'ICICI'],[/hdfc/i,'HDFC'],
+    [/axis/i,'Axis'],[/kotak/i,'Kotak'],[/amnex|american express/i,'Amex'],
+  ];
+  for(const [pat, label] of bankHints){
+    if(pat.test(msg)){
+      const found = state.cards.find(c=>new RegExp(label,'i').test(c.name));
+      if(found) return found;
+    }
+  }
+  return null;
+}
+
+function autoUpdateCardOutstanding(card, amount, txName, date){
+  if(!card) return;
+  const oldUsed = card.used || 0;
+  card.used = oldUsed + amount;
+  if(!card.payments) card.payments = [];
+  card.payments.push({ date, amount, note: txName });
+  addNotif('Card outstanding updated: '+card.name,
+    `${fmt(oldUsed)} + ${fmt(amount)} = ${fmt(card.used)} after "${txName}"`, 'card');
 }
 
 function autoUpdateAccountBalance(src, amount, type, date){
@@ -4525,7 +4583,23 @@ function addManual(){
     toast('✓ Own transfer recorded — not counted as expense or income');
   }
 
-  // ── AUTO-UPDATE ACCOUNT BALANCE ──────────────────────────────────────────
+  // ── AUTO-UPDATE ACCOUNT BALANCE OR CARD OUTSTANDING ─────────────────
+  // Check if source is a credit card
+  if(src.includes('••')){
+    const last4 = src.match(/••(\d{4})/)?.[1];
+    const card = last4 ? state.cards.find(c=>c.last4===last4) : state.cards.find(c=>src.includes(c.name));
+    if(card && type === 'dr'){
+      autoUpdateCardOutstanding(card, amount, name, date);
+      toast(`💳 ${card.name}: outstanding ${fmt(card.used - amount)} + ${fmt(amount)} = ${fmt(card.used)}`);
+    } else {
+      toast('Transaction saved ✓');
+    }
+    save(); renderDashboard(); renderTxPage(); renderCards();
+    document.getElementById('m-name').value='';
+    document.getElementById('m-amount').value='';
+    return;
+  }
+
   const smsOverride = availBal ? parseFloat(availBal.replace(/,/g,'')) : NaN;
 
   if(!isNaN(smsOverride) && smsOverride >= 0){
@@ -4586,6 +4660,15 @@ function addManual(){
 }
 
 function renderQuickBalanceSection(){
+  // Populate m-src dropdowns with accounts + cards
+  document.querySelectorAll('#m-src').forEach(sel=>{
+    const currentVal = sel.value;
+    const accOpts = state.accounts.map(a=>`<option value="${a.bank||a.name}">${a.bank||a.name}</option>`).join('');
+    const cardOpts = state.cards.map(c=>`<option value="${c.name} ••${c.last4}">${c.name} ••${c.last4} (Card)</option>`).join('');
+    sel.innerHTML = `<option value="">Select source…</option>${accOpts}${cardOpts}`;
+    if(currentVal) sel.value = currentVal;
+  });
+
   const sel = document.getElementById('qb-account');
   const list = document.getElementById('qb-accounts-list');
   if(sel) sel.innerHTML='<option value="">Select account…</option>'+
@@ -4650,7 +4733,11 @@ function renderImportHistory(){
 
 /* ── DUPLICATE CHECK ── */
 function isDuplicate(tx){
-  return state.transactions.some(t=>t.date===tx.date&&t.amount===tx.amount&&t.type===tx.type&&t.name.slice(0,12)===tx.name.slice(0,12));
+  return state.transactions.some(t=>
+    t.amount===tx.amount && t.type===tx.type &&
+    t.name.slice(0,15)===tx.name.slice(0,15) &&
+    Math.abs(new Date(t.date)-new Date(tx.date)) < 86400000
+  );
 }
 
 /* ── CATEGORY GUESSER ── */
@@ -4701,111 +4788,156 @@ function parseSMSText(smsText){
 
 function parseSingleSMS(msg){
   const m = msg.replace(/\s+/g,' ').trim();
-  const lower = m.toLowerCase();
 
-  // Skip OTPs, promotions, balance enquiry-only messages
-  if(/otp|password|cvv|pin |login|click here|offer|cashback promo|congratulations|dear customer, your|activate/i.test(m) && !/debited|credited|spent|paid|received|transferred/i.test(m)) return null;
+  // ── Skip non-transaction SMS ───────────────────────────────────────────
   if(m.length < 20) return null;
 
+  // ── Detect credit card SMS early ─────────────────────────────────────
+  const isCreditCardSMS =
+    /credit card|SBI.*card|ICICI.*credit|HDFC.*card|axis.*card|kotak.*card/i.test(m) &&
+    /debited|spent|purchase|transaction/i.test(m);
+  // Extract card last4 from CC SMS
+  const ccLast4Match = m.match(/(?:card\s+(?:ending|no\.?|xx)[\s]*|XX)(\d{4})/i) ||
+                       m.match(/Credit Card\s+XX(\d{4})/i) ||
+                       m.match(/ending\s+(\d{4})/i);
+  const ccLast4 = ccLast4Match ? ccLast4Match[1] : null;
+  if(/otp|one.?time.?pass|password|cvv|pin |login|click here|offer|cashback promo|congratulations|activate|pre.?approved|pre-approved/i.test(m)
+    && !/debited|credited|sent|received|transferred/i.test(m)) return null;
+  if(/(?:fd|fixed deposit|rd|recurring deposit)\s*(?:no\.?|number|#|booked|created|opened|placed|renewed)/i.test(m)) return null;
+  if(/(?:booked|created|opened|placed|renewed).*(?:fd|fixed deposit|rd|recurring deposit)/i.test(m)) return null;
+
   // ── 1. Determine transaction type ──────────────────────────────────────
-  const isDebit = /debited|debit|spent|paid|withdrawal|withdrawn|dr\b|purchase|charged/i.test(m);
-  const isCredit = /credited|credit|received|deposited|cr\b|refund|cashback|salary|added/i.test(m);
+  // Debit signals: debited, sent, paid, spent, withdrawn, purchase, dr, charged
+  const isDebit = /\bdebited\b|\bdebit\b|\bsent\b|\bspent\b|\bpaid\b|\bwithdraw[n]?\b|\bpurchase\b|\bcharged\b|\bdr\b/i.test(m);
+  // Credit signals: credited, received, added, deposited, refund, cashback, salary
+  const isCredit = /\bcredited\b|\bcredit\b|\breceived\b|\bdeposited\b|\badded\b|\brefund\b|\bcashback\b|\bsalary\b|\bcr\b/i.test(m);
   if(!isDebit && !isCredit) return null;
-  const type = isCredit && !isDebit ? 'cr' : 'dr';
+  const type = (isCredit && !isDebit) ? 'cr' : 'dr';
 
   // ── 2. Extract amount ───────────────────────────────────────────────────
-  // Patterns: Rs.1,234.56 | INR 1234.56 | ₹1,234 | Rs 1234 | 1,234.00
-  const amtPatterns = [
-    /(?:INR|Rs\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)/i,
-    /(?:amount|amt)[:\s]+(?:INR|Rs\.?|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i,
-    /(?:for|of)\s+(?:INR|Rs\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)/i,
-    /([\d,]+(?:\.\d{2}))\s*(?:INR|Rs|₹)/i,
-  ];
-  let amount = 0;
-  for(const p of amtPatterns){
-    const match = m.match(p);
-    if(match){ amount = parseFloat(match[1].replace(/,/g,'')); break; }
-  }
+  const amtMatch =
+    m.match(/(?:INR|Rs\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)/i) ||
+    m.match(/([\d,]+(?:\.\d{2}))\s*(?:INR|Rs\.?|₹)/i) ||
+    m.match(/(?:amount|amt)[:\s]+([\d,]+(?:\.\d{1,2})?)/i);
+  if(!amtMatch) return null;
+  const amount = parseFloat(amtMatch[1].replace(/,/g,''));
   if(!amount || amount <= 0) return null;
 
   // ── 3. Extract date ─────────────────────────────────────────────────────
-  const datePatterns = [
-    /(\d{2})[\/\-](\d{2})[\/\-](\d{4})/,   // DD/MM/YYYY or DD-MM-YYYY
-    /(\d{2})[\/\-](\d{2})[\/\-](\d{2})\b/,  // DD/MM/YY
-    /(\d{4})[\/\-](\d{2})[\/\-](\d{2})/,    // YYYY-MM-DD
-    /(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{2,4})/i,
-  ];
   let date = todayStr;
-  for(const p of datePatterns){
-    const match = m.match(p);
-    if(match){
-      try{
-        if(p.source.startsWith('(\\d{4})')){
-          date = `${match[1]}-${match[2]}-${match[3]}`;
-        } else if(p.source.includes('Jan|Feb')){
-          const months={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
-          const yr = match[3].length===2?'20'+match[3]:match[3];
-          date = `${yr}-${months[match[2].toLowerCase().slice(0,3)]}-${match[1].padStart(2,'0')}`;
-        } else {
-          const yr = match[3].length===2?'20'+match[3]:match[3];
-          date = `${yr}-${match[2].padStart(2,'0')}-${match[1].padStart(2,'0')}`;
-        }
-        // Validate
-        if(new Date(date).toString()==='Invalid Date') date = todayStr;
-      } catch(e){ date = todayStr; }
-      break;
-    }
-  }
+  // Priority: YYYY-MM-DD > DD-Mon-YY/YYYY > DD/MM/YYYY > DD-MM-YY
+  const d2 = m.match(/(\d{4})-(\d{2})-(\d{2})/);
+  const d3 = m.match(/(\d{1,2})[\s\-](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s\-,]+(\d{2,4})/i);
+  const d1 = m.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+  const d4 = m.match(/(\d{2})-(\d{2})-(\d{2})\b/);
+  try{
+    const mo = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+    if(d2) date = d2[0];
+    else if(d3){ const y=d3[3].length===2?'20'+d3[3]:d3[3]; date=`${y}-${mo[d3[2].toLowerCase().slice(0,3)]}-${d3[1].padStart(2,'0')}`; }
+    else if(d1){ const y=d1[3].length===2?'20'+d1[3]:d1[3]; date=`${y}-${d1[2].padStart(2,'0')}-${d1[1].padStart(2,'0')}`; }
+    else if(d4){ date=`20${d4[3]}-${d4[2].padStart(2,'0')}-${d4[1].padStart(2,'0')}`; }
+    if(new Date(date).toString()==='Invalid Date') date = todayStr;
+  } catch(e){ date = todayStr; }
 
-  // ── 4. Extract merchant / description ──────────────────────────────────
+  // ── 4. Extract name / merchant ─────────────────────────────────────────
   let name = '';
-  const merchantPatterns = [
-    /(?:at|to|merchant|for)\s+([A-Z][A-Za-z0-9\s&\-_\.]{2,30})(?:\s+on|\s+via|\s+ref|\.|,|$)/i,
-    /UPI[:\-\s]+([A-Za-z0-9@\.\-_]+)/i,
-    /VPA[:\s]+([A-Za-z0-9@\.\-_]+)/i,
-    /Info[:\s]+([A-Z][A-Za-z0-9\s\-\/]{2,30})/i,
-    /(?:paid|sent)\s+to\s+([A-Za-z0-9\s&]{2,25})/i,
-    /(?:from|by)\s+([A-Z][A-Za-z0-9\s]{2,20})/i,
-  ];
-  for(const p of merchantPatterns){
-    const match = m.match(p);
-    if(match && match[1].trim().length>2){ name = match[1].trim().replace(/\s+/g,' '); break; }
-  }
-  if(!name){
-    // Fallback — extract from UPI ID
-    const upiMatch = m.match(/([a-zA-Z0-9._-]+@[a-zA-Z]+)/);
-    if(upiMatch) name = upiMatch[1].split('@')[0].replace(/[._-]/g,' ');
-  }
-  if(!name) name = type==='cr'?'Credit received':'Debit transaction';
+
+  // Kotak UPI: "Sent Rs.X from ACCTNO to PERSON NAME on DATE"
+  const kotakSent = m.match(/Sent\s+Rs\.?[\d,\.]+\s+from\s+[\dX]+\s+to\s+([A-Za-z][A-Za-z\s]{1,35})\s+on/i);
+  if(kotakSent) name = kotakSent[1].trim();
+
+  // Kotak UPI: "Received Rs.X from PERSON NAME in your"
+  if(!name){ const kotakRcv = m.match(/Received\s+Rs\.?[\d,\.]+\s+from\s+([A-Za-z][A-Za-z\s]{1,35})\s+in\s+your/i); if(kotakRcv) name = kotakRcv[1].trim(); }
+
+  // SBI: "by a/c linked to mobile 9XXXXX-NAME (IMPS"
+  if(!name){ const sbiN = m.match(/mobile\s+[\dX]+-([A-Za-z][A-Za-z\s]{2,25})(?:\s*[\(\-]|$)/i); if(sbiN) name = sbiN[1].trim(); }
+
+  // Axis: IMPS/P2A/REF/SENDERNAME — name ends at space or non-alpha
+  if(!name){ const axisN = m.match(/IMPS\/P2A\/[\dA-Z]+\/([A-Za-z][A-Za-z]{2,20})/i); if(axisN) name = axisN[1].trim(); }
+
+  // ICICI debit: "XX237 debited for Rs X on DATE; MERCHANT credited. UPI:"
+  if(!name){ const icicDebit = m.match(/;\s*([A-Z][A-Z0-9\s]{2,30})\s+credited\./i); if(icicDebit) name = icicDebit[1].trim(); }
+
+  // ICICI credit: account/mobile linked → IMPS Transfer
+  if(!name && /ICICI/i.test(m) && type==='cr'){ name = /IMPS/i.test(m)?'IMPS Transfer':/NEFT/i.test(m)?'NEFT Transfer':'Credit received'; }
+
+  // ICICI Info field (UPI debit)
+  if(!name){ const icicInfo = m.match(/Info[:\s]+([A-Za-z0-9][A-Za-z0-9\s\-\/\.&]{2,35})(?:\.|,|$|Avl)/i); if(icicInfo) name = icicInfo[1].trim(); }
+
+  // Generic "to NAME on/via/UPI"
+  if(!name){ const toVPA = m.match(/to\s+([A-Za-z][A-Za-z0-9\s\.@_\-]{2,35})\s+(?:on|via|UPI|ref)/i); if(toVPA) name = toVPA[1].trim(); }
+
+  // HDFC: "Rs X spent on MERCHANT"
+  if(!name){ const hdfc = m.match(/spent\s+(?:at|on|for)?\s*([A-Za-z][A-Za-z0-9\s&\.\-]{2,30})(?:\s+on|\.|,)/i); if(hdfc) name = hdfc[1].trim(); }
+
+  // UPI "paid to NAME" / "sent to NAME"
+  if(!name){ const sentTo = m.match(/(?:paid|sent)\s+to\s+([A-Za-z][A-Za-z\s]{2,30})(?:\s+on|\s+via|\s+UPI|\.|,|$)/i); if(sentTo) name = sentTo[1].trim(); }
+
+  // "from NAME" for credits
+  if(!name && type==='cr'){ const fromN = m.match(/from\s+([A-Za-z][A-Za-z\s]{2,30})(?:\s+in|\s+to|\s+on|\.|,)/i); if(fromN) name = fromN[1].trim(); }
+
+  // UPI VPA: extract handle name
+  if(!name){ const vpa = m.match(/([a-zA-Z0-9][a-zA-Z0-9._\-]{2,})@[a-zA-Z]{3,}/); if(vpa) name = vpa[1].replace(/[._\-]/g,' ').replace(/\d+/g,'').trim(); }
+
+  // Generic "at MERCHANT"
+  if(!name){ const atM = m.match(/(?:at|@)\s+([A-Z][A-Za-z0-9\s&\.\-]{2,25})(?:\s+on|\.|,|$)/i); if(atM) name = atM[1].trim(); }
+
+  // Fallback
+  if(!name || name.length < 2) name = type==='cr' ? 'Credit received' : 'Debit transaction';
+
+  // Clean up — remove trailing noise words
+  name = name.replace(/\s+(on|via|through|using|at|from|to|for|in|the|your|a|an)$/i,'').replace(/\s+/g,' ').trim();
 
   // ── 5. Detect source bank ───────────────────────────────────────────────
   const bankMap = [
+    [/\bkotak\b/i,'Kotak 811'],
     [/sbi|state bank/i,'SBI'],
-    [/hdfc/i,'HDFC'],
-    [/icici/i,'ICICI'],
-    [/kotak/i,'Kotak 811'],
-    [/axis/i,'Axis Bank'],
+    [/\bhdfc\b/i,'HDFC'],
+    [/\bicici\b/i,'ICICI'],
+    [/\baxis\b/i,'Axis Bank'],
     [/phonepe|phone pe/i,'PhonePe'],
     [/paytm/i,'Paytm'],
     [/gpay|google pay/i,'Google Pay'],
     [/yes bank|yesbank/i,'YES Bank'],
     [/indusind/i,'IndusInd'],
-    [/pnb|punjab national/i,'PNB'],
-    [/bob|bank of baroda/i,'Bank of Baroda'],
+    [/\bpnb\b|punjab national/i,'PNB'],
+    [/bank of baroda|\bbob\b/i,'Bank of Baroda'],
     [/canara/i,'Canara Bank'],
-    [/idbi/i,'IDBI'],
-    [/ibl|indusland/i,'IndusInd'],
-    [/bankl|bank\//i,'Bank'],
+    [/\bidbi\b/i,'IDBI'],
+    [/\bidfc\b/i,'IDFC'],
+    [/\bsbi\b/i,'SBI'],
   ];
-  let src = 'Bank';
-  for(const [pattern, label] of bankMap){
-    if(pattern.test(m)){ src = label; break; }
+  let src = '';
+  for(const [pattern, label] of bankMap){ if(pattern.test(m)){ src = label; break; } }
+  if(!src) src = 'Bank';
+
+  // ── CC-specific name patterns ────────────────────────────────────────
+  if(isCreditCardSMS && !name){
+    // SBI Card: "at MERCHANT on DD/MM/YY"
+    const sbiAt = m.match(/at\s+([A-Za-z][A-Za-z0-9\s]{2,30})\s+on\s+\d/i);
+    if(sbiAt) name = sbiAt[1].trim();
+  }
+  if(isCreditCardSMS && !name){
+    // SBI Card emandates: "at MERCHANT against"
+    const sbiAgainst = m.match(/at\s+([A-Za-z][A-Za-z0-9]{2,25})\s+against/i);
+    if(sbiAgainst) name = sbiAgainst[1].trim();
+  }
+  if(isCreditCardSMS && !name){
+    // ICICI Card: "for UPI-REFNO-MERCHANT"
+    const icicUPI = m.match(/for\s+UPI-[\d]+-([A-Za-z][A-Za-z0-9\s]{2,25})(?:\.|,|$|\s+To)/i);
+    if(icicUPI) name = icicUPI[1].trim();
   }
 
-  // ── 6. Guess category ────────────────────────────────────────────────────
+  // Override src with card identifier if CC SMS
+  if(isCreditCardSMS){
+    const card = findCardBySMS(m, ccLast4);
+    src = card ? card.name + (card.last4?' ••'+card.last4:'') : (src+' Credit Card');
+  }
+
+  // ── 6. Guess category ─────────────────────────────────────────────────
   const cat = guessCategory(name + ' ' + m);
 
-  return { name: name.slice(0,50), amount, type, cat, src, date };
+  return { name: name.slice(0,50), amount, type, cat, src, date, isCreditCard: isCreditCardSMS, ccLast4 };
 }
 
 function bulkParseSMS(){
@@ -6605,6 +6737,18 @@ async function pullSMSFromFirebase(){
     // Filter unprocessed
     const newDocs = docs.filter(d => !_processedSMSIds.has(d.name.split('/').pop()));
 
+    // Deduplicate by message content (in case Automation fired multiple times for same SMS)
+    const seenMsgHashes = new Set();
+    const dedupedDocs = newDocs.filter(doc => {
+      const f = doc.fields||{};
+      const msg = f.msg?.stringValue || f.body?.stringValue || f.body || f.text?.stringValue || f.text || '';
+      const hash = msg.trim().slice(0,80); // use first 80 chars as fingerprint
+      if(seenMsgHashes.has(hash)) return false;
+      seenMsgHashes.add(hash);
+      return true;
+    });
+    const uniqueNewDocs = dedupedDocs;
+
     if(!newDocs.length){
       if(status) status.innerHTML='<span style="color:var(--text2);">No new SMS found. All caught up ✓</span>';
       if(pending) pending.style.display='none';
@@ -6613,7 +6757,7 @@ async function pullSMSFromFirebase(){
 
     // Parse each SMS — each Firestore doc is one SMS, parse as single message (not split)
     const parsed = [];
-    newDocs.forEach(doc => {
+    uniqueNewDocs.forEach(doc => {
       const f = doc.fields||{};
       // Support both Firestore nested format {body:{stringValue:...}} and flat format {body:'...'}
       const msg = f.msg?.stringValue || f.body?.stringValue || f.body || f.text?.stringValue || f.text || f.message?.stringValue || f.message || '';
@@ -6640,17 +6784,23 @@ async function pullSMSFromFirebase(){
         if(isDuplicate(tx)) return;
         const txDate = tx.date || today;
         state.transactions.push({id:state.nextId++, name:tx.name, amount:tx.amount, type:tx.type, cat:tx.cat, src:tx.src, date:txDate});
-        if(tx.type !== 'own-transfer' && tx.src) autoUpdateAccountBalance(tx.src, tx.amount, tx.type, txDate);
+        if(tx.isCreditCard){
+          // CC transaction → increase outstanding
+          const card = findCardBySMS(tx._rawMsg||'', tx.ccLast4);
+          if(card) autoUpdateCardOutstanding(card, tx.amount, tx.name, txDate);
+        } else if(tx.type !== 'own-transfer' && tx.src){
+          autoUpdateAccountBalance(tx.src, tx.amount, tx.type, txDate);
+        }
         if(tx._docId) docIds.add(tx._docId);
         imported++;
       });
       // Mark all as processed
-      newDocs.forEach(d => _processedSMSIds.add(d.name.split('/').pop()));
+      docs.forEach(d => _processedSMSIds.add(d.name.split('/').pop())); // mark ALL as processed
       saveProcessedSMS();
       save();
       deleteProcessedFirebaseSMS([...docIds]);
       saveImportHistory('Auto SMS Import', imported, 'Firebase SMS');
-      if(status) status.innerHTML=`<span style="color:#22c98a;">✓ Auto-imported ${imported} transaction${imported!==1?'s':''} from ${newDocs.length} SMS</span>`;
+      if(status) status.innerHTML=`<span style="color:#22c98a;">✓ Auto-imported ${imported} transaction${imported!==1?'s':''} from ${uniqueNewDocs.length} SMS</span>`;
       if(imported>0){
         toast(`✓ ${imported} transaction${imported!==1?'s':''} auto-imported from SMS`);
         addNotif('Auto Import', imported+' transactions imported from SMS', 'success');
@@ -6705,8 +6855,10 @@ function commitSMSImport(){
     if(!tx) return;
     const txDate = tx.date || today;
     state.transactions.push({id:state.nextId++, name:tx.name, amount:tx.amount, type:tx.type, cat:tx.cat, src:tx.src, date:txDate});
-    // Auto-update linked account balance
-    if(tx.type !== 'own-transfer' && tx.src){
+    if(tx.isCreditCard){
+      const card = findCardBySMS(tx._rawMsg||'', tx.ccLast4);
+      if(card) autoUpdateCardOutstanding(card, tx.amount, tx.name, txDate);
+    } else if(tx.type !== 'own-transfer' && tx.src){
       autoUpdateAccountBalance(tx.src, tx.amount, tx.type, txDate);
     }
     docIds.add(tx._docId);
