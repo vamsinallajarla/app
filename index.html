@@ -3405,6 +3405,7 @@ function renderAccounts(){
         ${a.rate?`<div class="detail-row"><span class="detail-label">Interest rate</span><span style="color:var(--amber);">${a.rate}% p.a.</span></div>`:''}
         <div style="display:flex;gap:8px;margin-top:10px;">
           <button class="btn btn-ghost" style="flex:1;font-size:12px;padding:7px;" onclick="editAccount(${a.id})"><i class="ti ti-edit" aria-hidden="true" style="font-size:13px;vertical-align:-1px;"></i> Edit</button>
+          <button class="btn btn-primary" style="flex:1;font-size:12px;padding:7px;" onclick="openReconcileModal(${a.id})"><i class="ti ti-refresh" aria-hidden="true" style="font-size:13px;vertical-align:-1px;"></i> Sync</button>
           <button class="btn btn-danger" style="flex:1;font-size:12px;padding:7px;" onclick="deleteAccount(${a.id})"><i class="ti ti-trash" aria-hidden="true" style="font-size:13px;vertical-align:-1px;"></i> Remove</button>
         </div>
       </div>
@@ -4520,7 +4521,61 @@ function autoUpdateAccountBalance(src, amount, type, date){
   return { acc, oldBal, newBal: acc.balance };
 }
 
-function addManual(){
+function reconcileAccountBalance(accountId){
+  const acc = state.accounts.find(a=>a.id===accountId);
+  if(!acc) return null;
+  
+  // Get the starting balance (from history or initial)
+  const startBal = acc.history && acc.history.length > 0 
+    ? acc.history[0].bal 
+    : acc.balance;
+  
+  // Get current month
+  const now = new Date();
+  const curMonth = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  
+  // Get all transactions for this account in current month
+  const monthTxs = state.transactions.filter(t => 
+    t.date.startsWith(curMonth) && 
+    t.src && 
+    findAccountBySrc(t.src)?.id === accountId &&
+    t.type !== 'own-transfer'
+  );
+  
+  // Calculate balance: start + credits - debits
+  let calculated = startBal;
+  monthTxs.forEach(tx => {
+    if(tx.type === 'cr'){
+      calculated += tx.amount;
+    } else if(tx.type === 'dr'){
+      calculated = Math.max(0, calculated - tx.amount);
+    }
+  });
+  
+  const oldBal = acc.balance;
+  acc.balance = calculated;
+  
+  if(!acc.history) acc.history = [];
+  acc.history.push({ bal: calculated, date: todayStr });
+  
+  return { acc, oldBal, newBal: calculated, monthTxs: monthTxs.length };
+}
+
+function openReconcileModal(accountId){
+  const acc = state.accounts.find(a=>a.id===accountId);
+  if(!acc) return;
+  
+  const result = reconcileAccountBalance(accountId);
+  if(result){
+    const change = result.newBal - result.oldBal;
+    const dir = change >= 0 ? '+' : '';
+    alert(`✓ ${acc.name} Reconciled\n\n${result.monthTxs} transactions processed\n\n${fmt(result.oldBal)} ${dir}${fmt(change)} → ${fmt(result.newBal)}`);
+    save();
+    renderDashboard();
+    renderAccountsPage();
+    renderTxPage();
+  }
+}
   if(isReadOnly()){ toast('⚠️ Read-only access — you cannot modify this data'); return; }
   const name    = document.getElementById('m-name').value.trim();
   const amount  = +document.getElementById('m-amount').value;
