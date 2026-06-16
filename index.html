@@ -4576,6 +4576,8 @@ function openReconcileModal(accountId){
     renderTxPage();
   }
 }
+
+function addManual(){
   if(isReadOnly()){ toast('⚠️ Read-only access — you cannot modify this data'); return; }
   const name    = document.getElementById('m-name').value.trim();
   const amount  = +document.getElementById('m-amount').value;
