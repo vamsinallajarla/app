@@ -5003,6 +5003,8 @@ function commitBulkSMSImport(){
   checked.forEach(i=>{
     const tx=smsParsedRows[i];
     state.transactions.push({id:state.nextId++,name:tx.name||'SMS Import',amount:Math.abs(tx.amount||0),type:tx.type||'dr',cat:tx.cat||'Other',src:tx.src||'Bank',date:tx.date||todayStr});
+    // Auto-update account balance after adding transaction
+    autoUpdateAccountBalance(tx.src||'Bank', Math.abs(tx.amount||0), tx.type||'dr', tx.date||todayStr);
   });
   save();
   const src=document.getElementById('sms-bank-hint').value||'Bank SMS';
@@ -5123,6 +5125,8 @@ function commitCSVImport(){
   checked.forEach(i=>{
     const tx=csvParsedRows[i];
     state.transactions.push({id:state.nextId++,name:tx.name,amount:Math.abs(tx.amount),type:tx.type,cat:tx.cat||'Other',src:tx.src||'Bank',date:tx.date});
+    // Auto-update account balance after adding transaction
+    autoUpdateAccountBalance(tx.src||'Bank', Math.abs(tx.amount), tx.type, tx.date);
   });
   save();
   const src=csvParsedRows[0]?.src||'CSV';
@@ -5623,6 +5627,8 @@ function commitDocTxImport(){
   checked.forEach(i=>{
     const tx=docState.tx.rows[i];
     state.transactions.push({id:state.nextId++,name:tx.name||'Doc Import',amount:Math.abs(tx.amount||0),type:tx.type||'dr',cat:tx.cat||'Other',src:tx.src||'Scanned Doc',date:tx.date||todayStr});
+    // Auto-update account balance after adding transaction
+    autoUpdateAccountBalance(tx.src||'Scanned Doc', Math.abs(tx.amount||0), tx.type||'dr', tx.date||todayStr);
   });
   save();
   saveImportHistory('Document Scan',checked.length,'Image/PDF Scan');
@@ -7686,6 +7692,8 @@ function commitDocPasteImport(){
   checked.forEach(i=>{
     const tx=docPasteRows[i]; if(!tx) return;
     state.transactions.push({id:state.nextId++,name:tx.name||'Import',amount:Math.abs(tx.amount||0),type:tx.type||'dr',cat:tx.cat||'Other',src:tx.src||'Statement',date:tx.date||todayStr});
+    // Auto-update account balance after adding transaction
+    autoUpdateAccountBalance(tx.src||'Statement', Math.abs(tx.amount||0), tx.type||'dr', tx.date||todayStr);
   });
   save();
   saveImportHistory('Statement Paste',checked.length,'Copy-Paste Import');
