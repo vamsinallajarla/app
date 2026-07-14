@@ -407,16 +407,17 @@ function doLogin(){
   const pass = document.getElementById('login-pass').value;
   if(!email || !pass){ toast('Enter email and password'); return; }
   
-  const hash = sha256(pass);
-  const users = JSON.parse(localStorage.getItem('users') || '{}');
-  
-  if(users[email] && users[email].hash === hash){
-    state.user = users[email];
-    showApp();
-  } else {
-    document.getElementById('login-error').style.display = 'block';
-    document.getElementById('login-error').textContent = 'Email or password incorrect';
-  }
+  hashPassword(pass).then(hash => {
+    const users = JSON.parse(localStorage.getItem('users') || '{}');
+    
+    if(users[email] && users[email].hash === hash){
+      state.user = users[email];
+      showApp();
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+      document.getElementById('login-error').textContent = 'Email or password incorrect';
+    }
+  });
 }
 
 function doSignup(){
@@ -432,12 +433,13 @@ function doSignup(){
   const users = JSON.parse(localStorage.getItem('users') || '{}');
   if(users[email]){ toast('Email already in use'); return; }
   
-  const hash = sha256(pass);
-  users[email] = { name, email, hash, created: todayStr };
-  localStorage.setItem('users', JSON.stringify(users));
-  
-  state.user = users[email];
-  showApp();
+  hashPassword(pass).then(hash => {
+    users[email] = { name, email, hash, created: todayStr };
+    localStorage.setItem('users', JSON.stringify(users));
+    
+    state.user = users[email];
+    showApp();
+  });
 }
 
 function doLogout(){
@@ -864,10 +866,13 @@ function hexToRgb(hex){
   return result ? `${parseInt(result[1],16)},${parseInt(result[2],16)},${parseInt(result[3],16)}` : '79,124,255';
 }
 
-function sha256(str){
-  let result = '';
-  for(let i=0;i<str.length;i++) result += ('0' + str.charCodeAt(i).toString(16)).slice(-2);
-  return result;
+async function hashPassword(password){
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => ('00' + b.toString(16)).slice(-2)).join('');
+  return hashHex;
 }
 
 // ============================================================
